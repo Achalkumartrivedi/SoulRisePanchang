@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "SoulRise Panchang",
+    "slug": "soulrise-panchang",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6F00"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.soulrise.panchang"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6F00"
+      },
+      "package": "com.soulrise.panchang"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
