@@ -92,18 +92,18 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
 
   // House Label Positions for North Indian Diamond Chart SVG (300x300 canvas)
   const NORTH_HOUSE_POSITIONS = [
-    { houseNum: 1, x: 150, y: 50, px: 150, py: 75 },   // H1 (Top Center Diamond - 1st House)
-    { houseNum: 2, x: 80, y: 35, px: 80, py: 55 },     // H2 (Upper Left)
-    { houseNum: 3, x: 35, y: 80, px: 35, py: 100 },    // H3 (Left Upper)
-    { houseNum: 4, x: 75, y: 150, px: 75, py: 170 },   // H4 (Left Center Diamond)
-    { houseNum: 5, x: 35, y: 220, px: 35, py: 240 },   // H5 (Left Lower)
-    { houseNum: 6, x: 80, y: 265, px: 80, py: 280 },   // H6 (Lower Left)
-    { houseNum: 7, x: 150, y: 235, px: 150, py: 255 }, // H7 (Bottom Center Diamond)
-    { houseNum: 8, x: 220, y: 265, px: 220, py: 280 }, // H8 (Lower Right)
-    { houseNum: 9, x: 265, y: 220, px: 265, py: 240 }, // H9 (Right Lower)
-    { houseNum: 10, x: 225, y: 150, px: 225, py: 170 },// H10 (Right Center Diamond)
-    { houseNum: 11, x: 265, y: 80, px: 265, py: 100 }, // H11 (Right Upper)
-    { houseNum: 12, x: 220, y: 35, px: 220, py: 55 },  // H12 (Upper Right)
+    { houseNum: 1, x: 150, y: 44, px: 150, py: 70 },   // H1 (Top Center Diamond - 1st House)
+    { houseNum: 2, x: 80, y: 32, px: 80, py: 48 },     // H2 (Upper Left)
+    { houseNum: 3, x: 35, y: 70, px: 35, py: 86 },    // H3 (Left Upper)
+    { houseNum: 4, x: 80, y: 138, px: 80, py: 155 },   // H4 (Left Center Diamond)
+    { houseNum: 5, x: 35, y: 210, px: 35, py: 226 },   // H5 (Left Lower)
+    { houseNum: 6, x: 80, y: 250, px: 80, py: 266 },   // H6 (Lower Left)
+    { houseNum: 7, x: 150, y: 208, px: 150, py: 225 }, // H7 (Bottom Center Diamond)
+    { houseNum: 8, x: 220, y: 250, px: 220, py: 266 }, // H8 (Lower Right)
+    { houseNum: 9, x: 265, y: 210, px: 265, py: 226 }, // H9 (Right Lower)
+    { houseNum: 10, x: 220, y: 138, px: 220, py: 155 },// H10 (Right Center Diamond)
+    { houseNum: 11, x: 265, y: 70, px: 265, py: 86 }, // H11 (Right Upper)
+    { houseNum: 12, x: 220, y: 32, px: 220, py: 48 },  // H12 (Upper Right)
   ];
 
   return (
@@ -229,8 +229,8 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                   {hp.houseNum === 1 && (
                     <SvgText
                       x={hp.x}
-                      y={hp.y + 16}
-                      fontSize={12}
+                      y={hp.y + 14}
+                      fontSize={11}
                       fontWeight="bold"
                       fill="#800000"
                       textAnchor="middle"
@@ -239,15 +239,27 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                     </SvgText>
                   )}
 
-                  {/* Render Planets in House with Custom Colors & Icons */}
+                  {/* Render Planets in House with Custom Colors & Icons (Zero Overlap Vertical Stacking) */}
                   {planets.map((p, pIdx) => {
-                    const offset = (pIdx - (planets.length - 1) / 2) * 16;
-                    const py = hp.houseNum === 1 ? hp.py + 12 : hp.py;
+                    let px = hp.px;
+                    let py = hp.houseNum === 1 ? hp.py + 10 : hp.py;
+
+                    if (planets.length > 1) {
+                      if (planets.length <= 3) {
+                        const startY = hp.houseNum === 1 ? hp.py + 8 : hp.py - ((planets.length - 1) * 6);
+                        py = startY + pIdx * 13;
+                      } else {
+                        const row = Math.floor(pIdx / 2);
+                        const col = pIdx % 2;
+                        px = hp.px + (col === 0 ? -18 : 18);
+                        py = (hp.houseNum === 1 ? hp.py + 8 : hp.py - 6) + row * 13;
+                      }
+                    }
 
                     return (
                       <SvgText
                         key={p.symbol}
-                        x={hp.px + offset}
+                        x={px}
                         y={py}
                         fontSize={10}
                         fontWeight="900"
@@ -313,14 +325,26 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                     </G>
                   )}
 
-                  {/* Planets inside Sign Cell with Custom Colors & Icons */}
+                  {/* Planets inside Sign Cell with Custom Colors & Icons (Vertical Stacking) */}
                   {planets.map((p, pIdx) => {
-                    const offset = (pIdx - (planets.length - 1) / 2) * 14;
+                    let px = cell.x + 35;
+                    let py = cell.y + 50;
+
+                    if (planets.length > 1) {
+                      if (planets.length <= 2) {
+                        py = cell.y + 44 + pIdx * 13;
+                      } else {
+                        const offset = (pIdx - (planets.length - 1) / 2) * 14;
+                        px = cell.x + 35 + offset;
+                        py = cell.y + 52;
+                      }
+                    }
+
                     return (
                       <SvgText
                         key={p.symbol}
-                        x={cell.x + 35 + offset}
-                        y={cell.y + 52}
+                        x={px}
+                        y={py}
                         fontSize={9}
                         fontWeight="900"
                         fill={p.color}
