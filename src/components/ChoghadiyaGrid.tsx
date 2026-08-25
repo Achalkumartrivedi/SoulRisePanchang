@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { ChoghadiyaItem } from '../types/panchang';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ChoghadiyaGridProps {
   dayChoghadiya: ChoghadiyaItem[];
@@ -9,7 +10,9 @@ interface ChoghadiyaGridProps {
 }
 
 export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, nightChoghadiya }) => {
+  const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'DAY' | 'NIGHT'>('DAY');
+  const showHindiScript = language === 'hi' || language === 'hinglish';
 
   const items = activeTab === 'DAY' ? dayChoghadiya : nightChoghadiya;
 
@@ -20,7 +23,7 @@ export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, n
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.cardHeaderTitle}>⏱️ Day & Night Choghadiya</Text>
+        <Text style={styles.cardHeaderTitle} numberOfLines={1} adjustsFontSizeToFit>⏱️ {t('dayChoghadiyaHeader')}</Text>
 
         {/* Day / Night Toggle Bar */}
         <View style={styles.tabToggle}>
@@ -28,21 +31,20 @@ export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, n
             style={[styles.toggleBtn, activeTab === 'DAY' && styles.toggleBtnActive]}
             onPress={() => setActiveTab('DAY')}
           >
-            <Text style={[styles.toggleText, activeTab === 'DAY' && styles.toggleTextActive]}>☀️ Day</Text>
+            <Text style={[styles.toggleText, activeTab === 'DAY' && styles.toggleTextActive]}>{t('dayTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.toggleBtn, activeTab === 'NIGHT' && styles.toggleBtnActive]}
             onPress={() => setActiveTab('NIGHT')}
           >
-            <Text style={[styles.toggleText, activeTab === 'NIGHT' && styles.toggleTextActive]}>🌙 Night</Text>
+            <Text style={[styles.toggleText, activeTab === 'NIGHT' && styles.toggleTextActive]}>{t('nightTab')}</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.gridContainer}>
         {items.map((item, index) => {
-          // Parse start and end time minutes
           const startMin = parseTimeToMin(item.startTime);
           const endMin = parseTimeToMin(item.endTime);
           
@@ -70,19 +72,21 @@ export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, n
             >
               {isActive && (
                 <View style={styles.activeRunningBadge}>
-                  <Text style={styles.activeRunningText}>⚡ RUNNING NOW</Text>
+                  <Text style={styles.activeRunningText}>{t('runningNow')}</Text>
                 </View>
               )}
 
               <View style={styles.itemTop}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemHindi}>{item.hindiName}</Text>
+                <Text style={styles.itemName} numberOfLines={1} adjustsFontSizeToFit>{item.name}</Text>
+                {showHindiScript && <Text style={styles.itemHindi}>{item.hindiName}</Text>}
               </View>
 
               <Text style={styles.itemTime}>{item.startTime} - {item.endTime}</Text>
 
               <View style={[styles.badge, { backgroundColor: item.isAuspicious ? Colors.auspiciousGreen : Colors.inauspiciousRed }]}>
-                <Text style={styles.badgeText}>{item.isAuspicious ? 'Auspicious (शुभ)' : 'Inauspicious (अशुभ)'}</Text>
+                <Text style={styles.badgeText}>
+                  {item.isAuspicious ? (showHindiScript ? 'शुभ' : 'Auspicious') : (showHindiScript ? 'अशुभ' : 'Inauspicious')}
+                </Text>
               </View>
 
               {isActive && (
@@ -90,7 +94,7 @@ export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, n
                   <View style={styles.progressTrack}>
                     <View style={[styles.progressFill, { width: `${percentElapsed}%` }]} />
                   </View>
-                  <Text style={styles.progressPercentText}>{percentElapsed}% Elapsed</Text>
+                  <Text style={styles.progressPercentText}>{percentElapsed}% {t('elapsed')}</Text>
                 </View>
               )}
             </View>
@@ -127,7 +131,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
     gap: 8,
   },
   cardHeaderTitle: {
@@ -145,15 +149,15 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0B2',
   },
   toggleBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 9,
   },
   toggleBtnActive: {
     backgroundColor: Colors.maroon,
   },
   toggleText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: Colors.textSecondary,
   },
@@ -163,15 +167,13 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 10,
   },
   itemCard: {
     width: '48%',
+    borderRadius: 12,
     padding: 12,
-    borderRadius: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    justifyContent: 'space-between',
+    borderWidth: 1.5,
     position: 'relative',
   },
   bgGood: {
@@ -180,19 +182,19 @@ const styles = StyleSheet.create({
   },
   bgBad: {
     backgroundColor: '#FFEBEE',
-    borderColor: '#FFCDD2',
+    borderColor: '#EF9A9A',
   },
   activeCardBorder: {
-    borderColor: Colors.primary,
+    borderColor: Colors.maroon,
     borderWidth: 2,
   },
   activeRunningBadge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.maroon,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
     alignSelf: 'flex-start',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   activeRunningText: {
     color: '#FFFFFF',
@@ -203,28 +205,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   itemName: {
     fontSize: 14,
     fontWeight: 'bold',
     color: Colors.textPrimary,
+    flex: 1,
   },
   itemHindi: {
-    fontSize: 11,
-    color: Colors.textMuted,
+    fontSize: 12,
+    color: Colors.textSecondary,
     fontWeight: '600',
   },
   itemTime: {
     fontSize: 11,
     color: Colors.textSecondary,
-    marginVertical: 4,
-    fontWeight: '600',
+    marginBottom: 8,
+    fontWeight: '500',
   },
   badge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   badgeText: {
     color: '#FFFFFF',
@@ -232,23 +236,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   progressContainer: {
-    marginTop: 6,
+    marginTop: 8,
   },
   progressTrack: {
     height: 4,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: '#E0E0E0',
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.maroon,
   },
   progressPercentText: {
     fontSize: 9,
+    color: Colors.maroon,
     fontWeight: 'bold',
-    color: Colors.primaryDark,
-    textAlign: 'right',
     marginTop: 2,
+    textAlign: 'right',
   },
 });

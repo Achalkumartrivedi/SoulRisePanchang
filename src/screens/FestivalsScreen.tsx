@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal } 
 import { Colors } from '../theme/colors';
 import { Festival, FestivalCategory } from '../types/panchang';
 import { FESTIVALS } from '../engine/festivalRepository';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FestivalsScreenProps {
   onSelectFestivalDate: (dateIso: string) => void;
@@ -23,19 +24,21 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
     return matchesSearch && matchesCategory;
   });
 
+  const { t } = useLanguage();
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🚩 Hindu Festivals & Vrat Directory</Text>
-        <Text style={styles.headerSubtitle}>Discover upcoming major festivals, fasting dates, and divine rituals</Text>
+        <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('festivalsTitle')}</Text>
+        <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('festivalsSub')}</Text>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search festival, puja, deity..."
+            placeholder={t('searchFestivals')}
             placeholderTextColor="#9E9E9E"
             value={searchQuery}
             onChangeText={setSearchQuery}

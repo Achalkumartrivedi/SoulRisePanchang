@@ -3,16 +3,18 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView } from '
 import { Colors } from '../theme/colors';
 import { RashiDetail } from '../types/panchang';
 import { RASHIPHAL_DATA } from '../engine/rashiphalRepository';
+import { useLanguage } from '../context/LanguageContext';
 
 export const RashiphalScreen: React.FC = () => {
+  const { t } = useLanguage();
   const [selectedRashi, setSelectedRashi] = useState<RashiDetail>(RASHIPHAL_DATA[0]);
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>♈ Daily Rashiphal (दैनिक राशिफल)</Text>
-        <Text style={styles.headerSubtitle}>Astrological predictions and guidance for all 12 Rashi signs</Text>
+        <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('rashiphalTitle')}</Text>
+        <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('rashiphalSub')}</Text>
       </View>
 
       {/* Horizontally Scrollable Rashi Selector */}

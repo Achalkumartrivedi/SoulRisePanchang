@@ -14,12 +14,16 @@ import { FestivalsScreen } from '../screens/FestivalsScreen';
 import { RashiphalScreen } from '../screens/RashiphalScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 
+import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
+import { useLanguage } from '../context/LanguageContext';
+
 type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'RASHIPHAL' | 'SETTINGS';
 
 const CITY_STORAGE_KEY = 'SOULRISE_SELECTED_CITY';
 const GPS_STORAGE_KEY = 'SOULRISE_USE_GPS';
 
 export const AppNavigator: React.FC = () => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabName>('TODAY');
   const [selectedCity, setSelectedCity] = useState<CityLocation>(DEFAULT_CITIES[0]); // Default New Delhi
   const [currentDateIso, setCurrentDateIso] = useState<string>(() => {
@@ -30,6 +34,7 @@ export const AppNavigator: React.FC = () => {
     return `${y}-${m}-${day}`;
   });
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
+  const [isLangModalVisible, setIsLangModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -91,22 +96,20 @@ export const AppNavigator: React.FC = () => {
     })();
   }, []);
 
-  useEffect(() => {
-    updateLiveChoghadiyaNotification(selectedCity);
-  }, [selectedCity]);
+  const currentDateObj = new Date(currentDateIso + 'T00:00:00');
+  const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity);
 
   const handleSelectCity = async (city: CityLocation) => {
     setSelectedCity(city);
+    setIsCityModalVisible(false);
     try {
       await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(city));
       await AsyncStorage.setItem(GPS_STORAGE_KEY, city.stateCountry === 'GPS Location' ? 'true' : 'false');
+      await updateLiveChoghadiyaNotification(city);
     } catch (e) {
       console.log('Save city error:', e);
     }
   };
-
-  const currentDateObj = new Date(currentDateIso + 'T00:00:00');
-  const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity);
 
   const handlePrevDay = () => {
     const d = new Date(currentDateIso + 'T00:00:00');
@@ -132,7 +135,7 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.maroon} />
 
       <View style={styles.contentArea}>
         {activeTab === 'TODAY' && (
@@ -171,6 +174,7 @@ export const AppNavigator: React.FC = () => {
             isModalVisible={isCityModalVisible}
             onOpenCityModal={() => setIsCityModalVisible(true)}
             onCloseCityModal={() => setIsCityModalVisible(false)}
+            onOpenLanguageModal={() => setIsLangModalVisible(true)}
           />
         )}
       </View>
@@ -182,8 +186,7 @@ export const AppNavigator: React.FC = () => {
           onPress={() => setActiveTab('TODAY')}
         >
           <Text style={styles.tabIcon}>☀️</Text>
-
-          <Text style={[styles.tabLabel, activeTab === 'TODAY' && styles.tabLabelActive]}>Today</Text>
+          <Text style={[styles.tabLabel, activeTab === 'TODAY' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('today')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -191,7 +194,7 @@ export const AppNavigator: React.FC = () => {
           onPress={() => setActiveTab('CALENDAR')}
         >
           <Text style={styles.tabIcon}>📅</Text>
-          <Text style={[styles.tabLabel, activeTab === 'CALENDAR' && styles.tabLabelActive]}>Calendar</Text>
+          <Text style={[styles.tabLabel, activeTab === 'CALENDAR' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('calendar')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -199,7 +202,7 @@ export const AppNavigator: React.FC = () => {
           onPress={() => setActiveTab('FESTIVALS')}
         >
           <Text style={styles.tabIcon}>🚩</Text>
-          <Text style={[styles.tabLabel, activeTab === 'FESTIVALS' && styles.tabLabelActive]}>Festivals</Text>
+          <Text style={[styles.tabLabel, activeTab === 'FESTIVALS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('festivals')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -207,7 +210,7 @@ export const AppNavigator: React.FC = () => {
           onPress={() => setActiveTab('RASHIPHAL')}
         >
           <Text style={styles.tabIcon}>♈</Text>
-          <Text style={[styles.tabLabel, activeTab === 'RASHIPHAL' && styles.tabLabelActive]}>Horoscope</Text>
+          <Text style={[styles.tabLabel, activeTab === 'RASHIPHAL' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('horoscope')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -215,9 +218,15 @@ export const AppNavigator: React.FC = () => {
           onPress={() => setActiveTab('SETTINGS')}
         >
           <Text style={styles.tabIcon}>⚙️</Text>
-          <Text style={[styles.tabLabel, activeTab === 'SETTINGS' && styles.tabLabelActive]}>Settings</Text>
+          <Text style={[styles.tabLabel, activeTab === 'SETTINGS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('settings')}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Language Selection Modal triggered from Settings */}
+      <LanguageSelectionModal
+        visible={isLangModalVisible}
+        onClose={() => setIsLangModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

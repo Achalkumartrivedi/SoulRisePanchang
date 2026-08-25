@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../theme/colors';
 import { MuhuratTiming } from '../types/panchang';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MuhuratCardProps {
   auspicious: MuhuratTiming[];
@@ -9,16 +10,21 @@ interface MuhuratCardProps {
 }
 
 export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicious }) => {
+  const { language, t } = useLanguage();
+  const showHindiScript = language === 'hi' || language === 'hinglish';
+
   return (
     <View style={styles.card}>
-      <Text style={styles.cardHeaderTitle}>✨ Auspicious & Inauspicious Timings</Text>
+      <Text style={styles.cardHeaderTitle} numberOfLines={1} adjustsFontSizeToFit>✨ {t('auspiciousTimingsHeader')}</Text>
 
       {/* Auspicious Section */}
-      <Text style={styles.sectionSubtitle}>🌟 Auspicious Muhurats (शुभ समय)</Text>
+      <Text style={styles.sectionSubtitle}>{t('auspiciousSection')}</Text>
       {auspicious.map((item, index) => (
         <View key={index} style={[styles.muhuratItem, styles.auspiciousBorder]}>
           <View style={styles.muhuratTop}>
-            <Text style={styles.muhuratName}>{item.name} ({item.hindiName})</Text>
+            <Text style={styles.muhuratName} numberOfLines={1} adjustsFontSizeToFit>
+              {item.name} {showHindiScript && item.hindiName ? `(${item.hindiName})` : ''}
+            </Text>
             <Text style={styles.auspiciousTime}>{item.startTime} - {item.endTime}</Text>
           </View>
           <Text style={styles.muhuratDesc}>{item.description}</Text>
@@ -28,11 +34,13 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
       <View style={styles.divider} />
 
       {/* Inauspicious Section */}
-      <Text style={styles.sectionSubtitleRed}>⚠️ Inauspicious Timings (अशुभ समय)</Text>
+      <Text style={styles.sectionSubtitleRed}>{t('inauspiciousSection')}</Text>
       {inauspicious.map((item, index) => (
         <View key={index} style={[styles.muhuratItem, styles.inauspiciousBorder]}>
           <View style={styles.muhuratTop}>
-            <Text style={styles.muhuratNameRed}>{item.name} ({item.hindiName})</Text>
+            <Text style={styles.muhuratNameRed} numberOfLines={1} adjustsFontSizeToFit>
+              {item.name} {showHindiScript && item.hindiName ? `(${item.hindiName})` : ''}
+            </Text>
             <Text style={styles.inauspiciousTime}>{item.startTime} - {item.endTime}</Text>
           </View>
           <Text style={styles.muhuratDesc}>{item.description}</Text>
@@ -52,36 +60,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     elevation: 2,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
   cardHeaderTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
     marginBottom: 12,
-    letterSpacing: 0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.auspiciousGreen,
-    marginTop: 4,
     marginBottom: 8,
+    marginTop: 4,
   },
   sectionSubtitleRed: {
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.inauspiciousRed,
-    marginTop: 4,
     marginBottom: 8,
+    marginTop: 4,
   },
   muhuratItem: {
-    backgroundColor: Colors.creamBg,
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: '#FAF5EE',
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 8,
     borderLeftWidth: 4,
   },
@@ -95,16 +98,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   muhuratName: {
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textPrimary,
+    flex: 1,
+    marginRight: 8,
   },
   muhuratNameRed: {
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.inauspiciousRed,
+    flex: 1,
+    marginRight: 8,
   },
   auspiciousTime: {
     fontSize: 12,
@@ -119,11 +127,10 @@ const styles = StyleSheet.create({
   muhuratDesc: {
     fontSize: 11,
     color: Colors.textSecondary,
-    marginTop: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
-    marginVertical: 10,
+    backgroundColor: '#F0E0D0',
+    marginVertical: 8,
   },
 });

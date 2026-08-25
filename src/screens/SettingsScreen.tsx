@@ -11,12 +11,16 @@ import {
   cancelChoghadiyaNotification
 } from '../utils/choghadiyaNotifier';
 
+import { useLanguage } from '../context/LanguageContext';
+import { SUPPORTED_LANGUAGES } from '../types/language';
+
 interface SettingsScreenProps {
   selectedCity: CityLocation;
   onSelectCity: (city: CityLocation) => void;
   isModalVisible: boolean;
   onCloseCityModal: () => void;
   onOpenCityModal: () => void;
+  onOpenLanguageModal?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -25,7 +29,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   isModalVisible,
   onCloseCityModal,
   onOpenCityModal,
+  onOpenLanguageModal,
 }) => {
+  const { language, t } = useLanguage();
+  const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
   const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
   const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
   const [useChoghadiyaNotif, setUseChoghadiyaNotif] = useState(false);
@@ -89,12 +96,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           setUseGps(false);
         }
       } catch (e) {
-        // Fallback gracefully on emulator without error popup
         onSelectCity(DEFAULT_CITIES[0]);
         setUseGps(false);
       }
     } else {
-      // Revert gracefully to Default City when turning OFF GPS
       onSelectCity(DEFAULT_CITIES[0]);
     }
   };
@@ -103,14 +108,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>⚙️ Settings & Location</Text>
-        <Text style={styles.headerSubtitle}>Customize city, calculation system, and app preferences</Text>
+        <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('settingsTitle')}</Text>
+        <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('settingsSub')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* App Language Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t('appLanguage')}</Text>
+
+          <TouchableOpacity style={styles.citySelectorBox} onPress={onOpenLanguageModal} activeOpacity={0.8}>
+            <View style={styles.cityLeft}>
+              <Text style={{ fontSize: 24, marginRight: 12 }}>{currentLangObj.flag}</Text>
+              <View>
+                <Text style={styles.cityNameText}>{currentLangObj.name}</Text>
+                <Text style={styles.citySubText}>{currentLangObj.nativeName}</Text>
+              </View>
+            </View>
+            <Text style={styles.changeBtnText}>Select ➔</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Active Location Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📍 Active Location (स्थान)</Text>
+          <Text style={styles.cardTitle}>{t('activeLocation')}</Text>
 
           <TouchableOpacity style={styles.citySelectorBox} onPress={onOpenCityModal} activeOpacity={0.8}>
             <View style={styles.cityLeft}>
