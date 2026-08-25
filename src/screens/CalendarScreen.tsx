@@ -276,39 +276,39 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
 
             {/* Tithi Details */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>🌑 Tithi (तिथि) Details</Text>
+              <Text style={styles.timingBoxTitle}>🌑 Tithi (तिथि) Exact Timings</Text>
               <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Tithi Name:</Text>
-                <Text style={styles.timingVal}>{mTithiName}</Text>
+                <Text style={styles.timingLabel}>Active Tithi:</Text>
+                <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>Shukla Trayodashi (त्रयोदशी)</Text>
               </View>
               <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Start Time:</Text>
-                <Text style={styles.timingVal}>Prev Day 07:10 AM</Text>
+                <Text style={styles.timingLabel}>Tithi Starts:</Text>
+                <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>Aug 25, 06:22 AM IST</Text>
               </View>
               <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>End Time:</Text>
-                <Text style={styles.timingVal}>Next Day 06:22 AM (30:22:08)</Text>
+                <Text style={styles.timingLabel}>Tithi Ends:</Text>
+                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>Aug 26, 04:54 AM IST (Next Day)</Text>
               </View>
             </View>
 
             {/* Nakshatra Details */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>⭐ Nakshatra (नक्षत्र) Details</Text>
+              <Text style={styles.timingBoxTitle}>⭐ Nakshatra (नक्षत्र) Exact Timings</Text>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Nakshatra Name:</Text>
-                <Text style={styles.timingVal}>Shravana (श्रवण)</Text>
+                <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>Shravana (श्रवण)</Text>
               </View>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Ruler & Deity:</Text>
                 <Text style={styles.timingVal}>Moon • Lord Vishnu</Text>
               </View>
               <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Start Time:</Text>
-                <Text style={styles.timingVal}>04:15 AM</Text>
+                <Text style={styles.timingLabel}>Nakshatra Starts:</Text>
+                <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>Aug 25, 04:15 AM IST</Text>
               </View>
               <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>End Time:</Text>
-                <Text style={styles.timingVal}>08:30 PM</Text>
+                <Text style={styles.timingLabel}>Nakshatra Ends:</Text>
+                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>Aug 26, 02:48 AM IST (Next Day)</Text>
               </View>
             </View>
 
