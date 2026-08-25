@@ -388,6 +388,31 @@
       return null;
     }
 
+    function getRahuKalamForDate(d) {
+      const RAHU_PARTS = [8, 2, 7, 5, 6, 4, 3]; // Sun(0)=8th part, Mon(1)=2nd part, Tue(2)=7th part...
+      const dayIndex = d.getDay();
+      
+      const sunriseMin = 6 * 60 + 12; // 06:12 AM
+      const sunsetMin = 18 * 60 + 52; // 06:52 PM
+      const dayDurationMin = sunsetMin - sunriseMin;
+      const partMin = dayDurationMin / 8.0;
+
+      const rahuPart = RAHU_PARTS[dayIndex];
+      const rStartMin = sunriseMin + (rahuPart - 1) * partMin;
+      const rEndMin = sunriseMin + rahuPart * partMin;
+
+      const formatMin = (m) => {
+        let hrs = Math.floor(m / 60);
+        const mins = Math.floor(m % 60);
+        const ampm = hrs >= 12 ? 'PM' : 'AM';
+        if (hrs > 12) hrs -= 12;
+        if (hrs === 0) hrs = 12;
+        return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`;
+      };
+
+      return `${formatMin(rStartMin)} - ${formatMin(rEndMin)}`;
+    }
+
     function calculateGrahaPositionsForDate(targetDate) {
       const dateIso = formatDateToIso(targetDate);
 
@@ -971,7 +996,7 @@
                 </div>
                 <div class="timing-row">
                   <span class="timing-label">⚠️ Rahu Kalam:</span>
-                  <span class="timing-val" style="color:var(--red); background:#FFEBEE;">07:44 AM - 09:18 AM</span>
+                  <span class="timing-val" style="color:var(--red); background:#FFEBEE;">${getRahuKalamForDate(mDate)}</span>
                 </div>
               </div>
 

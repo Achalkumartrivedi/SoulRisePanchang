@@ -78,6 +78,31 @@ const getPerpetualMiniRitual = (d: Date, tithiIdx: number, hinduMonth: string) =
   return null;
 };
 
+const getRahuKalamForDate = (d: Date) => {
+  const RAHU_PARTS = [8, 2, 7, 5, 6, 4, 3];
+  const dayIndex = d.getDay();
+  
+  const sunriseMin = 6 * 60 + 12;
+  const sunsetMin = 18 * 60 + 52;
+  const dayDurationMin = sunsetMin - sunriseMin;
+  const partMin = dayDurationMin / 8.0;
+
+  const rahuPart = RAHU_PARTS[dayIndex];
+  const rStartMin = sunriseMin + (rahuPart - 1) * partMin;
+  const rEndMin = sunriseMin + rahuPart * partMin;
+
+  const formatMin = (m: number) => {
+    let hrs = Math.floor(m / 60);
+    const mins = Math.floor(m % 60);
+    const ampm = hrs >= 12 ? 'PM' : 'AM';
+    if (hrs > 12) hrs -= 12;
+    if (hrs === 0) hrs = 12;
+    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`;
+  };
+
+  return `${formatMin(rStartMin)} - ${formatMin(rEndMin)}`;
+};
+
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); // August 2026
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
@@ -296,7 +321,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
               </View>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>⚠️ Rahu Kalam:</Text>
-                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>07:44 AM - 09:18 AM</Text>
+                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>{getRahuKalamForDate(mDate)}</Text>
               </View>
             </View>
 
