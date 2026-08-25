@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { Colors } from '../theme/colors';
 import { MuhuratTiming } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
@@ -12,13 +12,25 @@ interface MuhuratCardProps {
 export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicious }) => {
   const { language, t } = useLanguage();
   const showHindiScript = language === 'hi' || language === 'hinglish';
+  const [activeInfoModal, setActiveInfoModal] = useState<'AUSPICIOUS' | 'INAUSPICIOUS' | null>(null);
 
   return (
     <View style={styles.card}>
       <Text style={styles.cardHeaderTitle} numberOfLines={1} adjustsFontSizeToFit>✨ {t('auspiciousTimingsHeader')}</Text>
 
       {/* Auspicious Section */}
-      <Text style={styles.sectionSubtitle}>{t('auspiciousSection')}</Text>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionSubtitle}>{t('auspiciousSection')}</Text>
+        <TouchableOpacity
+          style={styles.infoBtn}
+          onPress={() => setActiveInfoModal('AUSPICIOUS')}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.infoIcon}>ℹ️</Text>
+        </TouchableOpacity>
+      </View>
+
       {auspicious.map((item, index) => (
         <View key={index} style={[styles.muhuratItem, styles.auspiciousBorder]}>
           <View style={styles.muhuratTop}>
@@ -34,7 +46,18 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
       <View style={styles.divider} />
 
       {/* Inauspicious Section */}
-      <Text style={styles.sectionSubtitleRed}>{t('inauspiciousSection')}</Text>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionSubtitleRed}>{t('inauspiciousSection')}</Text>
+        <TouchableOpacity
+          style={styles.infoBtn}
+          onPress={() => setActiveInfoModal('INAUSPICIOUS')}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.infoIcon}>ℹ️</Text>
+        </TouchableOpacity>
+      </View>
+
       {inauspicious.map((item, index) => (
         <View key={index} style={[styles.muhuratItem, styles.inauspiciousBorder]}>
           <View style={styles.muhuratTop}>
@@ -46,6 +69,41 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
           <Text style={styles.muhuratDesc}>{item.description}</Text>
         </View>
       ))}
+
+      {/* Info Modal Popup */}
+      <Modal
+        visible={activeInfoModal !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveInfoModal(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setActiveInfoModal(null)}
+        >
+          <View style={styles.infoModalCard} onStartShouldSetResponder={() => true}>
+            <View style={styles.infoModalHeader}>
+              <Text style={styles.infoModalTitle}>
+                {activeInfoModal === 'AUSPICIOUS' ? '🌟 Auspicious Timings Guidance' : '⚠️ Inauspicious Timings Guidance'}
+              </Text>
+              <TouchableOpacity onPress={() => setActiveInfoModal(null)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={[styles.infoMsgBox, activeInfoModal === 'AUSPICIOUS' ? styles.msgGood : styles.msgBad]}>
+              <Text style={styles.infoMsgText}>
+                {activeInfoModal === 'AUSPICIOUS' ? t('auspiciousInfoText') : t('inauspiciousInfoText')}
+              </Text>
+            </View>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setActiveInfoModal(null)}>
+              <Text style={styles.gotItBtnText}>Understand / Got It</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -67,19 +125,29 @@ const styles = StyleSheet.create({
     color: Colors.maroon,
     marginBottom: 12,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    marginTop: 4,
+  },
   sectionSubtitle: {
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.auspiciousGreen,
-    marginBottom: 8,
-    marginTop: 4,
+    marginRight: 6,
   },
   sectionSubtitleRed: {
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.inauspiciousRed,
-    marginBottom: 8,
-    marginTop: 4,
+    marginRight: 6,
+  },
+  infoBtn: {
+    padding: 2,
+  },
+  infoIcon: {
+    fontSize: 14,
   },
   muhuratItem: {
     backgroundColor: '#FAF5EE',
@@ -132,5 +200,70 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F0E0D0',
     marginVertical: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  infoModalCard: {
+    width: '100%',
+    backgroundColor: Colors.cardBg,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: Colors.accentGold,
+    elevation: 8,
+  },
+  infoModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  infoModalTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    flex: 1,
+    marginRight: 10,
+  },
+  closeBtnText: {
+    fontSize: 18,
+    color: Colors.textMuted,
+    fontWeight: 'bold',
+  },
+  infoMsgBox: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  msgGood: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#A5D6A7',
+  },
+  msgBad: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#EF9A9A',
+  },
+  infoMsgText: {
+    fontSize: 13,
+    color: Colors.textPrimary,
+    lineHeight: 19,
+    fontWeight: '500',
+  },
+  gotItBtn: {
+    backgroundColor: Colors.maroon,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  gotItBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

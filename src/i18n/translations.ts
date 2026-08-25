@@ -58,6 +58,12 @@ export interface TranslationKeys {
   liveNotificationSub: string;
   systemPurnimanta: string;
   systemSub: string;
+
+  // Info Icon Tooltip Texts
+  auspiciousInfoText: string;
+  inauspiciousInfoText: string;
+  calendarPopupAbhijitInfo: string;
+  calendarPopupRahuInfo: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
@@ -118,6 +124,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'Show pinned active Choghadiya timer in system status bar',
     systemPurnimanta: '📜 Month Calculation System',
     systemSub: 'Purnimanta (North India) / Amanta (South & West India)',
+
+    auspiciousInfoText: 'This is an auspicious time suitable for starting new work, business ventures, career moves, or important day-to-day decisions.',
+    inauspiciousInfoText: 'Generally, during this time you should avoid starting new projects, signing contracts, or performing major sacred/important activities.',
+    calendarPopupAbhijitInfo: '🌟 Auspicious Muhurat (Abhijit): Highly favorable for starting new work, business decisions, career moves, or auspicious rituals.',
+    calendarPopupRahuInfo: '⚠️ Rahu Kalam: An inauspicious period during which major new beginnings, travel departures, or critical agreements should be avoided.',
   },
   hi: {
     appName: 'सोलराइज़ पंचांग',
@@ -176,6 +187,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'स्टेटस बार में सक्रिय चौघड़िया टाइमर दिखाएं',
     systemPurnimanta: '📜 मास गणना प्रणाली',
     systemSub: 'पूर्णिमान्त (उत्तर भारत) / अमान्त (दक्षिण व पश्चिम भारत)',
+
+    auspiciousInfoText: 'यह नया कार्य, व्यापार, नया प्रोजेक्ट या शुभ दिनचर्या शुरू करने के लिए अत्यंत अनुकूल और शुभ समय है।',
+    inauspiciousInfoText: 'सामान्यतः इस समय के दौरान नया काम शुरू करने, अनुबंध करने या कोई भी महत्वपूर्ण/शुभ कार्य करने से बचना चाहिए।',
+    calendarPopupAbhijitInfo: '🌟 शुभ मुहूर्त (अभिजित): नया कार्य, व्यावसायिक निर्णय, करियर में प्रगति या मांगलिक कार्य शुरू करने हेतु अत्यंत श्रेष्ठ समय।',
+    calendarPopupRahuInfo: '⚠️ राहु काल: यह अशुभ समय माना जाता है जिसमें नए कार्य का शुभारंभ, यात्रा की शुरुआत या महत्वपूर्ण समझौते टालने चाहिए।',
   },
   en: {
     appName: 'SoulRise Panchang',
@@ -234,6 +250,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'Show pinned active Choghadiya timer in system status bar',
     systemPurnimanta: '📜 Month Calculation System',
     systemSub: 'Purnimanta (North India) / Amanta (South & West India)',
+
+    auspiciousInfoText: 'This is an auspicious time suitable for starting new work, business ventures, career moves, or important day-to-day decisions.',
+    inauspiciousInfoText: 'Generally, during this time you should avoid starting new projects, signing contracts, or performing major sacred/important activities.',
+    calendarPopupAbhijitInfo: '🌟 Auspicious Muhurat (Abhijit): Highly favorable for starting new work, business decisions, career moves, or auspicious rituals.',
+    calendarPopupRahuInfo: '⚠️ Rahu Kalam: An inauspicious period during which major new beginnings, travel departures, or critical agreements should be avoided.',
   },
   ta: {
     appName: 'சோல்ரைஸ் பஞ்சாங்கம்',
@@ -292,6 +313,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'தற்போதைய சொகடியா நேரத்தை அறிவிப்பில் காட்டவும்',
     systemPurnimanta: '📜 மாத கணிப்பு முறை',
     systemSub: 'பூர்ணிமாந்தா / அமாந்தா முறை',
+
+    auspiciousInfoText: 'இது புதிய வேலை, தொழில் மற்றும் முக்கிய செயல்களைத் தொடங்க உகந்த சுப நேரமாகும்.',
+    inauspiciousInfoText: 'பொதுவாக இந்த நேரத்தில் புதிய திட்டங்களைத் தொடங்குவது, ஒப்பந்தங்களில் கையெழுத்திடுவதைத் தவிர்க்க வேண்டும்.',
+    calendarPopupAbhijitInfo: '🌟 சுப முகூர்த்தம் (அபிஜித்): புதிய வேலை, தொழில் முடிவுகள் மற்றும் சுப காரியங்களைத் தொடங்க மிகவும் உகந்தது.',
+    calendarPopupRahuInfo: '⚠️ ராகு காலம்: இந்த காலத்தில் புதிய தொடக்கங்கள், பயணங்கள் அல்லது முக்கிய ஒப்பந்தங்களைத் தவிர்க்க வேண்டும்.',
   },
   te: {
     appName: 'సోల్‌రైజ్ పంచాంగం',
@@ -350,6 +376,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'స్టేటస్ బార్‌లో లైవ్ చౌఘడియా టైమర్ చూపించు',
     systemPurnimanta: '📜 నెలల గణన పద్ధతి',
     systemSub: 'పూర్ణిమాంత / అమాంత పద్ధతి',
+
+    auspiciousInfoText: 'ఇది కొత్త పనులు, వ్యాపారం మరియు ముఖ్యమైన నిర్ణయాలు ప్రారంభించడానికి అత్యంత శుభ సమయం.',
+    inauspiciousInfoText: 'సాధారణంగా ఈ సమయంలో కొత్త ప్రాజెక్ట్‌లు ప్రారంభించడం, ఒప్పందాలు చేసుకోవడం తదితర పనులు చేయకూడదు.',
+    calendarPopupAbhijitInfo: '🌟 శుభ ముహుర్తం (అభిజిత్): కొత్త పనులు, వ్యాపార నిర్ణయాలు లేదా శుభ కార్యాలు ప్రారంభించడానికి అనుకూలం.',
+    calendarPopupRahuInfo: '⚠️ రాహు కాలం: కొత్త పనులు ప్రారంభించడం, ప్రయాణాలు చేయడం లేదా ఒప్పందాలు చేసుకోవడం వర్జించవలసిన సమయం.',
   },
   bn: {
     appName: 'সোলরাইজ পঞ্জিকা',
@@ -408,6 +439,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'স্ট্যাটাস বারে চৌঘড়িয়া টাইমার দেখান',
     systemPurnimanta: '📜 মাস গণনা পদ্ধতি',
     systemSub: 'পূর্ণিমান্ত / অমান্ত নীতি',
+
+    auspiciousInfoText: 'এটি নতুন কাজ, ব্যবসা ও গুরুত্বপূর্ণ সিদ্ধান্ত শুরু করার জন্য অত্যন্ত শুভ সময়।',
+    inauspiciousInfoText: 'সাধারণত এই সময়ে নতুন কাজ শুরু করা, চুক্তি স্বাক্ষর করা বা গুরুত্বপূর্ণ কাজ এড়িয়ে চলা উচিত।',
+    calendarPopupAbhijitInfo: '🌟 শুভ মুহূর্ত (অভিজিৎ): নতুন কাজ, ব্যবসায়িক সিদ্ধান্ত বা শুভ অনুষ্ঠান শুরু করার জন্য অত্যন্ত উপযুক্ত।',
+    calendarPopupRahuInfo: '⚠️ রাহু কাল: অশুভ সময়, এই সময়ে কোনো নতুন সূচনা, যাত্রা শুরু বা চুক্তি স্বাক্ষর করা অনুচিত।',
   },
   mr: {
     appName: 'सोलराईझ पंचांग',
@@ -466,6 +502,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'स्टेटस बारमध्ये थेट चौघडिया दाखवा',
     systemPurnimanta: '📜 महिना गणना पद्धती',
     systemSub: 'पूर्णिमान्त / अमान्त पद्धत',
+
+    auspiciousInfoText: 'नवीन कार्य, व्यवसाय किंवा महत्त्वाचे निर्णय सुरू करण्यासाठी हा अत्यंत शुभ काळ आहे.',
+    inauspiciousInfoText: 'सामान्यतः या काळात नवीन काम सुरू करणे, करार करणे किंवा महत्त्वाचे कार्य करणे टाळावे.',
+    calendarPopupAbhijitInfo: '🌟 शुभ मुहूर्त (अभिजित): नवीन काम, व्यावसायिक निर्णय किंवा मांगलिक कार्य सुरू करण्यासाठी अत्यंत उत्तम.',
+    calendarPopupRahuInfo: '⚠️ राहु काळ: हा अशुभ काळ मानला जातो; यात नवीन सुरुवात किंवा महत्त्वाचे करार टाळावेत.',
   },
   ru: {
     appName: 'СоулРайз Панчанг',
@@ -524,6 +565,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'Показывать таймер Чогадия в строке состояния',
     systemPurnimanta: '📜 Система Расчета Месяца',
     systemSub: 'Пурниманта (Северная Индия) / Аманта (Юг и Запад)',
+
+    auspiciousInfoText: 'Это благоприятное время, подходящее для начала новых дел, важных решений и новых проектов.',
+    inauspiciousInfoText: 'Как правило, в это время следует избегать начала новых проектов, подписания контрактов и важных дел.',
+    calendarPopupAbhijitInfo: '🌟 Благоприятный Мухурта (Абхиджит): Отлично подходит для новых начинаний и важных решений.',
+    calendarPopupRahuInfo: '⚠️ Раху Калам: Неблагоприятный период, когда следует избегать новых начинаний и поездок.',
   },
   fr: {
     appName: 'SoulRise Panchang',
@@ -582,6 +628,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'Afficher le minuteur Choghadiya dans la barre d\'état',
     systemPurnimanta: '📜 Système de Calcul du Mois',
     systemSub: 'Purnimanta (Inde du Nord) / Amanta (Sud & Ouest)',
+
+    auspiciousInfoText: 'C\'est un moment favorable pour commencer un nouveau travail, des projets professionnels ou des décisions importantes.',
+    inauspiciousInfoText: 'En général, il convient d\'éviter de commencer de nouveaux projets, de signer des contrats ou de faire des tâches importantes.',
+    calendarPopupAbhijitInfo: '🌟 Muhurat Favorable (Abhijit) : Très favorable pour débuter de nouveaux travaux ou décisions de carrière.',
+    calendarPopupRahuInfo: '⚠️ Rahu Kalam : Période néfaste pendant laquelle les nouveaux départs et contrats doivent être évités.',
   },
   es: {
     appName: 'SoulRise Panchang',
@@ -640,6 +691,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'Mostrar temporizador de Choghadiya en la barra de estado',
     systemPurnimanta: '📜 Sistema de Cálculo del Mes',
     systemSub: 'Purnimanta (Norte de la India) / Amanta (Sur y Oeste)',
+
+    auspiciousInfoText: 'Este es un momento auspicioso adecuado para iniciar nuevos trabajos, emprendimientos o decisiones importantes.',
+    inauspiciousInfoText: 'Generalmente durante este tiempo debes evitar iniciar nuevos proyectos, firmar contratos o realizar trabajos importantes.',
+    calendarPopupAbhijitInfo: '🌟 Muhurat Auspicioso (Abhijit): Muy favorable para iniciar nuevos trabajos o decisiones de negocios.',
+    calendarPopupRahuInfo: '⚠️ Rahu Kalam: Período desfavorable durante el cual deben evitarse nuevos inicios o contratos.',
   },
   he: {
     appName: 'סולרייז פנצ\'אנג',
@@ -698,6 +754,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'הצג טיימר צ\'וגדיה בשורת הסטטוס',
     systemPurnimanta: '📜 מערכת חישוב חודשית',
     systemSub: 'שיטת פורנימנטה / אמאנטה',
+
+    auspiciousInfoText: 'זהו זמן מבורך ומתאים להתחלת עבודה חדשה, עסקים או החלטות חשובות.',
+    inauspiciousInfoText: 'בדרך כלל בזמן זה מומלץ להימנע מהתחלת פרויקטים חדשים, חתימת חוזים או אירועים חשובים.',
+    calendarPopupAbhijitInfo: '🌟 זמן מבורך (אבהיג\'יט): מומלץ מאוד להתחלת פרויקטים חדשים והחלטות קריירה.',
+    calendarPopupRahuInfo: '⚠️ ראהו קאלאם: זמן לא מומלץ שבו כדאי להימנע מהתחלות חדשות או הסכמים חשובים.',
   },
   id: {
     appName: 'SoulRise Panchang',
@@ -756,6 +817,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'Tampilkan pengatur waktu Choghadiya di bilah status',
     systemPurnimanta: '📜 Sistem Perhitungan Bulan',
     systemSub: 'Sistem Purnimanta / Amanta',
+
+    auspiciousInfoText: 'Ini adalah waktu baik yang cocok untuk memulai pekerjaan baru, bisnis, atau keputusan penting.',
+    inauspiciousInfoText: 'Umumnya pada waktu ini Anda harus menghindari memulai proyek baru, menandatangani kontrak, atau hal penting.',
+    calendarPopupAbhijitInfo: '🌟 Muhurat Baik (Abhijit): Sangat baik untuk memulai pekerjaan baru, keputusan bisnis, atau hal menguntungkan.',
+    calendarPopupRahuInfo: '⚠️ Rahu Kalam: Periode waktu yang buruk di mana awal baru atau kontrak penting harus dihindari.',
   },
   th: {
     appName: 'โซลไรซ์ ปฏิทินฮินดู',
@@ -814,5 +880,10 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     liveNotificationSub: 'แสดงตัวนับเวลาโชกาดิยาบนแถบสถานะ',
     systemPurnimanta: '📜 ระบบการคำนวณเดือน',
     systemSub: 'ระบบปูรณิมานตะ / อมานตะ',
+
+    auspiciousInfoText: 'นี่คือช่วงเวลามงคลที่เหมาะสำหรับการเริ่มต้นงานใหม่ ธุรกิจ หรือการตัดสินใจสำคัญในชีวิตประจำวัน',
+    inauspiciousInfoText: 'โดยทั่วไปในช่วงเวลานี้ควรงดเว้นการเริ่มต้นโครงการใหม่ การเซ็นสัญญา หรือกิจกรรมสำคัญ',
+    calendarPopupAbhijitInfo: '🌟 ฤกษ์มงคล (อภิจิต): เหมาะอย่างยิ่งสำหรับการเริ่มต้นงานใหม่ การตัดสินใจทางธุรกิจ หรือพิธีมงคล',
+    calendarPopupRahuInfo: '⚠️ ราหูกาล: ช่วงเวลาอัปมงคลซึ่งควรงดเว้นการเริ่มต้นงานใหม่ การเดินทาง หรือการทำสัญญาสำคัญ',
   },
 };

@@ -5,6 +5,8 @@ import { FESTIVALS } from '../engine/festivalRepository';
 import { CityLocation } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { calculatePanchang } from '../engine/panchangEngine';
+import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -77,8 +79,10 @@ const getRahuKalamForDate = (d: Date): string => {
 };
 
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = DEFAULT_CITIES[0], onSelectDate }) => {
+  const { language, t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); 
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
+  const [showPopupInfoModal, setShowPopupInfoModal] = useState(false);
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
@@ -102,27 +106,29 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   let mPakshaFull = "";
   let mRitual: string | null = null;
   let festMatchModal = null;
-  let mPanchang = calculatePanchang(mDate, selectedCity);
+  let mPanchang = calculatePanchang(new Date(), selectedCity);
 
   if (selectedModalDateIso) {
     const parts = selectedModalDateIso.split('-');
-    const mY = parseInt(parts[0], 10);
-    const mM = parseInt(parts[1], 10) - 1;
-    const mD = parseInt(parts[2], 10);
-    mDate = new Date(mY, mM, mD, 12, 0, 0);
-
-    mPanchang = calculatePanchang(mDate, selectedCity);
+    mDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
     mTithiIdx = calculateTithiForDate(mDate);
-    mTithiName = TITHI_NAMES[mTithiIdx];
+    mTithiName = getLocalizedTithi((mTithiIdx % 15) + 1, language).name;
     mMonthName = getHinduMonthName(mDate);
-    mPakshaFull = mTithiIdx <= 14 ? 'Shukla Paksha' : 'Krishna Paksha';
+    mPakshaFull = getLocalizedPakshaName(mTithiIdx <= 14 ? 'SHUKLA' : 'KRISHNA', language);
     mRitual = getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName);
     festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso);
+    mPanchang = calculatePanchang(mDate, selectedCity);
   }
+
+  const locPurnima = getLocalizedTithi(15, language).name;
+  const locAmavasya = getLocalizedTithi(30, language).name;
+  const showHindiScript = language === 'hi' || language === 'hinglish';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Calendar Card */}
       <View style={styles.card}>
+        {/* Month Header Navigation */}
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.navBtn} onPress={handlePrevMonth}>
             <Text style={styles.navBtnText}>◀ Prev</Text>
@@ -159,7 +165,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             const isHoliday = isSunday || (festMatch && festMatch.isHoliday);
 
             const tithiIdx = calculateTithiForDate(dateObj);
-            const tithiName = TITHI_NAMES[tithiIdx];
+            const tithiName = getLocalizedTithi((tithiIdx % 15) + 1, language).name;
 
             const hinduMonthName = getHinduMonthName(dateObj);
             const pakshaShort = tithiIdx <= 14 ? "Shu." : "Kru.";
@@ -194,13 +200,21 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 <Text style={styles.monthPakshaText} numberOfLines={1}>{monthPakshaDisplay}</Text>
 
                 {tithiIdx === 14 ? (
-                  <View style={styles.purnimaBadge}><Text style={styles.purnimaBadgeText}>🌕 Purnima</Text></View>
+                  <View style={styles.purnimaBadge}>
+                    <Text style={styles.purnimaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌕 {locPurnima}</Text>
+                  </View>
                 ) : tithiIdx === 29 ? (
-                  <View style={styles.amavasyaBadge}><Text style={styles.amavasyaBadgeText}>🌑 Amavasya</Text></View>
+                  <View style={styles.amavasyaBadge}>
+                    <Text style={styles.amavasyaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌑 {locAmavasya}</Text>
+                  </View>
                 ) : tithiIdx === 10 || tithiIdx === 25 ? (
-                  <View style={styles.ekadashiBadge}><Text style={styles.ekadashiBadgeText}>🌿 Ekadashi</Text></View>
+                  <View style={styles.ekadashiBadge}>
+                    <Text style={styles.ekadashiBadgeText} numberOfLines={1}>🌿 Ekadashi</Text>
+                  </View>
                 ) : festMatch ? (
-                  <View style={styles.festBadge}><Text style={styles.festBadgeText}>🚩 {festMatch.name.split(' ')[0]}</Text></View>
+                  <View style={styles.festBadge}>
+                    <Text style={styles.festBadgeText} numberOfLines={1}>🚩 {festMatch.name.split(' ')[0]}</Text>
+                  </View>
                 ) : (
                   <Text style={styles.tithiText} numberOfLines={1}>{tithiName}</Text>
                 )}
@@ -230,11 +244,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
         >
           <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
             <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalDateTitle}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.modalDateTitle} numberOfLines={1} adjustsFontSizeToFit>
                   🕉️ {mDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                 </Text>
-                <Text style={styles.modalSubtitle}>
+                <Text style={styles.modalSubtitle} numberOfLines={1} adjustsFontSizeToFit>
                   {mMonthName} • {mPakshaFull} • Samvat 2083
                 </Text>
               </View>
@@ -251,17 +265,17 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
             {/* Tithi Details */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>🌑 Tithi (तिथि) Exact Timings</Text>
+              <Text style={styles.timingBoxTitle}>🌑 Tithi {showHindiScript ? '(तिथि)' : ''} Timings</Text>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Active Tithi:</Text>
                 <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
-                  {mPanchang.tithi.paksha === 'SHUKLA' ? 'Shukla' : 'Krishna'} {mPanchang.tithi.name} ({mPanchang.tithi.hindiName})
+                  {getLocalizedTithi(mPanchang.tithi.number || 13, language).name} {showHindiScript && mPanchang.tithi.hindiName ? `(${mPanchang.tithi.hindiName})` : ''}
                 </Text>
               </View>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Tithi Starts:</Text>
                 <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>
-                  {mPanchang.tithi.startTimeFormatted || '06:15 AM IST'}
+                  {mPanchang.tithi.startTimeFormatted || '06:15 AM'}
                 </Text>
               </View>
               <View style={styles.timingRow}>
@@ -274,11 +288,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
             {/* Nakshatra Details */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>⭐ Nakshatra (नक्षत्र) Exact Timings</Text>
+              <Text style={styles.timingBoxTitle}>⭐ Nakshatra {showHindiScript ? '(नक्षत्र)' : ''} Timings</Text>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Nakshatra Name:</Text>
                 <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
-                  {mPanchang.nakshatra.name} ({mPanchang.nakshatra.hindiName})
+                  {mPanchang.nakshatra.name} {showHindiScript && mPanchang.nakshatra.hindiName ? `(${mPanchang.nakshatra.hindiName})` : ''}
                 </Text>
               </View>
               <View style={styles.timingRow}>
@@ -287,33 +301,32 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   Ruler: {mPanchang.nakshatra.ruler} • Deity: {mPanchang.nakshatra.deity}
                 </Text>
               </View>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Nakshatra Starts:</Text>
-                <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>
-                  {mPanchang.nakshatra.startTimeFormatted || '04:15 AM IST'}
-                </Text>
-              </View>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Nakshatra Ends:</Text>
-                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>
-                  {mPanchang.nakshatra.endTimeFormatted}
-                </Text>
-              </View>
             </View>
 
-            {/* Muhurat Details */}
+            {/* Muhurat & Rahu Kalam Details with SINGLE info icon */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>✨ Muhurat & Rahu Kalam</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={styles.timingBoxTitle}>✨ Muhurat & Rahu Kalam</Text>
+                <TouchableOpacity
+                  onPress={() => setShowPopupInfoModal(true)}
+                  style={{ padding: 2 }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Text style={{ fontSize: 16 }}>ℹ️</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>🌟 Abhijit Muhurat:</Text>
                 <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>
-                  {mPanchang.auspiciousMuhurats?.find(m => m.name.includes('Abhijit'))?.timeWindow || '12:05 PM - 12:55 PM'}
+                  {mPanchang.auspiciousMuhurats?.[0] ? `${mPanchang.auspiciousMuhurats[0].startTime} - ${mPanchang.auspiciousMuhurats[0].endTime}` : '12:05 PM - 12:55 PM'}
                 </Text>
               </View>
+
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>⚠️ Rahu Kalam:</Text>
                 <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>
-                  {mPanchang.inauspiciousMuhurats?.find(m => m.name.includes('Rahu'))?.timeWindow || getRahuKalamForDate(mDate)}
+                  {mPanchang.inauspiciousMuhurats?.[0] ? `${mPanchang.inauspiciousMuhurats[0].startTime} - ${mPanchang.inauspiciousMuhurats[0].endTime}` : getRahuKalamForDate(mDate)}
                 </Text>
               </View>
             </View>
@@ -333,6 +346,43 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Calendar Popup ℹ️ Info Modal displaying TWO lines */}
+      <Modal
+        visible={showPopupInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPopupInfoModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.infoModalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPopupInfoModal(false)}
+        >
+          <View style={styles.infoModalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.infoModalHeader}>
+              <Text style={styles.infoModalHeaderTitle}>✨ Muhurat & Rahu Kalam Guidance</Text>
+              <TouchableOpacity onPress={() => setShowPopupInfoModal(false)}>
+                <Text style={styles.infoModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Line 1: Auspicious Abhijit Muhurat */}
+            <View style={styles.infoBoxGood}>
+              <Text style={styles.infoBoxText}>{t('calendarPopupAbhijitInfo')}</Text>
+            </View>
+
+            {/* Line 2: Inauspicious Rahu Kalam */}
+            <View style={styles.infoBoxBad}>
+              <Text style={styles.infoBoxText}>{t('calendarPopupRahuInfo')}</Text>
+            </View>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowPopupInfoModal(false)}>
+              <Text style={styles.gotItBtnText}>Understand / Got It</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -348,63 +398,335 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: Colors.border,
-    elevation: 2,
+    elevation: 3,
   },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  navBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#F0F0F0' },
-  navBtnText: { fontSize: 12, fontWeight: 'bold', color: Colors.maroon },
-  titleContainer: { alignItems: 'center' },
-  monthTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.maroon },
-  samvatTitle: { fontSize: 11, color: Colors.accentGold, fontWeight: 'bold', marginTop: 2 },
-  weekdayRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 8, backgroundColor: Colors.creamBg, borderRadius: 10, marginBottom: 8 },
-  weekdayText: { fontSize: 12, fontWeight: 'bold', color: Colors.textSecondary, width: 40, textAlign: 'center' },
-  sunText: { color: Colors.inauspiciousRed },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  emptyDayCell: { width: '14.28%', height: 85 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  navBtn: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  navBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  titleContainer: {
+    alignItems: 'center',
+  },
+  monthTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  samvatTitle: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E0D0',
+    paddingBottom: 8,
+    marginBottom: 8,
+  },
+  weekdayText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  sunText: {
+    color: Colors.inauspiciousRed,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  emptyDayCell: {
+    width: '14.28%',
+    height: 70,
+  },
   dayCell: {
     width: '14.28%',
-    height: 85,
+    height: 72,
+    padding: 4,
     borderWidth: 0.5,
-    borderColor: '#E0E0E0',
+    borderColor: '#F0E0D0',
     borderRadius: 8,
-    padding: 3,
-    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
   },
-  holidayCell: { backgroundColor: '#FFEBEE', borderColor: '#EF9A9A' },
-  todayCell: { borderWidth: 2, borderColor: Colors.primary, backgroundColor: '#FFF8E1' },
-  dayTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dayNumText: { fontSize: 11, fontWeight: 'bold', color: Colors.textPrimary },
-  holidayDayNum: { color: Colors.inauspiciousRed },
-  moonIconText: { fontSize: 9 },
-  monthPakshaText: { fontSize: 8, color: '#800000', fontWeight: 'bold', backgroundColor: '#FFF3E0', borderRadius: 3, textAlign: 'center', paddingVertical: 1 },
-  tithiText: { fontSize: 8, color: '#666', fontWeight: 'bold', textAlign: 'center' },
-  purnimaBadge: { backgroundColor: '#FFD700', borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
-  purnimaBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#800000', textAlign: 'center' },
-  amavasyaBadge: { backgroundColor: '#212121', borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
-  amavasyaBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
-  ekadashiBadge: { backgroundColor: Colors.auspiciousGreen, borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
-  ekadashiBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
-  festBadge: { backgroundColor: Colors.inauspiciousRed, borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
-  festBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
-  ritualBadge: { backgroundColor: '#FFE0B2', borderRadius: 3, paddingHorizontal: 2, paddingVertical: 1, borderWidth: 0.5, borderColor: '#FFB74D' },
-  ritualBadgeText: { fontSize: 7, fontWeight: 'bold', color: '#D84315', textAlign: 'center' },
-  // Modal Popup Styles
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.65)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#FFFFFF', borderRadius: 20, width: '100%', maxWidth: 500, padding: 20, borderContainer: 1, elevation: 10 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: '#EEEEEE', paddingBottom: 10, marginBottom: 12 },
-  modalDateTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.maroon },
-  modalSubtitle: { fontSize: 12, fontWeight: 'bold', color: Colors.primary, marginTop: 2 },
-  modalCloseBtn: { backgroundColor: '#F0F0F0', width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
-  modalCloseBtnText: { fontSize: 14, fontWeight: 'bold', color: '#666' },
-  ritualAlertBox: { backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFB74D', borderRadius: 10, padding: 10, marginBottom: 12 },
-  ritualAlertText: { color: '#D84315', fontWeight: 'bold', fontSize: 13, textAlign: 'center' },
-  timingBox: { backgroundColor: Colors.creamBg, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, padding: 12, marginBottom: 10 },
-  timingBoxTitle: { fontSize: 14, fontWeight: 'bold', color: Colors.maroon, marginBottom: 6 },
-  timingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  timingLabel: { fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary },
-  timingVal: { fontSize: 11, fontWeight: 'bold', color: Colors.primary, backgroundColor: '#FFF3E0', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  modalActionRow: { marginTop: 10 },
-  fullPanchangBtn: { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  fullPanchangBtnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
+  holidayCell: {
+    backgroundColor: '#FFF8E1',
+  },
+  todayCell: {
+    borderColor: Colors.maroon,
+    borderWidth: 2,
+    backgroundColor: '#FFF3E0',
+  },
+  dayTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dayNumText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  holidayDayNum: {
+    color: Colors.inauspiciousRed,
+  },
+  moonIconText: {
+    fontSize: 10,
+  },
+  monthPakshaText: {
+    fontSize: 8,
+    color: Colors.textMuted,
+  },
+  purnimaBadge: {
+    backgroundColor: '#FFF8E1',
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#FFE082',
+  },
+  purnimaBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#F57F17',
+    textAlign: 'center',
+  },
+  amavasyaBadge: {
+    backgroundColor: '#ECEFF1',
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#CFD8DC',
+  },
+  amavasyaBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#37474F',
+    textAlign: 'center',
+  },
+  ekadashiBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  ekadashiBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    textAlign: 'center',
+  },
+  festBadge: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  festBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    textAlign: 'center',
+  },
+  tithiText: {
+    fontSize: 9,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  ritualBadge: {
+    backgroundColor: '#F3E5F5',
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  ritualBadgeText: {
+    fontSize: 7,
+    color: '#7B1FA2',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: Colors.cardBg,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.accentGold,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  modalDateTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  modalSubtitle: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalCloseBtnText: {
+    fontSize: 18,
+    color: Colors.textMuted,
+    fontWeight: 'bold',
+  },
+  ritualAlertBox: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  ritualAlertText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  timingBox: {
+    backgroundColor: '#FAF5EE',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  timingBoxTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 6,
+  },
+  timingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  timingLabel: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  timingVal: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  modalActionRow: {
+    marginTop: 6,
+  },
+  fullPanchangBtn: {
+    backgroundColor: Colors.maroon,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  fullPanchangBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  infoModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  infoModalContent: {
+    width: '100%',
+    backgroundColor: Colors.cardBg,
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: Colors.accentGold,
+    elevation: 10,
+  },
+  infoModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  infoModalHeaderTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    flex: 1,
+  },
+  infoModalClose: {
+    fontSize: 18,
+    color: Colors.textMuted,
+    fontWeight: 'bold',
+  },
+  infoBoxGood: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#A5D6A7',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+  },
+  infoBoxBad: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#EF9A9A',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  infoBoxText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+  gotItBtn: {
+    backgroundColor: Colors.maroon,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  gotItBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
 });
