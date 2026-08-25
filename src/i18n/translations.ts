@@ -71,6 +71,8 @@ export interface TranslationKeys {
   amavasyaTitle: string;
   purnimaRitual: string;
   amavasyaRitual: string;
+  tithiStarts: string;
+  tithiEnds: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
@@ -142,6 +144,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 Amavasya (New Moon)',
     purnimaRitual: 'Satyanarayan Vrat & Moon Sighting Puja',
     amavasyaRitual: 'Pitru Tarpana & Daan Ritual',
+    tithiStarts: 'Tithi (Lunar Day) Starts',
+    tithiEnds: 'Ends',
   },
   hi: {
     appName: 'सोलराइज़ पंचांग',
@@ -211,6 +215,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 अमावस्या (नया चंद्र)',
     purnimaRitual: 'सत्यनारायण व्रत कथा एवं चंद्र दर्शन पूजा',
     amavasyaRitual: 'पितृ तर्पण, दान एवं पवित्र स्नान',
+    tithiStarts: 'तिथि (चंद्र दिवस) प्रारंभ',
+    tithiEnds: 'समाप्त',
   },
   en: {
     appName: 'SoulRise Panchang',
@@ -280,6 +286,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 Amavasya (New Moon)',
     purnimaRitual: 'Satyanarayan Vrat & Moon Sighting Puja',
     amavasyaRitual: 'Pitru Tarpana & Daan Ritual',
+    tithiStarts: 'Lunar Day (Tithi) Starts',
+    tithiEnds: 'Ends',
   },
   ta: {
     appName: 'சோல்ரைஸ் பஞ்சாங்கம்',
@@ -349,6 +357,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 அமாவாசை (புது நிலவு)',
     purnimaRitual: 'சத்யநாராயண பூஜை & நிலவு தரிசனம்',
     amavasyaRitual: 'பித்ரு தர்ப்பணம் & தானம்',
+    tithiStarts: 'திதி (சந்திர நாள்) தொடக்கம்',
+    tithiEnds: 'முடிவு',
   },
   te: {
     appName: 'సోల్‌రైజ్ పంచాంగం',
@@ -418,6 +428,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 అమావాస్య (కొత్త చంద్రుడు)',
     purnimaRitual: 'సత్యనారాయణ వ్రతం & చంద్ర దర్శనం',
     amavasyaRitual: 'పితృ తర్పణం & దాన ధర్మాలు',
+    tithiStarts: 'తిథి (చంద్ర దినం) ప్రారంభం',
+    tithiEnds: 'ముగింపు',
   },
   bn: {
     appName: 'সোলরাইজ পঞ্জিকা',
@@ -487,6 +499,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 অমাবস্যা (নতুন চাঁদ)',
     purnimaRitual: 'সত্যনারায়ণ ব্রত ও চন্দ্র দর্শন পূজা',
     amavasyaRitual: 'পিতৃ তর্পণ ও দান ধর্ম',
+    tithiStarts: 'তিথি (চন্দ্র দিবস) শুরু',
+    tithiEnds: 'শেষ',
   },
   mr: {
     appName: 'सोलराईझ पंचांग',
@@ -556,6 +570,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 अमावस्या (अमावस्या)',
     purnimaRitual: 'सत्यनारायण पूजा व चंद्र दर्शन',
     amavasyaRitual: 'पितृ तर्पण व दान कर्म',
+    tithiStarts: 'तिथी (चंद्र दिवस) प्रारंभ',
+    tithiEnds: 'समाप्त',
   },
   ru: {
     appName: 'СоулРайз Панчанг',
@@ -625,6 +641,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 Амавасья (Новолуние)',
     purnimaRitual: 'Сатьянараяна Врат и Ритуал Луны',
     amavasyaRitual: 'Питру Тарпана и Даан',
+    tithiStarts: 'Начало Титхи (лунного дня)',
+    tithiEnds: 'До',
   },
   fr: {
     appName: 'SoulRise Panchang',
@@ -694,6 +712,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 Amavasya (Nouvelle Lune)',
     purnimaRitual: 'Satyanarayan Vrat & Culte de la Lune',
     amavasyaRitual: 'Pitru Tarpana & Don Sacré',
+    tithiStarts: 'Début du Tithi (jour lunaire)',
+    tithiEnds: 'Fin',
   },
   es: {
     appName: 'SoulRise Panchang',
@@ -763,6 +783,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 Amavasya (Luna Nueva)',
     purnimaRitual: 'Satyanarayan Vrat y Culto a la Luna',
     amavasyaRitual: 'Ritual de Pitru Tarpana y Daan',
+    tithiStarts: 'Inicio del Tithi (día lunar)',
+    tithiEnds: 'Fin',
   },
   he: {
     appName: 'סולרייז פנצ\'אנג',
@@ -832,6 +854,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 אמאבסיה (ירח חדש)',
     purnimaRitual: 'טקס סטיאנראיאן וצפייה בירח',
     amavasyaRitual: 'טקס פיטרו תרפנה ותרומה',
+    tithiStarts: 'תחילת יום הירח (טיטהי)',
+    tithiEnds: 'סיום',
   },
   id: {
     appName: 'SoulRise Panchang',
@@ -901,6 +925,8 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 Amavasya (Bulan Baru)',
     purnimaRitual: 'Puja Satyanarayan & Melihat Bulan',
     amavasyaRitual: 'Ritual Pitru Tarpana & Daan',
+    tithiStarts: 'Mulai Tithi (Hari Lunar)',
+    tithiEnds: 'Selesai',
   },
   th: {
     appName: 'โซลไรซ์ ปฏิทินฮินดู',
@@ -970,5 +996,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaTitle: '🌑 อมาวสี (พระจันทร์ดับ / อมาวสี)',
     purnimaRitual: 'พิธีสัตยนารายณ์และชมพระจันทร์',
     amavasyaRitual: 'พิธีปิตฤตర్పณและการบริจาคทาน',
+    tithiStarts: 'เริ่มต้นดิถี (วันทางจันทรคติ)',
+    tithiEnds: 'สิ้นสุด',
   },
 };

@@ -297,7 +297,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                       {getLocalizedDateString(item.dateObj, language)}
                     </Text>
                     <Text style={styles.summaryTimingText}>
-                      Tithi Starts: {item.panchang.tithi.startTimeFormatted} • Ends: {item.panchang.tithi.endTimeFormatted}
+                      {t('tithiStarts')}: {item.panchang.tithi.startTimeFormatted} • {t('tithiEnds')}: {item.panchang.tithi.endTimeFormatted}
                     </Text>
                     <Text style={styles.summaryRitualText}>✨ {t('purnimaRitual')}</Text>
                   </View>
@@ -332,7 +332,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                       {getLocalizedDateString(item.dateObj, language)}
                     </Text>
                     <Text style={styles.summaryTimingText}>
-                      Tithi Starts: {item.panchang.tithi.startTimeFormatted} • Ends: {item.panchang.tithi.endTimeFormatted}
+                      {t('tithiStarts')}: {item.panchang.tithi.startTimeFormatted} • {t('tithiEnds')}: {item.panchang.tithi.endTimeFormatted}
                     </Text>
                     <Text style={styles.summaryRitualText}>✨ {t('amavasyaRitual')}</Text>
                   </View>
