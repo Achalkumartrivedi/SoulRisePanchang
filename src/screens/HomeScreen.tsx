@@ -31,7 +31,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onToday,
   onNavigateToFestivals,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('PLANETS');
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>('LIMBS');
 
   return (
     <View style={styles.container}>
