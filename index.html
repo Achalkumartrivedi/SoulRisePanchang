@@ -837,10 +837,19 @@
               </div>
             </div>
 
-            <div style="display:flex; background:#F5EBE6; padding:3px; border-radius:12px; margin-bottom:12px; gap:4px;">
-              <button class="chart-toggle-btn ${activeChartRefMode==='LAGNA'?'active':''}" style="flex:1;" onclick="switchChartRefMode('LAGNA')">🌅 Ascendant (Lagna)</button>
-              <button class="chart-toggle-btn ${activeChartRefMode==='MOON'?'active':''}" style="flex:1;" onclick="switchChartRefMode('MOON')">🌙 Moon Sign (Chandra)</button>
-              <button class="chart-toggle-btn ${activeChartRefMode==='SUN'?'active':''}" style="flex:1;" onclick="switchChartRefMode('SUN')">☀️ Sun Sign (Surya)</button>
+            <div style="display:flex; background:#F5EBE6; padding:4px; border-radius:12px; margin-bottom:12px; gap:4px;">
+              <button class="chart-toggle-btn ${activeChartRefMode==='LAGNA'?'active':''}" style="flex:1; display:flex; flex-direction:column; align-items:center; padding:4px 8px;" onclick="switchChartRefMode('LAGNA')">
+                <span style="font-weight:bold;">🌅 Asc</span>
+                <span style="font-size:9px; opacity:0.85; margin-top:1px;">Rising Lagna</span>
+              </button>
+              <button class="chart-toggle-btn ${activeChartRefMode==='MOON'?'active':''}" style="flex:1; display:flex; flex-direction:column; align-items:center; padding:4px 8px;" onclick="switchChartRefMode('MOON')">
+                <span style="font-weight:bold;">🌙 Moon Sign</span>
+                <span style="font-size:9px; opacity:0.85; margin-top:1px;">Chandra Lagna</span>
+              </button>
+              <button class="chart-toggle-btn ${activeChartRefMode==='SUN'?'active':''}" style="flex:1; display:flex; flex-direction:column; align-items:center; padding:4px 8px;" onclick="switchChartRefMode('SUN')">
+                <span style="font-weight:bold;">☀️ Sun Sign</span>
+                <span style="font-size:9px; opacity:0.85; margin-top:1px;">Surya Lagna</span>
+              </button>
             </div>
 
             <div class="kundali-wrapper">
@@ -1239,7 +1248,7 @@
             const planets = getPlanetsInHouse(item.h);
             return `
               <text x="${item.x}" y="${item.y}" font-size="15" font-weight="bold" fill="${item.h===1?'#800000':'#5D3A00'}" text-anchor="middle">${signIdx}</text>
-              ${item.h === 1 ? `<text x="${item.x}" y="${item.y+16}" font-size="12" font-weight="bold" fill="#800000" text-anchor="middle">${activeChartRefMode==='MOON'?'Chandra':(activeChartRefMode==='SUN'?'Surya':'Lagna')}</text>` : ''}
+              ${item.h === 1 ? `<text x="${item.x}" y="${item.y+16}" font-size="11" font-weight="bold" fill="#800000" text-anchor="middle">${activeChartRefMode==='MOON'?'Chandra Lagna':(activeChartRefMode==='SUN'?'Surya Lagna':'Rising Lagna')}</text>` : ''}
               ${planets.map((p, pIdx) => {
                 const cfg = PLANETS_CONFIG_MAP[p.symbol] || { icon: '🪐', color: '#1B5E20' };
                 const offset = (pIdx - (planets.length - 1) / 2) * 16;

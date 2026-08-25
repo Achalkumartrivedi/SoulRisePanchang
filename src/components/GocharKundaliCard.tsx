@@ -143,7 +143,10 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           onPress={() => setRefMode('LAGNA')}
         >
           <Text style={[styles.refModeText, refMode === 'LAGNA' && styles.refModeTextActive]}>
-            🌅 Ascendant (Lagna)
+            🌅 Asc
+          </Text>
+          <Text style={[styles.refModeSubText, refMode === 'LAGNA' && styles.refModeSubTextActive]}>
+            Rising Lagna
           </Text>
         </TouchableOpacity>
 
@@ -152,7 +155,10 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           onPress={() => setRefMode('MOON')}
         >
           <Text style={[styles.refModeText, refMode === 'MOON' && styles.refModeTextActive]}>
-            🌙 Moon Sign (Chandra)
+            🌙 Moon Sign
+          </Text>
+          <Text style={[styles.refModeSubText, refMode === 'MOON' && styles.refModeSubTextActive]}>
+            Chandra Lagna
           </Text>
         </TouchableOpacity>
 
@@ -161,7 +167,10 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           onPress={() => setRefMode('SUN')}
         >
           <Text style={[styles.refModeText, refMode === 'SUN' && styles.refModeTextActive]}>
-            ☀️ Sun Sign (Surya)
+            ☀️ Sun Sign
+          </Text>
+          <Text style={[styles.refModeSubText, refMode === 'SUN' && styles.refModeSubTextActive]}>
+            Surya Lagna
           </Text>
         </TouchableOpacity>
       </View>
@@ -174,9 +183,9 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           </Text>
           <View>
             <Text style={styles.lagnaTitleText}>
-              {refMode === 'MOON' ? 'Chandra Kundali (Moon in 1st House)' :
-               refMode === 'SUN' ? 'Surya Kundali (Sun in 1st House)' :
-               `Current Ascendant (Lagna): ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
+              {refMode === 'MOON' ? 'Chandra Lagna (Moon in 1st House)' :
+               refMode === 'SUN' ? 'Surya Lagna (Sun in 1st House)' :
+               `Rising Lagna (Ascendant): ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
             </Text>
             <Text style={styles.lagnaTimeSub}>
               {refMode === 'MOON' ? '1st House = Makara (Capricorn)' :
@@ -193,7 +202,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
       {/* Chart Visualization */}
       <View style={styles.chartWrapper}>
         {chartStyle === 'NORTH' ? (
-          /* North Indian Diamond Chart (Matching @image1 with Lagna / Moon / Sun mode) */
+          /* North Indian Diamond Chart */
           <Svg width={300} height={300} viewBox="0 0 300 300" style={styles.svgChart}>
             {/* Background Parchment Box */}
             <Rect x={10} y={10} width={280} height={280} fill="#FAF5EC" stroke="#D4A359" strokeWidth={3} rx={4} />
@@ -235,7 +244,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                       fill="#800000"
                       textAnchor="middle"
                     >
-                      {refMode === 'MOON' ? 'Chandra' : refMode === 'SUN' ? 'Surya' : 'Lagna'}
+                      {refMode === 'MOON' ? 'Chandra Lagna' : refMode === 'SUN' ? 'Surya Lagna' : 'Rising Lagna'}
                     </SvgText>
                   )}
 
@@ -292,7 +301,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
             {/* Center Merged Box */}
             <Rect x={80} y={80} width={140} height={140} fill="#F4EADB" stroke="#5D3A00" strokeWidth={1.5} />
             <SvgText x={150} y={140} fontSize={13} fontWeight="bold" fill="#800000" textAnchor="middle">
-              {refMode === 'MOON' ? 'CHANDRA KUNDALI' : refMode === 'SUN' ? 'SURYA KUNDALI' : 'GOCHAR KUNDALI'}
+              {refMode === 'MOON' ? 'CHANDRA LAGNA' : refMode === 'SUN' ? 'SURYA LAGNA' : 'RISING LAGNA'}
             </SvgText>
             <SvgText x={150} y={160} fontSize={10} fontWeight="bold" fill="#C49347" textAnchor="middle">
               {refMode === 'MOON' ? '1st House = Moon Sign' : refMode === 'SUN' ? '1st House = Sun Sign' : '1st House = Ascendant'}
@@ -431,7 +440,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justify.content: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
     gap: 8,
@@ -472,13 +481,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#F5EBE6',
     borderRadius: 12,
-    padding: 3,
+    padding: 4,
     marginBottom: 12,
     justifyContent: 'space-between',
   },
   refModeBtn: {
     flex: 1,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 9,
     alignItems: 'center',
   },
@@ -486,12 +495,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.maroon,
   },
   refModeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     color: Colors.textSecondary,
   },
   refModeTextActive: {
     color: '#FFFFFF',
+  },
+  refModeSubText: {
+    fontSize: 9,
+    fontWeight: '500',
+    color: Colors.textMuted,
+    marginTop: 1,
+  },
+  refModeSubTextActive: {
+    color: '#FFE0B2',
   },
   lagnaBanner: {
     backgroundColor: '#FFF3E0',
