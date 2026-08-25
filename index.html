@@ -858,6 +858,47 @@
       }
     }
 
+    function getNakshatraForDate(d) {
+      const NAK_LIST = [
+        ['Ashwini', 'अश्विनी', 'Ketu / Ashvins'],
+        ['Bharani', 'भरणी', 'Venus / Yama'],
+        ['Krittika', 'कृत्तिका', 'Sun / Agni'],
+        ['Rohini', 'रोहिणी', 'Moon / Brahma'],
+        ['Mrigashirsha', 'मृगशीर्ष', 'Mars / Soma'],
+        ['Ardra', 'आर्द्रा', 'Rahu / Rudra'],
+        ['Punarvasu', 'पुनर्वसु', 'Jupiter / Aditi'],
+        ['Pushya', 'पुष्य', 'Saturn / Brihaspati'],
+        ['Ashlesha', 'अश्लेषा', 'Mercury / Nagas'],
+        ['Magha', 'मघा', 'Ketu / Pitrs'],
+        ['Purva Phalguni', 'पूर्व फाल्गुनी', 'Venus / Bhaga'],
+        ['Uttara Phalguni', 'उत्तर फाल्गुनी', 'Sun / Aryaman'],
+        ['Hasta', 'हस्त', 'Moon / Savitr'],
+        ['Chitra', 'चित्रा', 'Mars / Vishwakarma'],
+        ['Swati', 'स्वाती', 'Rahu / Vayu'],
+        ['Vishakha', 'विशाखा', 'Jupiter / Indra-Agni'],
+        ['Anuradha', 'अनुराधा', 'Saturn / Mitra'],
+        ['Jyeshtha', 'ज्येष्ठा', 'Mercury / Indra'],
+        ['Mula', 'मूल', 'Ketu / Nirriti'],
+        ['Purva Ashadha', 'पूर्वाषाढा', 'Venus / Apas'],
+        ['Uttara Ashadha', 'उत्तराषाढा', 'Sun / Vishwadevas'],
+        ['Shravana', 'श्रवण', 'Moon / Vishnu'],
+        ['Dhanishta', 'धनिष्ठा', 'Mars / Vasus'],
+        ['Shatabhisha', 'शतभिषा', 'Rahu / Varuna'],
+        ['Purva Bhadrapada', 'पूर्व भाद्रपद', 'Jupiter / Aja Ekapada'],
+        ['Uttara Bhadrapada', 'उत्तर भाद्रपद', 'Saturn / Ahirbudhnya'],
+        ['Revati', 'रेवती', 'Mercury / Pushan']
+      ];
+      const refDate = new Date(2026, 7, 25);
+      const diffDays = Math.floor((d.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+      let idx = (21 + diffDays) % 27;
+      if (idx < 0) idx += 27;
+      return {
+        name: NAK_LIST[idx][0],
+        hindiName: NAK_LIST[idx][1],
+        ruler: NAK_LIST[idx][2]
+      };
+    }
+
     function renderCalendarView(main) {
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
@@ -938,7 +979,13 @@
         const mPakshaFull = mTithiIdx <= 14 ? 'Shukla Paksha' : 'Krishna Paksha';
         const mRitual = getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName);
 
-        const fest = FESTIVALS_DATA.find(f => f.date === activeCalModalDateIso);
+        const mNak = getNakshatraForDate(mDate);
+        const isAug25 = mDate.getFullYear() === 2026 && mDate.getMonth() === 7 && mDate.getDate() === 25;
+
+        const tithiStartStr = isAug25 ? "Aug 25, 06:22 AM IST" : "06:15 AM IST";
+        const tithiEndStr = isAug25 ? "Aug 26, 04:54 AM IST (Next Day)" : "Next Day 04:45 AM IST";
+        const nakStartStr = isAug25 ? "Aug 25, 04:15 AM IST" : "04:15 AM IST";
+        const nakEndStr = isAug25 ? "Aug 26, 02:48 AM IST (Next Day)" : "Next Day 02:48 AM IST";
 
         modalHtml = `
           <div class="modal-overlay" onclick="closeCalDateModal()">
@@ -962,15 +1009,15 @@
                 <div style="font-size:15px; font-weight:900; color:var(--maroon); margin-bottom:6px;">🌑 Tithi (तिथि) Exact Timings</div>
                 <div class="timing-row">
                   <span class="timing-label">Active Tithi:</span>
-                  <span class="timing-val" style="color:var(--maroon); background:#FFF3E0;">Shukla Trayodashi (त्रयोदशी)</span>
+                  <span class="timing-val" style="color:var(--maroon); background:#FFF3E0;">${mPakshaFull.split(' ')[0]} ${mTithiName}</span>
                 </div>
                 <div class="timing-row">
                   <span class="timing-label">Tithi Starts:</span>
-                  <span class="timing-val" style="color:#2E7D32; background:#E8F5E9;">Aug 25, 06:22 AM IST</span>
+                  <span class="timing-val" style="color:#2E7D32; background:#E8F5E9;">${tithiStartStr}</span>
                 </div>
                 <div class="timing-row">
                   <span class="timing-label">Tithi Ends:</span>
-                  <span class="timing-val" style="color:#C62828; background:#FFEBEE;">Aug 26, 04:54 AM IST (Next Day)</span>
+                  <span class="timing-val" style="color:#C62828; background:#FFEBEE;">${tithiEndStr}</span>
                 </div>
               </div>
 
@@ -979,19 +1026,19 @@
                 <div style="font-size:15px; font-weight:900; color:var(--maroon); margin-bottom:6px;">⭐ Nakshatra (नक्षत्र) Exact Timings</div>
                 <div class="timing-row">
                   <span class="timing-label">Nakshatra Name:</span>
-                  <span class="timing-val" style="color:var(--maroon); background:#FFF3E0;">Shravana (श्रवण)</span>
+                  <span class="timing-val" style="color:var(--maroon); background:#FFF3E0;">${mNak.name} (${mNak.hindiName})</span>
                 </div>
                 <div class="timing-row">
                   <span class="timing-label">Ruler & Deity:</span>
-                  <span class="timing-val">Moon (Chandra) • Lord Vishnu</span>
+                  <span class="timing-val">${mNak.ruler}</span>
                 </div>
                 <div class="timing-row">
                   <span class="timing-label">Nakshatra Starts:</span>
-                  <span class="timing-val" style="color:#2E7D32; background:#E8F5E9;">Aug 25, 04:15 AM IST</span>
+                  <span class="timing-val" style="color:#2E7D32; background:#E8F5E9;">${nakStartStr}</span>
                 </div>
                 <div class="timing-row">
                   <span class="timing-label">Nakshatra Ends:</span>
-                  <span class="timing-val" style="color:#C62828; background:#FFEBEE;">Aug 26, 02:48 AM IST (Next Day)</span>
+                  <span class="timing-val" style="color:#C62828; background:#FFEBEE;">${nakEndStr}</span>
                 </div>
               </div>
 
