@@ -40,6 +40,44 @@ const calculateTithiForDate = (d: Date) => {
   return Math.floor(elongation / 12) % 30;
 };
 
+const getHinduMonthName = (d: Date) => {
+  const jd = getJulianDay(d);
+  const T = (jd - 2451545.0) / 36525.0;
+  const sunL = (280.46646 + 36000.76983 * T) % 360;
+  const norm = (v: number) => (v < 0 ? (v % 360 + 360) : v % 360);
+  const sunRashi = Math.floor(norm(sunL) / 30) % 12;
+
+  const monthNames = [
+    "Phalguni", "Chaitra", "Vaishakha", "Jyeshtha",
+    "Ashadha", "Shravan", "Bhadrapada", "Ashwin",
+    "Kartika", "Margashirsha", "Pausha", "Magha"
+  ];
+  return monthNames[sunRashi];
+};
+
+const getPerpetualMiniRitual = (d: Date, tithiIdx: number, hinduMonth: string) => {
+  const dayOfWeek = d.getDay();
+  
+  if (tithiIdx === 14) return "🌕 Purnima";
+  if (tithiIdx === 29) return "🌑 Amavasya";
+  if (tithiIdx === 10 || tithiIdx === 25) return "🌿 Ekadashi";
+  if (tithiIdx === 12 || tithiIdx === 27) return "🔱 Pradosh Vrat";
+  if (tithiIdx === 18) return "🐘 Sankashti Chauth";
+  if (tithiIdx === 3) return "🐘 Vinayaka Chauth";
+  if (tithiIdx === 7) return "🔱 Durgashtami";
+  if (tithiIdx === 22) return "🔱 Kalashtami";
+  if (tithiIdx === 28) return "🔱 Masik Shivratri";
+  if (tithiIdx === 2) return "🌸 Teej Vrat";
+  if (tithiIdx === 4 && hinduMonth === "Shravan") return "🌸 Nag Panchami";
+  if (tithiIdx === 5 && (hinduMonth === "Shravan" || hinduMonth === "Bhadrapada")) return "🌾 Randhan Chhath";
+  if (tithiIdx === 6 && (hinduMonth === "Shravan" || hinduMonth === "Bhadrapada")) return "❄️ Shitala Satam";
+
+  if (hinduMonth === "Shravan" && dayOfWeek === 2) return "🌸 ManglaGauri Pujan";
+  if (hinduMonth === "Shravan" && dayOfWeek === 1) return "🌺 Shravan Somvar";
+
+  return null;
+};
+
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); // August 2026
 
@@ -98,29 +136,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
             const tithiIdx = calculateTithiForDate(dateObj);
             const tithiName = TITHI_NAMES[tithiIdx];
 
-            let hinduMonthName = "Shravan";
-            if (month === 7 && dayNum > 27) hinduMonthName = "Bhadrapada";
-            else if (month === 8 && dayNum <= 11) hinduMonthName = "Bhadrapada";
-
+            const hinduMonthName = getHinduMonthName(dateObj);
             const pakshaShort = tithiIdx <= 14 ? "Shu." : "Kru.";
             const monthPakshaDisplay = `${hinduMonthName} - ${pakshaShort}`;
 
-            const MINI_RITUALS_MAP: { [key: string]: string } = {
-              "2026-08-14": "🌸 Nag Panchami",
-              "2026-08-17": "🌺 Shravan Somvar",
-              "2026-08-18": "🌸 Mangala Gauri",
-              "2026-08-21": "🌺 Varalakshmi Vrat",
-              "2026-08-23": "🌿 Putrada Ekadashi",
-              "2026-08-24": "🔱 Soma Pradosh",
-              "2026-08-25": "🌸 ManglaGauri Pujan",
-              "2026-08-27": "🪔 Raksha Bandhan",
-              "2026-08-29": "🌾 Randhan Chhath",
-              "2026-08-30": "🐘 Sankashti Chaturthi",
-              "2026-08-31": "❄️ Shitala Satam",
-              "2026-09-04": "🪔 Krishna Janmashtami",
-              "2026-09-14": "🐘 Ganesh Chaturthi"
-            };
-            const miniRitual = MINI_RITUALS_MAP[dateIso];
+            const miniRitual = getPerpetualMiniRitual(dateObj, tithiIdx, hinduMonthName);
 
             let moonIcon = '🌒';
             if (tithiIdx === 14) moonIcon = '🌕';
