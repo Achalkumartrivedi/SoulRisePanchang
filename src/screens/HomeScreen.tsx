@@ -7,6 +7,7 @@ import { PanchangLimbCard } from '../components/PanchangLimbCard';
 import { SunMoonWidget } from '../components/SunMoonWidget';
 import { MuhuratCard } from '../components/MuhuratCard';
 import { ChoghadiyaGrid } from '../components/ChoghadiyaGrid';
+import { GocharKundaliCard } from '../components/GocharKundaliCard';
 
 interface HomeScreenProps {
   panchang: PanchangDayData;
@@ -146,6 +147,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </TouchableOpacity>
             </View>
 
+            <GocharKundaliCard panchang={panchang} />
             <SunMoonWidget sunMoon={panchang.sunMoon} />
           </View>
         )}

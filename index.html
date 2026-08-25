@@ -105,10 +105,10 @@
     .muhurat-pill.green { background: #C8E6C9; color: var(--green); }
     .muhurat-pill.red { background: #FFCDD2; color: var(--red); }
 
-    /* Choghadiya Styling */
-    .chog-toggle-bar { display: flex; gap: 10px; margin-bottom: 16px; background: #F0F0F0; padding: 4px; border-radius: 12px; width: fit-content; }
-    .chog-toggle-btn { padding: 8px 16px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; color: #666; background: none; }
-    .chog-toggle-btn.active { background: var(--maroon); color: white; }
+    /* Choghadiya & Chart Toggle Styling */
+    .chog-toggle-bar, .chart-toggle-bar { display: flex; gap: 4px; background: #FFF3E0; padding: 3px; border-radius: 12px; border: 1px solid #FFE0B2; max-width: 100%; flex-wrap: wrap; }
+    .chog-toggle-btn, .chart-toggle-btn { padding: 6px 14px; border-radius: 9px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; color: #555; background: none; white-space: nowrap; }
+    .chog-toggle-btn.active, .chart-toggle-btn.active { background: var(--maroon); color: white; }
 
     .chog-table { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
     .chog-cell { padding: 16px; border-radius: 16px; border: 1px solid #E0E0E0; position: relative; overflow: hidden; }
@@ -836,6 +836,35 @@
             </div>
             <div class="kundali-wrapper">
               ${activeChartStyle === 'NORTH' ? drawNorthIndianKundali(grahasCalculated) : drawSouthIndianKundali(grahasCalculated)}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">⏰ Today's 12 Ascendant (Lagna) Rising Timings</div>
+            <div style="font-size:12px; color:#666; margin-bottom:12px;">Ascendant changes approx every ~2 hours based on Earth's rotation</div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:10px;">
+              ${[
+                { idx:5, name:'Simha (Leo)', hindi:'सिंह', time:'06:15 AM - 08:20 AM', active:true },
+                { idx:6, name:'Kanya (Virgo)', hindi:'कन्या', time:'08:20 AM - 10:32 AM', active:false },
+                { idx:7, name:'Tula (Libra)', hindi:'तुला', time:'10:32 AM - 12:48 PM', active:false },
+                { idx:8, name:'Vrischika (Scorpio)', hindi:'वृश्चिक', time:'12:48 PM - 03:04 PM', active:false },
+                { idx:9, name:'Dhanu (Sagittarius)', hindi:'धनु', time:'03:04 PM - 05:08 PM', active:false },
+                { idx:10, name:'Makara (Capricorn)', hindi:'मकर', time:'05:08 PM - 06:52 PM', active:false },
+                { idx:11, name:'Kumbha (Aquarius)', hindi:'कुम्भ', time:'06:52 PM - 08:24 PM', active:false },
+                { idx:12, name:'Meena (Pisces)', hindi:'मीन', time:'08:24 PM - 09:56 PM', active:false },
+                { idx:1, name:'Mesha (Aries)', hindi:'मेष', time:'09:56 PM - 11:36 PM', active:false },
+                { idx:2, name:'Vrishabha (Taurus)', hindi:'वृषभ', time:'11:36 PM - 01:34 AM', active:false },
+                { idx:3, name:'Mithuna (Gemini)', hindi:'मिथुन', time:'01:34 AM - 03:46 AM', active:false },
+                { idx:4, name:'Karka (Cancer)', hindi:'कर्क', time:'03:46 AM - 06:15 AM', active:false }
+              ].map(l => `
+                <div style="background:${l.active?'#E8F5E9':'#FFF'}; border:1px solid ${l.active?'#A5D6A7':'#E0E0E0'}; padding:10px 14px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div style="font-weight:bold; font-size:13px; color:var(--maroon);">${l.idx}. ${l.name} (${l.hindi})</div>
+                    <div style="font-size:11px; color:#555; margin-top:2px;">${l.time}</div>
+                  </div>
+                  ${l.active ? '<span style="background:var(--green); color:white; font-size:9px; font-weight:bold; padding:3px 8px; border-radius:8px;">⚡ RISING NOW</span>' : '<span style="font-size:10px; color:#888;">Scheduled</span>'}
+                </div>
+              `).join('')}
             </div>
           </div>
 

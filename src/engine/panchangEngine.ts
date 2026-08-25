@@ -236,6 +236,7 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   const { auspicious, inauspicious } = calculateMuhurats(date, sunrise, sunset);
   const { dayChoghadiya, nightChoghadiya } = calculateChoghadiya(date, sunrise, sunset);
   const festivals = getFestivalsForDate(dateIso);
+  const lagnaInfo = calculateLagnasForDay(date, sunrise, sunSignIndex);
 
   return {
     dateIso,
@@ -251,7 +252,83 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
     inauspiciousMuhurats: inauspicious,
     dayChoghadiya,
     nightChoghadiya,
-    festivalsForDay: festivals.map(f => f.name)
+    festivalsForDay: festivals.map(f => f.name),
+    lagnaInfo
+  };
+}
+
+const ZODIAC_SIGNS = [
+  { signIndex: 1, name: 'Mesha (Aries)', hindiName: 'मेष' },
+  { signIndex: 2, name: 'Vrishabha (Taurus)', hindiName: 'वृषभ' },
+  { signIndex: 3, name: 'Mithuna (Gemini)', hindiName: 'मिथुन' },
+  { signIndex: 4, name: 'Karka (Cancer)', hindiName: 'कर्क' },
+  { signIndex: 5, name: 'Simha (Leo)', hindiName: 'सिंह' },
+  { signIndex: 6, name: 'Kanya (Virgo)', hindiName: 'कन्या' },
+  { signIndex: 7, name: 'Tula (Libra)', hindiName: 'तुला' },
+  { signIndex: 8, name: 'Vrischika (Scorpio)', hindiName: 'वृश्चिक' },
+  { signIndex: 9, name: 'Dhanu (Sagittarius)', hindiName: 'धनु' },
+  { signIndex: 10, name: 'Makara (Capricorn)', hindiName: 'मकर' },
+  { signIndex: 11, name: 'Kumbha (Aquarius)', hindiName: 'कुम्भ' },
+  { signIndex: 12, name: 'Meena (Pisces)', hindiName: 'मीन' }
+];
+
+export function calculateLagnasForDay(date: Date, sunriseStr: string, sunSignIndex: number) {
+  const parts = sunriseStr.split(' ');
+  const [hStr, mStr] = parts[0].split(':');
+  let h = parseInt(hStr, 10) || 6;
+  const m = parseInt(mStr, 10) || 0;
+  if (parts.length > 1 && parts[1].toUpperCase() === 'PM' && h < 12) h += 12;
+  if (parts.length > 1 && parts[1].toUpperCase() === 'AM' && h === 12) h = 0;
+
+  const sunriseMin = h * 60 + m;
+  const now = new Date();
+  const currentMin = now.getHours() * 60 + now.getMinutes();
+
+  const allLagnas = [];
+  let currentLagnaItem = null;
+
+  for (let k = 0; k < 12; k++) {
+    const signIdx = ((sunSignIndex + k) % 12) + 1; // 1 to 12
+    const signMeta = ZODIAC_SIGNS.find(z => z.signIndex === signIdx) || ZODIAC_SIGNS[0];
+
+    const startMin = sunriseMin + k * 120;
+    const endMin = sunriseMin + (k + 1) * 120;
+
+    const startTime = formatMinToTimeStr(startMin);
+    const endTime = formatMinToTimeStr(endMin);
+
+    let isActive = false;
+    const normStart = startMin % 1440;
+    const normEnd = endMin % 1440;
+
+    if (normStart <= normEnd) {
+      isActive = currentMin >= normStart && currentMin < normEnd;
+    } else {
+      isActive = currentMin >= normStart || currentMin < normEnd;
+    }
+
+    const item = {
+      signIndex: signIdx,
+      name: signMeta.name,
+      hindiName: signMeta.hindiName,
+      startTime,
+      endTime,
+      isActive
+    };
+
+    allLagnas.push(item);
+    if (isActive) currentLagnaItem = item;
+  }
+
+  if (!currentLagnaItem) currentLagnaItem = allLagnas[0];
+
+  return {
+    currentLagnaSign: currentLagnaItem.signIndex,
+    name: currentLagnaItem.name,
+    hindiName: currentLagnaItem.hindiName,
+    startTime: currentLagnaItem.startTime,
+    endTime: currentLagnaItem.endTime,
+    allLagnas
   };
 }
 

@@ -100,6 +100,24 @@ export interface ChoghadiyaItem {
   isDayTime: boolean;
 }
 
+export interface DailyLagnaItem {
+  signIndex: number; // 1 to 12
+  name: string;
+  hindiName: string;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+}
+
+export interface LagnaInfo {
+  currentLagnaSign: number; // 1 to 12
+  name: string;
+  hindiName: string;
+  startTime: string;
+  endTime: string;
+  allLagnas: DailyLagnaItem[];
+}
+
 export interface PanchangDayData {
   dateIso: string;
   city: CityLocation;
@@ -115,6 +133,7 @@ export interface PanchangDayData {
   dayChoghadiya: ChoghadiyaItem[];
   nightChoghadiya: ChoghadiyaItem[];
   festivalsForDay: string[];
+  lagnaInfo?: LagnaInfo;
 }
 
 export type FestivalCategory = 'MAJOR_FESTIVAL' | 'VRAT' | 'JAYANTI' | 'ECLIPSE';
