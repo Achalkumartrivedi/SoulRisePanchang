@@ -64,6 +64,13 @@ export interface TranslationKeys {
   inauspiciousInfoText: string;
   calendarPopupAbhijitInfo: string;
   calendarPopupRahuInfo: string;
+
+  // Monthly Purnima & Amavasya Section Keys
+  purnimaAmavasyaHeader: string;
+  purnimaTitle: string;
+  amavasyaTitle: string;
+  purnimaRitual: string;
+  amavasyaRitual: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
@@ -129,6 +136,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'Generally, during this time you should avoid starting new projects, signing contracts, or performing major sacred/important activities.',
     calendarPopupAbhijitInfo: '🌟 Auspicious Muhurat (Abhijit): Highly favorable for starting new work, business decisions, career moves, or auspicious rituals.',
     calendarPopupRahuInfo: '⚠️ Rahu Kalam: An inauspicious period during which major new beginnings, travel departures, or critical agreements should be avoided.',
+
+    purnimaAmavasyaHeader: '🌕 Monthly Purnima & Amavasya Dates',
+    purnimaTitle: '🌕 Purnima (Full Moon / Poonam)',
+    amavasyaTitle: '🌑 Amavasya (New Moon)',
+    purnimaRitual: 'Satyanarayan Vrat & Moon Sighting Puja',
+    amavasyaRitual: 'Pitru Tarpana & Daan Ritual',
   },
   hi: {
     appName: 'सोलराइज़ पंचांग',
@@ -192,6 +205,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'सामान्यतः इस समय के दौरान नया काम शुरू करने, अनुबंध करने या कोई भी महत्वपूर्ण/शुभ कार्य करने से बचना चाहिए।',
     calendarPopupAbhijitInfo: '🌟 शुभ मुहूर्त (अभिजित): नया कार्य, व्यावसायिक निर्णय, करियर में प्रगति या मांगलिक कार्य शुरू करने हेतु अत्यंत श्रेष्ठ समय।',
     calendarPopupRahuInfo: '⚠️ राहु काल: यह अशुभ समय माना जाता है जिसमें नए कार्य का शुभारंभ, यात्रा की शुरुआत या महत्वपूर्ण समझौते टालने चाहिए।',
+
+    purnimaAmavasyaHeader: '🌕 माह की पूर्णिमा (पूनम) एवं अमावस्या तिथियां',
+    purnimaTitle: '🌕 पूर्णिमा (पूनम / पूर्ण चंद्र)',
+    amavasyaTitle: '🌑 अमावस्या (नया चंद्र)',
+    purnimaRitual: 'सत्यनारायण व्रत कथा एवं चंद्र दर्शन पूजा',
+    amavasyaRitual: 'पितृ तर्पण, दान एवं पवित्र स्नान',
   },
   en: {
     appName: 'SoulRise Panchang',
@@ -255,6 +274,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'Generally, during this time you should avoid starting new projects, signing contracts, or performing major sacred/important activities.',
     calendarPopupAbhijitInfo: '🌟 Auspicious Muhurat (Abhijit): Highly favorable for starting new work, business decisions, career moves, or auspicious rituals.',
     calendarPopupRahuInfo: '⚠️ Rahu Kalam: An inauspicious period during which major new beginnings, travel departures, or critical agreements should be avoided.',
+
+    purnimaAmavasyaHeader: '🌕 Monthly Purnima & Amavasya Dates',
+    purnimaTitle: '🌕 Purnima (Full Moon / Poonam)',
+    amavasyaTitle: '🌑 Amavasya (New Moon)',
+    purnimaRitual: 'Satyanarayan Vrat & Moon Sighting Puja',
+    amavasyaRitual: 'Pitru Tarpana & Daan Ritual',
   },
   ta: {
     appName: 'சோல்ரைஸ் பஞ்சாங்கம்',
@@ -318,6 +343,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'பொதுவாக இந்த நேரத்தில் புதிய திட்டங்களைத் தொடங்குவது, ஒப்பந்தங்களில் கையெழுத்திடுவதைத் தவிர்க்க வேண்டும்.',
     calendarPopupAbhijitInfo: '🌟 சுப முகூர்த்தம் (அபிஜித்): புதிய வேலை, தொழில் முடிவுகள் மற்றும் சுப காரியங்களைத் தொடங்க மிகவும் உகந்தது.',
     calendarPopupRahuInfo: '⚠️ ராகு காலம்: இந்த காலத்தில் புதிய தொடக்கங்கள், பயணங்கள் அல்லது முக்கிய ஒப்பந்தங்களைத் தவிர்க்க வேண்டும்.',
+
+    purnimaAmavasyaHeader: '🌕 மாதத்தின் பௌர்ணமி & அமாவாசை நாட்கள்',
+    purnimaTitle: '🌕 பௌர்ணமி (முழு நிலவு)',
+    amavasyaTitle: '🌑 அமாவாசை (புது நிலவு)',
+    purnimaRitual: 'சத்யநாராயண பூஜை & நிலவு தரிசனம்',
+    amavasyaRitual: 'பித்ரு தர்ப்பணம் & தானம்',
   },
   te: {
     appName: 'సోల్‌రైజ్ పంచాంగం',
@@ -381,6 +412,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'సాధారణంగా ఈ సమయంలో కొత్త ప్రాజెక్ట్‌లు ప్రారంభించడం, ఒప్పందాలు చేసుకోవడం తదితర పనులు చేయకూడదు.',
     calendarPopupAbhijitInfo: '🌟 శుభ ముహుర్తం (అభిజిత్): కొత్త పనులు, వ్యాపార నిర్ణయాలు లేదా శుభ కార్యాలు ప్రారంభించడానికి అనుకూలం.',
     calendarPopupRahuInfo: '⚠️ రాహు కాలం: కొత్త పనులు ప్రారంభించడం, ప్రయాణాలు చేయడం లేదా ఒప్పందాలు చేసుకోవడం వర్జించవలసిన సమయం.',
+
+    purnimaAmavasyaHeader: '🌕 నెలవారీ పౌర్ణమి & అమావాస్య తేదీలు',
+    purnimaTitle: '🌕 పౌర్ణమి (పూర్తి చంద్రుడు)',
+    amavasyaTitle: '🌑 అమావాస్య (కొత్త చంద్రుడు)',
+    purnimaRitual: 'సత్యనారాయణ వ్రతం & చంద్ర దర్శనం',
+    amavasyaRitual: 'పితృ తర్పణం & దాన ధర్మాలు',
   },
   bn: {
     appName: 'সোলরাইজ পঞ্জিকা',
@@ -444,6 +481,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'সাধারণত এই সময়ে নতুন কাজ শুরু করা, চুক্তি স্বাক্ষর করা বা গুরুত্বপূর্ণ কাজ এড়িয়ে চলা উচিত।',
     calendarPopupAbhijitInfo: '🌟 শুভ মুহূর্ত (অভিজিৎ): নতুন কাজ, ব্যবসায়িক সিদ্ধান্ত বা শুভ অনুষ্ঠান শুরু করার জন্য অত্যন্ত উপযুক্ত।',
     calendarPopupRahuInfo: '⚠️ রাহু কাল: অশুভ সময়, এই সময়ে কোনো নতুন সূচনা, যাত্রা শুরু বা চুক্তি স্বাক্ষর করা অনুচিত।',
+
+    purnimaAmavasyaHeader: '🌕 মাসের পূর্ণিমা ও অমাবস্যার তারিখসমূহ',
+    purnimaTitle: '🌕 পূর্ণিমা (পূর্ণ চাঁদ)',
+    amavasyaTitle: '🌑 অমাবস্যা (নতুন চাঁদ)',
+    purnimaRitual: 'সত্যনারায়ণ ব্রত ও চন্দ্র দর্শন পূজা',
+    amavasyaRitual: 'পিতৃ তর্পণ ও দান ধর্ম',
   },
   mr: {
     appName: 'सोलराईझ पंचांग',
@@ -503,10 +546,16 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     systemPurnimanta: '📜 महिना गणना पद्धती',
     systemSub: 'पूर्णिमान्त / अमान्त पद्धत',
 
-    auspiciousInfoText: 'नवीन कार्य, व्यवसाय किंवा महत्त्वाचे निर्णय सुरू करण्यासाठी हा अत्यंत शुभ काळ आहे.',
+    auspiciousInfoText: 'नवीन काम, व्यवसाय किंवा महत्त्वाचे निर्णय सुरू करण्यासाठी हा अत्यंत शुभ काळ आहे.',
     inauspiciousInfoText: 'सामान्यतः या काळात नवीन काम सुरू करणे, करार करणे किंवा महत्त्वाचे कार्य करणे टाळावे.',
     calendarPopupAbhijitInfo: '🌟 शुभ मुहूर्त (अभिजित): नवीन काम, व्यावसायिक निर्णय किंवा मांगलिक कार्य सुरू करण्यासाठी अत्यंत उत्तम.',
     calendarPopupRahuInfo: '⚠️ राहु काळ: हा अशुभ काळ मानला जातो; यात नवीन सुरुवात किंवा महत्त्वाचे करार टाळावेत.',
+
+    purnimaAmavasyaHeader: '🌕 महिन्यातील पौर्णिमा (पूनम) व अमावस्या तारखा',
+    purnimaTitle: '🌕 पौर्णिमा (पूनम / पूर्ण चंद्र)',
+    amavasyaTitle: '🌑 अमावस्या (अमावस्या)',
+    purnimaRitual: 'सत्यनारायण पूजा व चंद्र दर्शन',
+    amavasyaRitual: 'पितृ तर्पण व दान कर्म',
   },
   ru: {
     appName: 'СоулРайз Панчанг',
@@ -570,6 +619,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'Как правило, в это время следует избегать начала новых проектов, подписания контрактов и важных дел.',
     calendarPopupAbhijitInfo: '🌟 Благоприятный Мухурта (Абхиджит): Отлично подходит для новых начинаний и важных решений.',
     calendarPopupRahuInfo: '⚠️ Раху Калам: Неблагоприятный период, когда следует избегать новых начинаний и поездок.',
+
+    purnimaAmavasyaHeader: '🌕 Ежемесячные Даты Пурнимы и Амавасьи',
+    purnimaTitle: '🌕 Пурнима (Полнолуние)',
+    amavasyaTitle: '🌑 Амавасья (Новолуние)',
+    purnimaRitual: 'Сатьянараяна Врат и Ритуал Луны',
+    amavasyaRitual: 'Питру Тарпана и Даан',
   },
   fr: {
     appName: 'SoulRise Panchang',
@@ -633,6 +688,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'En général, il convient d\'éviter de commencer de nouveaux projets, de signer des contrats ou de faire des tâches importantes.',
     calendarPopupAbhijitInfo: '🌟 Muhurat Favorable (Abhijit) : Très favorable pour débuter de nouveaux travaux ou décisions de carrière.',
     calendarPopupRahuInfo: '⚠️ Rahu Kalam : Période néfaste pendant laquelle les nouveaux départs et contrats doivent être évités.',
+
+    purnimaAmavasyaHeader: '🌕 Dates Mensuelles de Purnima & Amavasya',
+    purnimaTitle: '🌕 Purnima (Pleine Lune)',
+    amavasyaTitle: '🌑 Amavasya (Nouvelle Lune)',
+    purnimaRitual: 'Satyanarayan Vrat & Culte de la Lune',
+    amavasyaRitual: 'Pitru Tarpana & Don Sacré',
   },
   es: {
     appName: 'SoulRise Panchang',
@@ -696,6 +757,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'Generalmente durante este tiempo debes evitar iniciar nuevos proyectos, firmar contratos o realizar trabajos importantes.',
     calendarPopupAbhijitInfo: '🌟 Muhurat Auspicioso (Abhijit): Muy favorable para iniciar nuevos trabajos o decisiones de negocios.',
     calendarPopupRahuInfo: '⚠️ Rahu Kalam: Período desfavorable durante el cual deben evitarse nuevos inicios o contratos.',
+
+    purnimaAmavasyaHeader: '🌕 Fechas Mensuales de Purnima y Amavasya',
+    purnimaTitle: '🌕 Purnima (Luna Llena)',
+    amavasyaTitle: '🌑 Amavasya (Luna Nueva)',
+    purnimaRitual: 'Satyanarayan Vrat y Culto a la Luna',
+    amavasyaRitual: 'Ritual de Pitru Tarpana y Daan',
   },
   he: {
     appName: 'סולרייז פנצ\'אנג',
@@ -759,6 +826,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'בדרך כלל בזמן זה מומלץ להימנע מהתחלת פרויקטים חדשים, חתימת חוזים או אירועים חשובים.',
     calendarPopupAbhijitInfo: '🌟 זמן מבורך (אבהיג\'יט): מומלץ מאוד להתחלת פרויקטים חדשים והחלטות קריירה.',
     calendarPopupRahuInfo: '⚠️ ראהו קאלאם: זמן לא מומלץ שבו כדאי להימנע מהתחלות חדשות או הסכמים חשובים.',
+
+    purnimaAmavasyaHeader: '🌕 תאריכי פורנימה ואמאבסיה חודשיים',
+    purnimaTitle: '🌕 פורנימה (ירח מלא)',
+    amavasyaTitle: '🌑 אמאבסיה (ירח חדש)',
+    purnimaRitual: 'טקס סטיאנראיאן וצפייה בירח',
+    amavasyaRitual: 'טקס פיטרו תרפנה ותרומה',
   },
   id: {
     appName: 'SoulRise Panchang',
@@ -822,6 +895,12 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'Umumnya pada waktu ini Anda harus menghindari memulai proyek baru, menandatangani kontrak, atau hal penting.',
     calendarPopupAbhijitInfo: '🌟 Muhurat Baik (Abhijit): Sangat baik untuk memulai pekerjaan baru, keputusan bisnis, atau hal menguntungkan.',
     calendarPopupRahuInfo: '⚠️ Rahu Kalam: Periode waktu yang buruk di mana awal baru atau kontrak penting harus dihindari.',
+
+    purnimaAmavasyaHeader: '🌕 Tanggal Bulanan Purnima & Amavasya',
+    purnimaTitle: '🌕 Purnima (Bulan Purnama)',
+    amavasyaTitle: '🌑 Amavasya (Bulan Baru)',
+    purnimaRitual: 'Puja Satyanarayan & Melihat Bulan',
+    amavasyaRitual: 'Ritual Pitru Tarpana & Daan',
   },
   th: {
     appName: 'โซลไรซ์ ปฏิทินฮินดู',
@@ -885,5 +964,11 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     inauspiciousInfoText: 'โดยทั่วไปในช่วงเวลานี้ควรงดเว้นการเริ่มต้นโครงการใหม่ การเซ็นสัญญา หรือกิจกรรมสำคัญ',
     calendarPopupAbhijitInfo: '🌟 ฤกษ์มงคล (อภิจิต): เหมาะอย่างยิ่งสำหรับการเริ่มต้นงานใหม่ การตัดสินใจทางธุรกิจ หรือพิธีมงคล',
     calendarPopupRahuInfo: '⚠️ ราหูกาล: ช่วงเวลาอัปมงคลซึ่งควรงดเว้นการเริ่มต้นงานใหม่ การเดินทาง หรือการทำสัญญาสำคัญ',
+
+    purnimaAmavasyaHeader: '🌕 วันวันเพ็ญ (ปูรณมี) และวันจันทร์ดับ (อมาวสี) ประจำเดือน',
+    purnimaTitle: '🌕 ปูรณมี (พระจันทร์เต็มดวง / ปูรณมี)',
+    amavasyaTitle: '🌑 อมาวสี (พระจันทร์ดับ / อมาวสี)',
+    purnimaRitual: 'พิธีสัตยนารายณ์และชมพระจันทร์',
+    amavasyaRitual: 'พิธีปิตฤตర్పณและการบริจาคทาน',
   },
 };

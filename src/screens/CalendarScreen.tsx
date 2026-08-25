@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { Colors } from '../theme/colors';
 import { FESTIVALS } from '../engine/festivalRepository';
-import { CityLocation } from '../types/panchang';
+import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { calculatePanchang } from '../engine/panchangEngine';
 import { useLanguage } from '../context/LanguageContext';
@@ -67,13 +67,13 @@ const getPerpetualMiniRitual = (d: Date, tithiIdx: number, monthName: string): s
 const getRahuKalamForDate = (d: Date): string => {
   const dayOfWeek = d.getDay();
   const windows = [
-    "04:30 PM - 06:00 PM", // Sun (8th)
-    "07:30 AM - 09:00 AM", // Mon (2nd)
-    "03:07 PM - 04:42 PM", // Tue (7th)
-    "12:00 PM - 01:30 PM", // Wed (5th)
-    "01:30 PM - 03:00 PM", // Thu (6th)
-    "10:30 AM - 12:00 PM", // Fri (4th)
-    "09:00 AM - 10:30 AM"  // Sat (3rd)
+    "04:30 PM - 06:00 PM",
+    "07:30 AM - 09:00 AM",
+    "03:07 PM - 04:42 PM",
+    "12:00 PM - 01:30 PM",
+    "01:30 PM - 03:00 PM",
+    "10:30 AM - 12:00 PM",
+    "09:00 AM - 10:30 AM"
   ];
   return windows[dayOfWeek];
 };
@@ -97,6 +97,24 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
     const parts = f.dateIso.split('-');
     return parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month + 1;
   });
+
+  // Calculate Monthly Purnima & Amavasya occurrences
+  const purnimaList: { dateObj: Date; dateIso: string; panchang: PanchangDayData }[] = [];
+  const amavasyaList: { dateObj: Date; dateIso: string; panchang: PanchangDayData }[] = [];
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d, 12, 0, 0);
+    const dateIso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const tithiIdx = calculateTithiForDate(dateObj);
+
+    if (tithiIdx === 14) {
+      const panchang = calculatePanchang(dateObj, selectedCity);
+      purnimaList.push({ dateObj, dateIso, panchang });
+    } else if (tithiIdx === 29) {
+      const panchang = calculatePanchang(dateObj, selectedCity);
+      amavasyaList.push({ dateObj, dateIso, panchang });
+    }
+  }
 
   // Calculate Modal details if open
   let mDate = new Date();
@@ -126,7 +144,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Calendar Card */}
+      {/* Monthly Calendar Card */}
       <View style={styles.card}>
         {/* Month Header Navigation */}
         <View style={styles.headerRow}>
@@ -227,6 +245,81 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
               </TouchableOpacity>
             );
           })}
+        </View>
+      </View>
+
+      {/* Monthly Purnima & Amavasya Summary Card (Below Calendar Grid) */}
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryCardTitle} numberOfLines={1} adjustsFontSizeToFit>
+          {t('purnimaAmavasyaHeader')}
+        </Text>
+
+        {/* Purnima Section */}
+        <View style={styles.summarySection}>
+          <Text style={styles.summarySectionTitle} numberOfLines={1} adjustsFontSizeToFit>
+            {t('purnimaTitle')}
+          </Text>
+          {purnimaList.length > 0 ? (
+            purnimaList.map((item, idx) => (
+              <TouchableOpacity
+                key={`purnima-${idx}`}
+                style={styles.summaryItemBoxGood}
+                onPress={() => setSelectedModalDateIso(item.dateIso)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.summaryItemTop}>
+                  <Text style={styles.summaryMoonIcon}>🌕</Text>
+                  <View style={{ flex: 1, marginRight: 6 }}>
+                    <Text style={styles.summaryDateText}>
+                      {item.dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    </Text>
+                    <Text style={styles.summaryTimingText}>
+                      Tithi Starts: {item.panchang.tithi.startTimeFormatted || '06:15 AM'} • Ends: {item.panchang.tithi.endTimeFormatted}
+                    </Text>
+                    <Text style={styles.summaryRitualText}>✨ {t('purnimaRitual')}</Text>
+                  </View>
+                  <Text style={styles.summaryArrow}>➔</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noDataText}>No Purnima in this date range</Text>
+          )}
+        </View>
+
+        <View style={styles.summaryDivider} />
+
+        {/* Amavasya Section */}
+        <View style={styles.summarySection}>
+          <Text style={styles.summarySectionTitleDark} numberOfLines={1} adjustsFontSizeToFit>
+            {t('amavasyaTitle')}
+          </Text>
+          {amavasyaList.length > 0 ? (
+            amavasyaList.map((item, idx) => (
+              <TouchableOpacity
+                key={`amavasya-${idx}`}
+                style={styles.summaryItemBoxDark}
+                onPress={() => setSelectedModalDateIso(item.dateIso)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.summaryItemTop}>
+                  <Text style={styles.summaryMoonIcon}>🌑</Text>
+                  <View style={{ flex: 1, marginRight: 6 }}>
+                    <Text style={styles.summaryDateText}>
+                      {item.dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    </Text>
+                    <Text style={styles.summaryTimingText}>
+                      Tithi Starts: {item.panchang.tithi.startTimeFormatted || '05:45 AM'} • Ends: {item.panchang.tithi.endTimeFormatted}
+                    </Text>
+                    <Text style={styles.summaryRitualText}>✨ {t('amavasyaRitual')}</Text>
+                  </View>
+                  <Text style={styles.summaryArrow}>➔</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noDataText}>No Amavasya in this date range</Text>
+          )}
         </View>
       </View>
 
@@ -563,6 +656,100 @@ const styles = StyleSheet.create({
     color: '#7B1FA2',
     fontWeight: 'bold',
   },
+
+  // Monthly Purnima & Amavasya Summary Card Styles
+  summaryCard: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 18,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    elevation: 3,
+  },
+  summaryCardTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 12,
+  },
+  summarySection: {
+    marginVertical: 4,
+  },
+  summarySectionTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#E65100',
+    marginBottom: 8,
+  },
+  summarySectionTitleDark: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#37474F',
+    marginBottom: 8,
+  },
+  summaryItemBoxGood: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F57F17',
+    borderWidth: 1,
+    borderColor: '#FFE082',
+  },
+  summaryItemBoxDark: {
+    backgroundColor: '#ECEFF1',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#37474F',
+    borderWidth: 1,
+    borderColor: '#CFD8DC',
+  },
+  summaryItemTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  summaryMoonIcon: {
+    fontSize: 22,
+    marginRight: 10,
+  },
+  summaryDateText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  summaryTimingText: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  summaryRitualText: {
+    fontSize: 11,
+    color: Colors.maroon,
+    marginTop: 4,
+    fontWeight: 'bold',
+  },
+  summaryArrow: {
+    fontSize: 16,
+    color: Colors.maroon,
+    fontWeight: 'bold',
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#F0E0D0',
+    marginVertical: 10,
+  },
+  noDataText: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
