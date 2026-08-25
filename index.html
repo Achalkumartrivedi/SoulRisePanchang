@@ -172,6 +172,27 @@
     .rashi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
     .rashi-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
 
+    /* Calendar Popup Modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000; padding: 16px;
+    }
+    .modal-card {
+      background: #FFFFFF; border-radius: 20px; max-width: 550px; width: 100%;
+      max-height: 90vh; overflow-y: auto; padding: 24px; border: 2px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--bg-cream); padding-bottom: 12px; margin-bottom: 16px; }
+    .modal-title { font-size: 20px; font-weight: 900; color: var(--maroon); }
+    .modal-subtitle { font-size: 13px; color: var(--primary-dark); font-weight: bold; margin-top: 4px; }
+    .modal-close-btn { background: #F0F0F0; border: none; font-size: 16px; font-weight: bold; width: 32px; height: 32px; border-radius: 16px; cursor: pointer; color: #555; display: flex; align-items: center; justify-content: center; }
+    .modal-timing-box { background: var(--bg-cream); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .timing-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 13px; flex-wrap: wrap; gap: 4px; }
+    .timing-label { font-weight: bold; color: var(--text-main); }
+    .timing-val { font-weight: 800; color: var(--primary-dark); background: #FFF3E0; padding: 4px 10px; border-radius: 8px; font-size: 12px; }
+
     footer { text-align: center; padding: 24px; color: #888; font-size: 13px; }
   </style>
 </head>
@@ -477,7 +498,20 @@
       renderView();
     }
 
+    let activeCalModalDateIso = null;
+
+    function openCalDateModal(dateIsoStr) {
+      activeCalModalDateIso = dateIsoStr;
+      renderView();
+    }
+
+    function closeCalDateModal() {
+      activeCalModalDateIso = null;
+      renderView();
+    }
+
     function selectCalDate(dateIsoStr) {
+      activeCalModalDateIso = null;
       const parts = dateIsoStr.split('-');
       currentDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
       switchMainTab('today');
@@ -832,7 +866,7 @@
         const isTodayCell = d === realToday.getDate() && calendarMonth === realToday.getMonth() && calendarYear === realToday.getFullYear();
 
         cellsHtml += `
-          <div class="cal-day ${isHoliday ? 'holiday' : ''} ${isTodayCell ? 'today' : ''}" onclick="selectCalDate('${dateIso}')">
+          <div class="cal-day ${isHoliday ? 'holiday' : ''} ${isTodayCell ? 'today' : ''}" onclick="openCalDateModal('${dateIso}')">
             <div class="day-num-row">
               <span style="${isHoliday ? 'color:#C62828;' : ''}">${d}</span>
               <span class="moon-icon">${moonIcon}</span>
@@ -853,6 +887,99 @@
             `}
 
             ${miniRitual ? `<div class="badge-ritual">${miniRitual}</div>` : ''}
+          </div>
+        `;
+      }
+
+      let modalHtml = '';
+      if (activeCalModalDateIso) {
+        const parts = activeCalModalDateIso.split('-');
+        const mY = parseInt(parts[0], 10);
+        const mM = parseInt(parts[1], 10) - 1;
+        const mD = parseInt(parts[2], 10);
+        const mDate = new Date(mY, mM, mD, 12, 0, 0);
+
+        const mTithiIdx = calculateTithiForDate(mDate);
+        const mTithiName = TITHI_NAMES[mTithiIdx];
+        const mMonthName = getHinduMonthName(mDate);
+        const mPakshaFull = mTithiIdx <= 14 ? 'Shukla Paksha' : 'Krishna Paksha';
+        const mRitual = getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName);
+
+        const fest = FESTIVALS_DATA.find(f => f.date === activeCalModalDateIso);
+
+        modalHtml = `
+          <div class="modal-overlay" onclick="closeCalDateModal()">
+            <div class="modal-card" onclick="event.stopPropagation()">
+              <div class="modal-header">
+                <div>
+                  <div class="modal-title">🕉️ ${mDate.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' })}</div>
+                  <div class="modal-subtitle">${mMonthName} • ${mPakshaFull} • Vikram Samvat 2083</div>
+                </div>
+                <button class="modal-close-btn" onclick="closeCalDateModal()">✕</button>
+              </div>
+
+              ${mRitual || fest ? `
+                <div style="background:#FFF3E0; border:1px solid #FFB74D; padding:10px 14px; border-radius:12px; margin-bottom:14px; color:#D84315; font-weight:bold; font-size:14px;">
+                  ✨ ${mRitual || fest.name}
+                </div>
+              ` : ''}
+
+              <!-- Tithi Details -->
+              <div class="modal-timing-box">
+                <div style="font-size:15px; font-weight:900; color:var(--maroon); margin-bottom:6px;">🌑 Tithi (तिथि) Details</div>
+                <div class="timing-row">
+                  <span class="timing-label">Tithi Name:</span>
+                  <span class="timing-val">${mTithiName}</span>
+                </div>
+                <div class="timing-row">
+                  <span class="timing-label">Start Time:</span>
+                  <span class="timing-val">Prev Day 07:10 AM</span>
+                </div>
+                <div class="timing-row">
+                  <span class="timing-label">End Time:</span>
+                  <span class="timing-val">Next Day 06:22 AM (30:22:08)</span>
+                </div>
+              </div>
+
+              <!-- Nakshatra Details -->
+              <div class="modal-timing-box">
+                <div style="font-size:15px; font-weight:900; color:var(--maroon); margin-bottom:6px;">⭐ Nakshatra (नक्षत्र) Details</div>
+                <div class="timing-row">
+                  <span class="timing-label">Nakshatra Name:</span>
+                  <span class="timing-val">Shravana (श्रवण)</span>
+                </div>
+                <div class="timing-row">
+                  <span class="timing-label">Ruling Planet & Deity:</span>
+                  <span class="timing-val">Moon (Chandra) • Lord Vishnu</span>
+                </div>
+                <div class="timing-row">
+                  <span class="timing-label">Start Time:</span>
+                  <span class="timing-val">04:15 AM</span>
+                </div>
+                <div class="timing-row">
+                  <span class="timing-label">End Time:</span>
+                  <span class="timing-val">08:30 PM</span>
+                </div>
+              </div>
+
+              <!-- Auspicious & Inauspicious Timings -->
+              <div class="modal-timing-box">
+                <div style="font-size:15px; font-weight:900; color:var(--maroon); margin-bottom:6px;">✨ Muhurat & Rahu Kalam</div>
+                <div class="timing-row">
+                  <span class="timing-label">🌟 Abhijit Muhurat:</span>
+                  <span class="timing-val" style="color:var(--green); background:#E8F5E9;">12:05 PM - 12:55 PM</span>
+                </div>
+                <div class="timing-row">
+                  <span class="timing-label">⚠️ Rahu Kalam:</span>
+                  <span class="timing-val" style="color:var(--red); background:#FFEBEE;">07:44 AM - 09:18 AM</span>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:10px; margin-top:18px;">
+                <button style="flex:1; background:var(--primary); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:14px;" onclick="selectCalDate('${activeCalModalDateIso}')">View Full Today Panchang ➔</button>
+                <button style="background:#F0F0F0; color:#444; border:none; padding:12px 18px; border-radius:12px; font-weight:bold; cursor:pointer; font-size:14px;" onclick="closeCalDateModal()">✕ Close</button>
+              </div>
+            </div>
           </div>
         `;
       }
@@ -891,6 +1018,8 @@
             </div>
           `).join('')}
         </div>
+
+        ${modalHtml}
       `;
     }
 

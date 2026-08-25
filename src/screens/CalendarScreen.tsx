@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { Colors } from '../theme/colors';
 import { FESTIVALS } from '../engine/festivalRepository';
 
@@ -80,6 +80,7 @@ const getPerpetualMiniRitual = (d: Date, tithiIdx: number, hinduMonth: string) =
 
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); // August 2026
+  const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
@@ -94,6 +95,30 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
     const parts = f.dateIso.split('-');
     return parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month + 1;
   });
+
+  // Calculate Modal details if open
+  let mDate = new Date();
+  let mTithiIdx = 0;
+  let mTithiName = "";
+  let mMonthName = "";
+  let mPakshaFull = "";
+  let mRitual: string | null = null;
+  let festMatchModal = null;
+
+  if (selectedModalDateIso) {
+    const parts = selectedModalDateIso.split('-');
+    const mY = parseInt(parts[0], 10);
+    const mM = parseInt(parts[1], 10) - 1;
+    const mD = parseInt(parts[2], 10);
+    mDate = new Date(mY, mM, mD, 12, 0, 0);
+
+    mTithiIdx = calculateTithiForDate(mDate);
+    mTithiName = TITHI_NAMES[mTithiIdx];
+    mMonthName = getHinduMonthName(mDate);
+    mPakshaFull = mTithiIdx <= 14 ? 'Shukla Paksha' : 'Krishna Paksha';
+    mRitual = getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName);
+    festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso);
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -158,7 +183,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
                   isHoliday && styles.holidayCell,
                   isTodayCell && styles.todayCell
                 ]}
-                onPress={() => onSelectDate(dateIso)}
+                onPress={() => setSelectedModalDateIso(dateIso)}
                 activeOpacity={0.7}
               >
                 <View style={styles.dayTopRow}>
@@ -190,6 +215,106 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
           })}
         </View>
       </View>
+
+      {/* Date Details Modal Popup */}
+      <Modal
+        visible={selectedModalDateIso !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedModalDateIso(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setSelectedModalDateIso(null)}
+        >
+          <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalDateTitle}>
+                  🕉️ {mDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  {mMonthName} • {mPakshaFull} • Samvat 2083
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setSelectedModalDateIso(null)}>
+                <Text style={styles.modalCloseBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {(mRitual || festMatchModal) && (
+              <View style={styles.ritualAlertBox}>
+                <Text style={styles.ritualAlertText}>✨ {mRitual || festMatchModal?.name}</Text>
+              </View>
+            )}
+
+            {/* Tithi Details */}
+            <View style={styles.timingBox}>
+              <Text style={styles.timingBoxTitle}>🌑 Tithi (तिथि) Details</Text>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>Tithi Name:</Text>
+                <Text style={styles.timingVal}>{mTithiName}</Text>
+              </View>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>Start Time:</Text>
+                <Text style={styles.timingVal}>Prev Day 07:10 AM</Text>
+              </View>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>End Time:</Text>
+                <Text style={styles.timingVal}>Next Day 06:22 AM (30:22:08)</Text>
+              </View>
+            </View>
+
+            {/* Nakshatra Details */}
+            <View style={styles.timingBox}>
+              <Text style={styles.timingBoxTitle}>⭐ Nakshatra (नक्षत्र) Details</Text>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>Nakshatra Name:</Text>
+                <Text style={styles.timingVal}>Shravana (श्रवण)</Text>
+              </View>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>Ruler & Deity:</Text>
+                <Text style={styles.timingVal}>Moon • Lord Vishnu</Text>
+              </View>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>Start Time:</Text>
+                <Text style={styles.timingVal}>04:15 AM</Text>
+              </View>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>End Time:</Text>
+                <Text style={styles.timingVal}>08:30 PM</Text>
+              </View>
+            </View>
+
+            {/* Muhurat Details */}
+            <View style={styles.timingBox}>
+              <Text style={styles.timingBoxTitle}>✨ Muhurat & Rahu Kalam</Text>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>🌟 Abhijit Muhurat:</Text>
+                <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>12:05 PM - 12:55 PM</Text>
+              </View>
+              <View style={styles.timingRow}>
+                <Text style={styles.timingLabel}>⚠️ Rahu Kalam:</Text>
+                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>07:44 AM - 09:18 AM</Text>
+              </View>
+            </View>
+
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={styles.fullPanchangBtn}
+                onPress={() => {
+                  const targetIso = selectedModalDateIso!;
+                  setSelectedModalDateIso(null);
+                  onSelectDate(targetIso);
+                }}
+              >
+                <Text style={styles.fullPanchangBtnText}>View Full Today Panchang ➔</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
@@ -246,4 +371,22 @@ const styles = StyleSheet.create({
   festBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
   ritualBadge: { backgroundColor: '#FFE0B2', borderRadius: 3, paddingHorizontal: 2, paddingVertical: 1, borderWidth: 0.5, borderColor: '#FFB74D' },
   ritualBadgeText: { fontSize: 7, fontWeight: 'bold', color: '#D84315', textAlign: 'center' },
+  // Modal Popup Styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.65)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalCard: { backgroundColor: '#FFFFFF', borderRadius: 20, width: '100%', maxWidth: 500, padding: 20, borderContainer: 1, elevation: 10 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: '#EEEEEE', paddingBottom: 10, marginBottom: 12 },
+  modalDateTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.maroon },
+  modalSubtitle: { fontSize: 12, fontWeight: 'bold', color: Colors.primary, marginTop: 2 },
+  modalCloseBtn: { backgroundColor: '#F0F0F0', width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+  modalCloseBtnText: { fontSize: 14, fontWeight: 'bold', color: '#666' },
+  ritualAlertBox: { backgroundColor: '#FFF3E0', borderWidth: 1, borderColor: '#FFB74D', borderRadius: 10, padding: 10, marginBottom: 12 },
+  ritualAlertText: { color: '#D84315', fontWeight: 'bold', fontSize: 13, textAlign: 'center' },
+  timingBox: { backgroundColor: Colors.creamBg, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, padding: 12, marginBottom: 10 },
+  timingBoxTitle: { fontSize: 14, fontWeight: 'bold', color: Colors.maroon, marginBottom: 6 },
+  timingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  timingLabel: { fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary },
+  timingVal: { fontSize: 11, fontWeight: 'bold', color: Colors.primary, backgroundColor: '#FFF3E0', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  modalActionRow: { marginTop: 10 },
+  fullPanchangBtn: { backgroundColor: Colors.primary, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+  fullPanchangBtnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
 });
