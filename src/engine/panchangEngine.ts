@@ -108,6 +108,14 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   const tithiEndTimeFraction = (12.0 - (diffAngle % 12.0)) / 12.0;
   const tithiEndHour = Math.floor(16 + tithiEndTimeFraction * 10) % 24;
   const tithiEndMin = Math.floor((tithiEndTimeFraction * 60) % 60);
+
+  // 2. Nakshatra
+  const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(moonLong / 13.333333333333334)));
+  const nakData = NAKSHATRA_DATA[nakshatraIndex];
+  const nakEndTimeFraction = (13.333333333333334 - (moonLong % 13.333333333333334)) / 13.333333333333334;
+  const nakEndHour = Math.floor(14 + nakEndTimeFraction * 12) % 24;
+  const nakEndMin = Math.floor((nakEndTimeFraction * 60) % 60);
+
   let tithiStartStr = "Prev Day 07:10 AM IST";
   let tithiEndStr = `Up to ${padZero(tithiEndHour)}:${padZero(tithiEndMin)} IST`;
   let nakStartStr = "04:15 AM IST";
@@ -139,13 +147,6 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
     isSpecial: isEkadashi || isPurnima || isAmavasya,
     specialTag
   };
-
-  // 2. Nakshatra
-  const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(moonLong / 13.333333333333334)));
-  const nakData = NAKSHATRA_DATA[nakshatraIndex];
-  const nakEndTimeFraction = (13.333333333333334 - (moonLong % 13.333333333333334)) / 13.333333333333334;
-  const nakEndHour = Math.floor(14 + nakEndTimeFraction * 12) % 24;
-  const nakEndMin = Math.floor((nakEndTimeFraction * 60) % 60);
 
   const nakshatraInfo = {
     name: nakData[0],
