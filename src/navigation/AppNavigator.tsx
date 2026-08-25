@@ -6,6 +6,7 @@ import { Colors } from '../theme/colors';
 import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { calculatePanchang } from '../engine/panchangEngine';
+import { updateLiveChoghadiyaNotification } from '../utils/choghadiyaNotifier';
 
 import { HomeScreen } from '../screens/HomeScreen';
 import { CalendarScreen } from '../screens/CalendarScreen';
@@ -89,6 +90,10 @@ export const AppNavigator: React.FC = () => {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    updateLiveChoghadiyaNotification(selectedCity);
+  }, [selectedCity]);
 
   const handleSelectCity = async (city: CityLocation) => {
     setSelectedCity(city);

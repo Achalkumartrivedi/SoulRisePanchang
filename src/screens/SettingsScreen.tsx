@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert } from 'react-native';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../theme/colors';
 import { CityLocation } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
+import {
+  CHOGHADIYA_NOTIF_KEY,
+  updateLiveChoghadiyaNotification,
+  cancelChoghadiyaNotification
+} from '../utils/choghadiyaNotifier';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -22,6 +28,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
   const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
   const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
+  const [useChoghadiyaNotif, setUseChoghadiyaNotif] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const stored = await AsyncStorage.getItem(CHOGHADIYA_NOTIF_KEY);
+      if (stored === 'true') {
+        setUseChoghadiyaNotif(true);
+      }
+    })();
+  }, []);
+
+  const handleChoghadiyaToggle = async (val: boolean) => {
+    setUseChoghadiyaNotif(val);
+    await AsyncStorage.setItem(CHOGHADIYA_NOTIF_KEY, val ? 'true' : 'false');
+    if (val) {
+      await updateLiveChoghadiyaNotification(selectedCity);
+      Alert.alert('⏰ Live Choghadiya Active', 'Pinned notification started in your status bar!');
+    } else {
+      await cancelChoghadiyaNotification();
+    }
+  };
 
   const handleGpsToggle = async (val: boolean) => {
     setUseGps(val);
@@ -108,6 +135,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               thumbColor={useGps ? Colors.accentGold : '#f4f3f4'}
             />
           </View>
+        </View>
+
+        {/* Timings & Persistent Notifications */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>⏰ Timings & Persistent Notifications</Text>
+
+          <View style={styles.switchRow}>
+            <View style={styles.switchTextContainer}>
+              <Text style={styles.switchLabel}>Choghadiya Status Bar Notification</Text>
+              <Text style={styles.switchSub}>Show pinned ongoing notification with current & next 3 Choghadiyas (Auspicious 🟩 / Inauspicious 🟥)</Text>
+            </View>
+            <Switch
+              value={useChoghadiyaNotif}
+              onValueChange={handleChoghadiyaToggle}
+              trackColor={{ false: '#767577', true: Colors.primary }}
+              thumbColor={useChoghadiyaNotif ? Colors.accentGold : '#f4f3f4'}
+            />
+          </View>
+          <Text style={styles.infoHint}>
+            Status: {useChoghadiyaNotif ? '🟢 Pinned Live Status Active in Android Notification Bar' : '⚪ Notification Disabled'}
+          </Text>
         </View>
 
         {/* Calculation System */}
