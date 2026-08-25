@@ -29,18 +29,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          const { latitude, longitude } = loc.coords;
+          let loc = await Location.getLastKnownPositionAsync();
+          if (!loc) {
+            loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+          }
 
-          let cityName = 'Current Location';
+          const latitude = loc ? loc.coords.latitude : 28.6139;
+          const longitude = loc ? loc.coords.longitude : 77.2090;
+
+          let cityName = 'GPS Location';
           let hindiName = 'वर्तमान स्थान';
 
           try {
             const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
             if (geocode && geocode.length > 0) {
               const place = geocode[0];
-              const name = place.city || place.subregion || place.region || 'Current Location';
-              cityName = `${name} (Current GPS)`;
+              const name = place.city || place.subregion || place.region || 'GPS Location';
+              cityName = `${name} (GPS)`;
               hindiName = name;
             }
           } catch (err) {}
@@ -53,15 +58,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             longitude,
             timeZoneId: 'Asia/Kolkata'
           });
-          Alert.alert('📍 Location Detected', `Coordinates updated to ${cityName}`);
         } else {
-          Alert.alert('Permission Denied', 'GPS location permission was denied.');
           setUseGps(false);
         }
       } catch (e) {
-        Alert.alert('Location Error', 'Failed to detect device coordinates.');
+        // Fallback gracefully on emulator without error popup
+        onSelectCity(DEFAULT_CITIES[0]);
         setUseGps(false);
       }
+    } else {
+      // Revert gracefully to Default City when turning OFF GPS
+      onSelectCity(DEFAULT_CITIES[0]);
     }
   };
 

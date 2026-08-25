@@ -46,10 +46,15 @@ export const AppNavigator: React.FC = () => {
         // Otherwise request location permission on launch
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          const { latitude, longitude } = loc.coords;
+          let loc = await Location.getLastKnownPositionAsync();
+          if (!loc) {
+            loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+          }
 
-          let cityName = 'Current Location';
+          const latitude = loc ? loc.coords.latitude : 28.6139;
+          const longitude = loc ? loc.coords.longitude : 77.2090;
+
+          let cityName = 'GPS Location';
           let hindiName = 'वर्तमान स्थान';
 
           try {
