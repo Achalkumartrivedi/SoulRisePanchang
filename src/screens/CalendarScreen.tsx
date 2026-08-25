@@ -20,6 +20,26 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+const getJulianDay = (d: Date) => {
+  let y = d.getFullYear();
+  let m = d.getMonth() + 1;
+  let day = d.getDate();
+  if (m <= 2) { y -= 1; m += 12; }
+  const a = Math.floor(y / 100);
+  const b = 2 - a + Math.floor(a / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + day + 0.5 + b - 1524.5;
+};
+
+const calculateTithiForDate = (d: Date) => {
+  const jd = getJulianDay(d);
+  const T = (jd - 2451545.0) / 36525.0;
+  const sunL = (280.46646 + 36000.76983 * T) % 360;
+  const moonL = (218.3165 + 481267.8813 * T) % 360;
+  const norm = (v: number) => (v < 0 ? (v % 360 + 360) : v % 360);
+  const elongation = norm(norm(moonL) - norm(sunL));
+  return Math.floor(elongation / 12) % 30;
+};
+
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); // August 2026
 
@@ -75,7 +95,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
             const festMatch = monthFestivals.find(f => f.dateIso === dateIso);
             const isHoliday = isSunday || (festMatch && festMatch.isHoliday);
 
-            const tithiIdx = (dayNum - 1) % 30;
+            const tithiIdx = calculateTithiForDate(dateObj);
             const tithiName = TITHI_NAMES[tithiIdx];
 
             let moonIcon = '🌒';
