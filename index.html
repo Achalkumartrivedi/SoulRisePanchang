@@ -555,7 +555,9 @@
       renderView();
     }
 
+    let activeChartRefMode = 'LAGNA';
     function switchChartStyle(style) { activeChartStyle = style; renderView(); }
+    function switchChartRefMode(mode) { activeChartRefMode = mode; renderView(); }
     function switchChogTime(type) { activeChogTimeType = type; renderView(); }
     function changeDate(days) { currentDate.setDate(currentDate.getDate() + days); renderView(); }
     function resetToday() { currentDate = new Date(); calendarMonth = currentDate.getMonth(); calendarYear = currentDate.getFullYear(); renderView(); }
@@ -828,12 +830,19 @@
 
           <div class="card">
             <div class="card-header">
-              <span>🔮 Precision Lagna Kundali Chart (${selectedCityName} • ${dateIsoStr})</span>
+              <span>🔮 Gochar Kundali Chart (${selectedCityName} • ${dateIsoStr})</span>
               <div class="chart-toggle-bar">
                 <button class="chart-toggle-btn ${activeChartStyle==='NORTH'?'active':''}" onclick="switchChartStyle('NORTH')">🏛️ North Indian</button>
                 <button class="chart-toggle-btn ${activeChartStyle==='SOUTH'?'active':''}" onclick="switchChartStyle('SOUTH')">☸️ South Indian</button>
               </div>
             </div>
+
+            <div style="display:flex; background:#F5EBE6; padding:3px; border-radius:12px; margin-bottom:12px; gap:4px;">
+              <button class="chart-toggle-btn ${activeChartRefMode==='LAGNA'?'active':''}" style="flex:1;" onclick="switchChartRefMode('LAGNA')">🌅 Ascendant (Lagna)</button>
+              <button class="chart-toggle-btn ${activeChartRefMode==='MOON'?'active':''}" style="flex:1;" onclick="switchChartRefMode('MOON')">🌙 Moon Sign (Chandra)</button>
+              <button class="chart-toggle-btn ${activeChartRefMode==='SUN'?'active':''}" style="flex:1;" onclick="switchChartRefMode('SUN')">☀️ Sun Sign (Surya)</button>
+            </div>
+
             <div class="kundali-wrapper">
               ${activeChartStyle === 'NORTH' ? drawNorthIndianKundali(grahasCalculated) : drawSouthIndianKundali(grahasCalculated)}
             </div>
@@ -1177,17 +1186,32 @@
       `;
     }
 
-    function drawNorthIndianKundali(grahas) {
-      const lagnaSign = 5; // Simha (Leo)
+    const PLANETS_CONFIG_MAP = {
+      'Su': { icon: '☀️', color: '#FF5722' },
+      'Mo': { icon: '🌙', color: '#607D8B' },
+      'Ma': { icon: '♂️', color: '#D32F2F' },
+      'Me': { icon: '☿', color: '#00897B' },
+      'Ju': { icon: '♃', color: '#FFB300' },
+      'Ve': { icon: '♀', color: '#0288D1' },
+      'Sa': { icon: '♄', color: '#827717' },
+      'Ra': { icon: '☊', color: '#616161' },
+      'Ke': { icon: '☋', color: '#546E7A' },
+    };
 
-      const getSignForHouse = (houseNum) => ((lagnaSign - 1 + houseNum - 1) % 12) + 1;
+    function drawNorthIndianKundali(grahas) {
+      const lagnaSign = 5;
+      const sunSign = 5;
+      const moonSign = 10;
+      const firstHouseSign = activeChartRefMode === 'MOON' ? moonSign : (activeChartRefMode === 'SUN' ? sunSign : lagnaSign);
+
+      const getSignForHouse = (houseNum) => ((firstHouseSign - 1 + houseNum - 1) % 12) + 1;
       const getPlanetsInHouse = (houseNum) => {
         const signIdx = getSignForHouse(houseNum);
-        return grahas.filter(g => g.rashiIdx === (signIdx - 1)).map(g => g.symbol).join(' ');
+        return grahas.filter(g => g.rashiIdx === (signIdx - 1));
       };
 
       const houseCoords = [
-        { h:1, x:150, y:55, px:150, py:78 },
+        { h:1, x:150, y:50, px:150, py:75 },
         { h:2, x:80, y:35, px:80, py:55 },
         { h:3, x:35, y:80, px:35, py:100 },
         { h:4, x:75, y:150, px:75, py:170 },
@@ -1198,7 +1222,7 @@
         { h:9, x:265, y:220, px:265, py:240 },
         { h:10, x:225, y:150, px:225, py:170 },
         { h:11, x:265, y:80, px:265, py:100 },
-        { h:12, x:210, y:35, px:210, py:55 }
+        { h:12, x:220, y:35, px:220, py:55 }
       ];
 
       return `
@@ -1215,8 +1239,13 @@
             const planets = getPlanetsInHouse(item.h);
             return `
               <text x="${item.x}" y="${item.y}" font-size="15" font-weight="bold" fill="${item.h===1?'#800000':'#5D3A00'}" text-anchor="middle">${signIdx}</text>
-              ${item.h === 1 ? `<text x="${item.x}" y="${item.y+16}" font-size="13" font-weight="bold" fill="#800000" text-anchor="middle">Lagna</text>` : ''}
-              ${planets ? `<text x="${item.px}" y="${item.h===1?item.py+10:item.py}" font-size="11" font-weight="900" fill="${item.h===1?'#D84315':'#1B5E20'}" text-anchor="middle">${planets}</text>` : ''}
+              ${item.h === 1 ? `<text x="${item.x}" y="${item.y+16}" font-size="12" font-weight="bold" fill="#800000" text-anchor="middle">${activeChartRefMode==='MOON'?'Chandra':(activeChartRefMode==='SUN'?'Surya':'Lagna')}</text>` : ''}
+              ${planets.map((p, pIdx) => {
+                const cfg = PLANETS_CONFIG_MAP[p.symbol] || { icon: '🪐', color: '#1B5E20' };
+                const offset = (pIdx - (planets.length - 1) / 2) * 16;
+                const py = item.h === 1 ? item.py + 12 : item.py;
+                return `<text x="${item.px + offset}" y="${py}" font-size="10" font-weight="900" fill="${cfg.color}" text-anchor="middle">${cfg.icon} ${p.symbol}</text>`;
+              }).join('')}
             `;
           }).join('')}
         </svg>
@@ -1224,7 +1253,11 @@
     }
 
     function drawSouthIndianKundali(grahas) {
-      const lagnaSign = 5; // Simha (Leo)
+      const lagnaSign = 5;
+      const sunSign = 5;
+      const moonSign = 10;
+      const firstHouseSign = activeChartRefMode === 'MOON' ? moonSign : (activeChartRefMode === 'SUN' ? sunSign : lagnaSign);
+
       const southGrid = [
         { signIdx:12, abbrev:'Pi', x:10, y:10 },
         { signIdx:1, abbrev:'Ar', x:80, y:10 },
@@ -1252,19 +1285,23 @@
           <line x1="10" y1="220" x2="290" y2="220" stroke="#5D3A00" stroke-width="1.5"/>
 
           <rect x="80" y="80" width="140" height="140" fill="#F4EADB" stroke="#5D3A00" stroke-width="1.5"/>
-          <text x="150" y="145" font-size="14" font-weight="bold" fill="#800000" text-anchor="middle">GOCHAR</text>
-          <text x="150" y="165" font-size="11" font-weight="bold" fill="#C49347" text-anchor="middle">KUNDALI</text>
+          <text x="150" y="140" font-size="13" font-weight="bold" fill="#800000" text-anchor="middle">${activeChartRefMode==='MOON'?'CHANDRA KUNDALI':(activeChartRefMode==='SUN'?'SURYA KUNDALI':'GOCHAR KUNDALI')}</text>
+          <text x="150" y="160" font-size="10" font-weight="bold" fill="#C49347" text-anchor="middle">${activeChartRefMode==='MOON'?'1st H = Moon Sign':(activeChartRefMode==='SUN'?'1st H = Sun Sign':'1st H = Ascendant')}</text>
 
           ${southGrid.map(cell => {
-            const isLagna = cell.signIdx === lagnaSign;
-            const planets = grahas.filter(g => g.rashiIdx === (cell.signIdx - 1)).map(g => g.symbol).join(' ');
+            const isFirstHouse = cell.signIdx === firstHouseSign;
+            const planets = grahas.filter(g => g.rashiIdx === (cell.signIdx - 1));
             return `
-              <text x="${cell.x+35}" y="${cell.y+32}" font-size="17" font-weight="bold" fill="${isLagna?'#800000':'#5D3A00'}" text-anchor="middle">${cell.abbrev}</text>
-              ${isLagna ? `
+              <text x="${cell.x+35}" y="${cell.y+28}" font-size="16" font-weight="bold" fill="${isFirstHouse?'#800000':'#5D3A00'}" text-anchor="middle">${cell.abbrev}</text>
+              ${isFirstHouse ? `
                 <line x1="${cell.x+52}" y1="${cell.y+12}" x2="${cell.x+64}" y2="${cell.y+24}" stroke="#800000" stroke-width="2"/>
                 <line x1="${cell.x+57}" y1="${cell.y+12}" x2="${cell.x+69}" y2="${cell.y+24}" stroke="#800000" stroke-width="2"/>
               ` : ''}
-              ${planets ? `<text x="${cell.x+35}" y="${cell.y+54}" font-size="11" font-weight="900" fill="${isLagna?'#D84315':'#1B5E20'}" text-anchor="middle">${planets}</text>` : ''}
+              ${planets.map((p, pIdx) => {
+                const cfg = PLANETS_CONFIG_MAP[p.symbol] || { icon: '🪐', color: '#1B5E20' };
+                const offset = (pIdx - (planets.length - 1) / 2) * 14;
+                return `<text x="${cell.x+35+offset}" y="${cell.y+52}" font-size="9" font-weight="900" fill="${cfg.color}" text-anchor="middle">${cfg.icon} ${p.symbol}</text>`;
+              }).join('')}
             `;
           }).join('')}
         </svg>

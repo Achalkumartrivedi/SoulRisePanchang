@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Rect, Line, Polygon, Text as SvgText, G } from 'react-native-svg';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, DailyLagnaItem } from '../types/panchang';
@@ -8,22 +8,35 @@ interface GocharKundaliCardProps {
   panchang: PanchangDayData;
 }
 
-// 9 Planets & their current transit signs for Aug 2026
-// Sign Index 1 to 12: 1=Mesha, 2=Vrishabha, 3=Mithuna, 4=Karka, 5=Simha, 6=Kanya, 7=Tula, 8=Vrischika, 9=Dhanu, 10=Makara, 11=Kumbha, 12=Meena
-const PLANET_POSITIONS: { symbol: string; name: string; hindiName: string; signIndex: number }[] = [
-  { symbol: 'Su', name: 'Sun', hindiName: 'सूर्य', signIndex: 5 },      // Simha (Leo)
-  { symbol: 'Mo', name: 'Moon', hindiName: 'चंद्र', signIndex: 10 },    // Makara (Capricorn)
-  { symbol: 'Ma', name: 'Mars', hindiName: 'मंगल', signIndex: 3 },     // Mithuna (Gemini)
-  { symbol: 'Me', name: 'Mercury', hindiName: 'बुध', signIndex: 4 },   // Karka (Cancer)
-  { symbol: 'Ju', name: 'Jupiter', hindiName: 'गुरु', signIndex: 3 },   // Mithuna (Gemini)
-  { symbol: 'Ve', name: 'Venus', hindiName: 'शुक्र', signIndex: 6 },   // Kanya (Virgo)
-  { symbol: 'Sa', name: 'Saturn', hindiName: 'शनि', signIndex: 12 },   // Meena (Pisces)
-  { symbol: 'Ra', name: 'Rahu', hindiName: 'राहु', signIndex: 11 },    // Kumbha (Aquarius)
-  { symbol: 'Ke', name: 'Ketu', hindiName: 'केतु', signIndex: 5 },     // Simha (Leo)
-];
+export type ReferenceMode = 'LAGNA' | 'MOON' | 'SUN';
+
+export interface PlanetConfig {
+  symbol: string;       // 'Su', 'Mo', etc.
+  name: string;
+  hindiName: string;
+  signIndex: number;    // 1-12
+  icon: string;         // Visual icon / emoji
+  color: string;        // Text & icon color
+  desc: string;
+}
+
+// 9 Planets with custom visual icons, colors, & Aug 2026 transits
+const PLANET_CONFIGS: Record<string, PlanetConfig> = {
+  Su: { symbol: 'Su', name: 'Sun', hindiName: 'सूर्य', signIndex: 5, icon: '☀️', color: '#FF5722', desc: 'Orange flare' },
+  Mo: { symbol: 'Mo', name: 'Moon', hindiName: 'चंद्र', signIndex: 10, icon: '🌙', color: '#607D8B', desc: 'White/Silver with grey' },
+  Ma: { symbol: 'Ma', name: 'Mars', hindiName: 'मंगल', signIndex: 3, icon: '♂️', color: '#D32F2F', desc: 'Red planet' },
+  Me: { symbol: 'Me', name: 'Mercury', hindiName: 'बुध', signIndex: 4, icon: '☿', color: '#00897B', desc: 'Light green planet' },
+  Ju: { symbol: 'Ju', name: 'Jupiter', hindiName: 'गुरु', signIndex: 3, icon: '♃', color: '#FFB300', desc: 'Yellow gas giant' },
+  Ve: { symbol: 'Ve', name: 'Venus', hindiName: 'शुक्र', signIndex: 6, icon: '♀', color: '#0288D1', desc: 'Blue radiant planet' },
+  Sa: { symbol: 'Sa', name: 'Saturn', hindiName: 'शनि', signIndex: 12, icon: '♄', color: '#827717', desc: 'Ringed golden planet' },
+  Ra: { symbol: 'Ra', name: 'Rahu', hindiName: 'राहु', signIndex: 11, icon: '☊', color: '#616161', desc: 'Shadow dark grey' },
+  Ke: { symbol: 'Ke', name: 'Ketu', hindiName: 'केतु', signIndex: 5, icon: '☋', color: '#546E7A', desc: 'Shadow slate grey' },
+};
+
+const PLANETS_ARRAY = Object.values(PLANET_CONFIGS);
 
 // Fixed South Indian Zodiac Map
-const SOUTH_ZODIAC_GRID: { signIndex: number; abbrev: string; name: string; col: number; row: number; x: number; y: number }[] = [
+const SOUTH_ZODIAC_GRID = [
   { signIndex: 12, abbrev: 'Pi', name: 'Meena', col: 0, row: 0, x: 10, y: 10 },
   { signIndex: 1, abbrev: 'Ar', name: 'Mesha', col: 1, row: 0, x: 80, y: 10 },
   { signIndex: 2, abbrev: 'Ta', name: 'Vrishabha', col: 2, row: 0, x: 150, y: 10 },
@@ -40,6 +53,7 @@ const SOUTH_ZODIAC_GRID: { signIndex: number; abbrev: string; name: string; col:
 
 export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }) => {
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH'>('NORTH');
+  const [refMode, setRefMode] = useState<ReferenceMode>('LAGNA');
 
   const lagnaInfo = panchang.lagnaInfo || {
     currentLagnaSign: 5,
@@ -51,26 +65,34 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
   };
 
   const lagnaSign = lagnaInfo.currentLagnaSign;
+  const sunSign = 5; // Simha
+  const moonSign = 10; // Makara
+
+  // Determine which Zodiac Sign is placed in the 1st House (Lagna house)
+  const firstHouseSign = 
+    refMode === 'MOON' ? moonSign :
+    refMode === 'SUN' ? sunSign :
+    lagnaSign;
 
   // Get sign number for House 1..12 in North Indian chart
   const getSignForHouse = (houseNum: number): number => {
-    return ((lagnaSign - 1 + houseNum - 1) % 12) + 1;
+    return ((firstHouseSign - 1 + houseNum - 1) % 12) + 1;
   };
 
   // Get planets inside a given zodiac sign index (1-12)
-  const getPlanetsInSign = (signIdx: number): string[] => {
-    return PLANET_POSITIONS.filter(p => p.signIndex === signIdx).map(p => p.symbol);
+  const getPlanetsInSign = (signIdx: number): PlanetConfig[] => {
+    return PLANETS_ARRAY.filter(p => p.signIndex === signIdx);
   };
 
   // Get planets inside a house (1-12) for North Chart
-  const getPlanetsInHouse = (houseNum: number): string[] => {
+  const getPlanetsInHouse = (houseNum: number): PlanetConfig[] => {
     const signIdx = getSignForHouse(houseNum);
     return getPlanetsInSign(signIdx);
   };
 
   // House Label Positions for North Indian Diamond Chart SVG (300x300 canvas)
-  const NORTH_HOUSE_POSITIONS: { houseNum: number; x: number; y: number; px: number; py: number }[] = [
-    { houseNum: 1, x: 150, y: 55, px: 150, py: 78 },   // H1 (Top Center Diamond - Lagna)
+  const NORTH_HOUSE_POSITIONS = [
+    { houseNum: 1, x: 150, y: 50, px: 150, py: 75 },   // H1 (Top Center Diamond - 1st House)
     { houseNum: 2, x: 80, y: 35, px: 80, py: 55 },     // H2 (Upper Left)
     { houseNum: 3, x: 35, y: 80, px: 35, py: 100 },    // H3 (Left Upper)
     { houseNum: 4, x: 75, y: 150, px: 75, py: 170 },   // H4 (Left Center Diamond)
@@ -92,7 +114,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           <Text style={styles.cardTitle}>🪐 Gochar Kundali (गोचर कुण्डली)</Text>
         </View>
 
-        {/* Segmented Control - Fixed container alignment */}
+        {/* Segmented Control - North vs South Indian */}
         <View style={styles.chartToggleBar}>
           <TouchableOpacity
             style={[styles.chartToggleBtn, chartStyle === 'NORTH' && styles.chartToggleBtnActive]}
@@ -114,39 +136,77 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
         </View>
       </View>
 
-      {/* Active Ascendant (Lagna) Header Banner */}
+      {/* 3-Way Chart Reference Mode Switcher: Ascendant / Moon Sign / Sun Sign */}
+      <View style={styles.refModeContainer}>
+        <TouchableOpacity
+          style={[styles.refModeBtn, refMode === 'LAGNA' && styles.refModeBtnActive]}
+          onPress={() => setRefMode('LAGNA')}
+        >
+          <Text style={[styles.refModeText, refMode === 'LAGNA' && styles.refModeTextActive]}>
+            🌅 Ascendant (Lagna)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.refModeBtn, refMode === 'MOON' && styles.refModeBtnActive]}
+          onPress={() => setRefMode('MOON')}
+        >
+          <Text style={[styles.refModeText, refMode === 'MOON' && styles.refModeTextActive]}>
+            🌙 Moon Sign (Chandra)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.refModeBtn, refMode === 'SUN' && styles.refModeBtnActive]}
+          onPress={() => setRefMode('SUN')}
+        >
+          <Text style={[styles.refModeText, refMode === 'SUN' && styles.refModeTextActive]}>
+            ☀️ Sun Sign (Surya)
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Active Mode Banner */}
       <View style={styles.lagnaBanner}>
         <View style={styles.lagnaLeft}>
-          <Text style={styles.lagnaIcon}>🌅</Text>
+          <Text style={styles.lagnaIcon}>
+            {refMode === 'MOON' ? '🌙' : refMode === 'SUN' ? '☀️' : '🌅'}
+          </Text>
           <View>
-            <Text style={styles.lagnaTitleText}>Current Ascendant (लग्न): {lagnaInfo.name} ({lagnaInfo.hindiName})</Text>
-            <Text style={styles.lagnaTimeSub}>Rising Window: {lagnaInfo.startTime} - {lagnaInfo.endTime}</Text>
+            <Text style={styles.lagnaTitleText}>
+              {refMode === 'MOON' ? 'Chandra Kundali (Moon in 1st House)' :
+               refMode === 'SUN' ? 'Surya Kundali (Sun in 1st House)' :
+               `Current Ascendant (Lagna): ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
+            </Text>
+            <Text style={styles.lagnaTimeSub}>
+              {refMode === 'MOON' ? '1st House = Makara (Capricorn)' :
+               refMode === 'SUN' ? '1st House = Simha (Leo)' :
+               `Rising Window: ${lagnaInfo.startTime} - ${lagnaInfo.endTime}`}
+            </Text>
           </View>
         </View>
         <View style={styles.activeLagnaBadge}>
-          <Text style={styles.activeLagnaBadgeText}>1st House (Lagna)</Text>
+          <Text style={styles.activeLagnaBadgeText}>1st House</Text>
         </View>
       </View>
 
       {/* Chart Visualization */}
       <View style={styles.chartWrapper}>
         {chartStyle === 'NORTH' ? (
-          /* North Indian Diamond Chart (Exact Match to @image1) */
+          /* North Indian Diamond Chart (Matching @image1 with Lagna / Moon / Sun mode) */
           <Svg width={300} height={300} viewBox="0 0 300 300" style={styles.svgChart}>
             {/* Background Parchment Box */}
             <Rect x={10} y={10} width={280} height={280} fill="#FAF5EC" stroke="#D4A359" strokeWidth={3} rx={4} />
-
-            {/* Inner Gold Ornamental Border Lines */}
             <Rect x={14} y={14} width={272} height={272} fill="none" stroke="#C49347" strokeWidth={1} />
 
-            {/* Main Diagonal Lines */}
+            {/* Main Diagonals */}
             <Line x1={10} y1={10} x2={290} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
             <Line x1={290} y1={10} x2={10} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
 
             {/* Midpoint Diamond Polygon */}
             <Polygon points="150,10 290,150 150,290 10,150" fill="none" stroke="#5D3A00" strokeWidth={1.8} />
 
-            {/* Houses 1 to 12 Labels & Planets */}
+            {/* Render Houses 1 to 12 Labels & Custom Colored Planet Icons */}
             {NORTH_HOUSE_POSITIONS.map((hp) => {
               const signIdx = getSignForHouse(hp.houseNum);
               const planets = getPlanetsInHouse(hp.houseNum);
@@ -165,39 +225,45 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                     {signIdx}
                   </SvgText>
 
-                  {/* "Lagna" Subtitle under House 1 */}
+                  {/* House 1 Subtitle */}
                   {hp.houseNum === 1 && (
                     <SvgText
                       x={hp.x}
                       y={hp.y + 16}
-                      fontSize={13}
+                      fontSize={12}
                       fontWeight="bold"
                       fill="#800000"
                       textAnchor="middle"
                     >
-                      Lagna
+                      {refMode === 'MOON' ? 'Chandra' : refMode === 'SUN' ? 'Surya' : 'Lagna'}
                     </SvgText>
                   )}
 
-                  {/* Planets inside House */}
-                  {planets.length > 0 && (
-                    <SvgText
-                      x={hp.px}
-                      y={hp.houseNum === 1 ? hp.py + 10 : hp.py}
-                      fontSize={11}
-                      fontWeight="900"
-                      fill={hp.houseNum === 1 ? '#D84315' : '#1B5E20'}
-                      textAnchor="middle"
-                    >
-                      {planets.join(' ')}
-                    </SvgText>
-                  )}
+                  {/* Render Planets in House with Custom Colors & Icons */}
+                  {planets.map((p, pIdx) => {
+                    const offset = (pIdx - (planets.length - 1) / 2) * 16;
+                    const py = hp.houseNum === 1 ? hp.py + 12 : hp.py;
+
+                    return (
+                      <SvgText
+                        key={p.symbol}
+                        x={hp.px + offset}
+                        y={py}
+                        fontSize={10}
+                        fontWeight="900"
+                        fill={p.color}
+                        textAnchor="middle"
+                      >
+                        {`${p.icon} ${p.symbol}`}
+                      </SvgText>
+                    );
+                  })}
                 </G>
               );
             })}
           </Svg>
         ) : (
-          /* South Indian Grid Chart (Exact Match to @image2) */
+          /* South Indian Grid Chart (Matching @image2 with double slash '//' on 1st House cell) */
           <Svg width={300} height={300} viewBox="0 0 300 300" style={styles.svgChart}>
             {/* Background Parchment Box */}
             <Rect x={10} y={10} width={280} height={280} fill="#FAF5EC" stroke="#D4A359" strokeWidth={3} rx={4} />
@@ -213,12 +279,16 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
 
             {/* Center Merged Box */}
             <Rect x={80} y={80} width={140} height={140} fill="#F4EADB" stroke="#5D3A00" strokeWidth={1.5} />
-            <SvgText x={150} y={145} fontSize={14} fontWeight="bold" fill="#800000" textAnchor="middle">GOCHAR</SvgText>
-            <SvgText x={150} y={165} fontSize={11} fontWeight="bold" fill="#C49347" textAnchor="middle">KUNDALI</SvgText>
+            <SvgText x={150} y={140} fontSize={13} fontWeight="bold" fill="#800000" textAnchor="middle">
+              {refMode === 'MOON' ? 'CHANDRA KUNDALI' : refMode === 'SUN' ? 'SURYA KUNDALI' : 'GOCHAR KUNDALI'}
+            </SvgText>
+            <SvgText x={150} y={160} fontSize={10} fontWeight="bold" fill="#C49347" textAnchor="middle">
+              {refMode === 'MOON' ? '1st House = Moon Sign' : refMode === 'SUN' ? '1st House = Sun Sign' : '1st House = Ascendant'}
+            </SvgText>
 
             {/* Render 12 Fixed Sign Cells */}
             {SOUTH_ZODIAC_GRID.map((cell) => {
-              const isLagna = cell.signIndex === lagnaSign;
+              const isFirstHouse = cell.signIndex === firstHouseSign;
               const planets = getPlanetsInSign(cell.signIndex);
 
               return (
@@ -226,36 +296,40 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                   {/* Sign Abbreviation (Ar, Ta, Ge, Cn, Le, Vi, Li, Sc, Sg, Cp, Aq, Pi) */}
                   <SvgText
                     x={cell.x + 35}
-                    y={cell.y + 32}
-                    fontSize={17}
+                    y={cell.y + 28}
+                    fontSize={16}
                     fontWeight="bold"
-                    fill={isLagna ? '#800000' : '#5D3A00'}
+                    fill={isFirstHouse ? '#800000' : '#5D3A00'}
                     textAnchor="middle"
                   >
                     {cell.abbrev}
                   </SvgText>
 
-                  {/* Double Slash '//' for Lagna Sign Corner (as in @image2) */}
-                  {isLagna && (
+                  {/* Double Slash '//' for 1st House Corner (as in @image2) */}
+                  {isFirstHouse && (
                     <G>
                       <Line x1={cell.x + 52} y1={cell.y + 12} x2={cell.x + 64} y2={cell.y + 24} stroke="#800000" strokeWidth={2} />
                       <Line x1={cell.x + 57} y1={cell.y + 12} x2={cell.x + 69} y2={cell.y + 24} stroke="#800000" strokeWidth={2} />
                     </G>
                   )}
 
-                  {/* Planets inside Sign Cell */}
-                  {planets.length > 0 && (
-                    <SvgText
-                      x={cell.x + 35}
-                      y={cell.y + 54}
-                      fontSize={11}
-                      fontWeight="900"
-                      fill={isLagna ? '#D84315' : '#1B5E20'}
-                      textAnchor="middle"
-                    >
-                      {planets.join(' ')}
-                    </SvgText>
-                  )}
+                  {/* Planets inside Sign Cell with Custom Colors & Icons */}
+                  {planets.map((p, pIdx) => {
+                    const offset = (pIdx - (planets.length - 1) / 2) * 14;
+                    return (
+                      <SvgText
+                        key={p.symbol}
+                        x={cell.x + 35 + offset}
+                        y={cell.y + 52}
+                        fontSize={9}
+                        fontWeight="900"
+                        fill={p.color}
+                        textAnchor="middle"
+                      >
+                        {`${p.icon} ${p.symbol}`}
+                      </SvgText>
+                    );
+                  })}
                 </G>
               );
             })}
@@ -263,12 +337,19 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
         )}
       </View>
 
-      {/* Planetary Legend */}
-      <View style={styles.legendBox}>
-        <Text style={styles.legendTitle}>🪐 Planetary Symbols Key (ग्रह संकेत):</Text>
-        <Text style={styles.legendText}>
-          <Text style={{ fontWeight: 'bold' }}>Su</Text>: Sun • <Text style={{ fontWeight: 'bold' }}>Mo</Text>: Moon • <Text style={{ fontWeight: 'bold' }}>Ma</Text>: Mars • <Text style={{ fontWeight: 'bold' }}>Me</Text>: Mercury • <Text style={{ fontWeight: 'bold' }}>Ju</Text>: Jupiter • <Text style={{ fontWeight: 'bold' }}>Ve</Text>: Venus • <Text style={{ fontWeight: 'bold' }}>Sa</Text>: Saturn • <Text style={{ fontWeight: 'bold' }}>Ra</Text>: Rahu • <Text style={{ fontWeight: 'bold' }}>Ke</Text>: Ketu
-        </Text>
+      {/* Visual Planetary Key (matching user's color description) */}
+      <View style={styles.planetKeyContainer}>
+        <Text style={styles.legendTitle}>🪐 Navagraha Color & Symbol Key (ग्रह रंग संकेत):</Text>
+
+        <View style={styles.planetKeyGrid}>
+          {PLANETS_ARRAY.map((p) => (
+            <View key={p.symbol} style={styles.planetKeyPill}>
+              <Text style={{ fontSize: 13, marginRight: 4 }}>{p.icon}</Text>
+              <Text style={[styles.planetKeySymbol, { color: p.color }]}>{p.symbol}</Text>
+              <Text style={styles.planetKeyName}> ({p.hindiName})</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Daily 12 Ascendants Rising Timings Table */}
@@ -328,7 +409,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 10,
     gap: 8,
   },
   titleBox: {
@@ -363,6 +444,31 @@ const styles = StyleSheet.create({
   chartToggleTextActive: {
     color: '#FFFFFF',
   },
+  refModeContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F5EBE6',
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 12,
+    justifyContent: 'space-between',
+  },
+  refModeBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 9,
+    alignItems: 'center',
+  },
+  refModeBtnActive: {
+    backgroundColor: Colors.maroon,
+  },
+  refModeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  refModeTextActive: {
+    color: '#FFFFFF',
+  },
   lagnaBanner: {
     backgroundColor: '#FFF3E0',
     borderRadius: 14,
@@ -370,7 +476,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#FFE0B2',
   },
@@ -380,11 +486,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lagnaIcon: {
-    fontSize: 24,
+    fontSize: 22,
     marginRight: 10,
   },
   lagnaTitleText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     color: Colors.maroon,
   },
@@ -408,28 +514,48 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    marginVertical: 6,
   },
   svgChart: {
     borderRadius: 14,
     elevation: 2,
   },
-  legendBox: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 14,
+  planetKeyContainer: {
+    backgroundColor: '#FAF5EE',
+    borderRadius: 12,
+    padding: 12,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E0D0B8',
   },
   legendTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 8,
+  },
+  planetKeyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  planetKeyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  planetKeySymbol: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginBottom: 4,
   },
-  legendText: {
+  planetKeyName: {
     fontSize: 10,
     color: Colors.textSecondary,
-    lineHeight: 16,
   },
   lagnaTableBox: {
     marginTop: 4,
@@ -449,7 +575,7 @@ const styles = StyleSheet.create({
   },
   lagnaRow: {
     flexDirection: 'row',
-    justify.content: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
