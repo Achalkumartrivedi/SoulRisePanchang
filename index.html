@@ -782,8 +782,11 @@
         else if (tithiIdx === 29) moonIcon = '🌑';
         else if (tithiIdx > 14) moonIcon = '🌘';
 
+        const realToday = new Date();
+        const isTodayCell = d === realToday.getDate() && calendarMonth === realToday.getMonth() && calendarYear === realToday.getFullYear();
+
         cellsHtml += `
-          <div class="cal-day ${isHoliday ? 'holiday' : ''} ${d === currentDate.getDate() && calendarMonth === currentDate.getMonth() ? 'today' : ''}" onclick="selectCalDate('${dateIso}')">
+          <div class="cal-day ${isHoliday ? 'holiday' : ''} ${isTodayCell ? 'today' : ''}" onclick="selectCalDate('${dateIso}')">
             <div class="day-num-row">
               <span style="${isHoliday ? 'color:#C62828;' : ''}">${d}</span>
               <span class="moon-icon">${moonIcon}</span>

@@ -103,13 +103,16 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
             else if (tithiIdx === 29) moonIcon = '🌑';
             else if (tithiIdx > 14) moonIcon = '🌘';
 
+            const realToday = new Date();
+            const isTodayCell = dayNum === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear();
+
             return (
               <TouchableOpacity
                 key={`day-${dayNum}`}
                 style={[
                   styles.dayCell,
                   isHoliday && styles.holidayCell,
-                  dayNum === 24 && month === 7 && year === 2026 && styles.todayCell
+                  isTodayCell && styles.todayCell
                 ]}
                 onPress={() => onSelectDate(dateIso)}
                 activeOpacity={0.7}
