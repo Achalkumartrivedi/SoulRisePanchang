@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import Svg, { Rect, Line, Polygon, Text as SvgText, G } from 'react-native-svg';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, DailyLagnaItem } from '../types/panchang';
 
@@ -21,20 +22,21 @@ const PLANET_POSITIONS: { symbol: string; name: string; hindiName: string; signI
   { symbol: 'Ke', name: 'Ketu', hindiName: 'केतु', signIndex: 5 },     // Simha (Leo)
 ];
 
-const SIGN_NAMES: Record<number, { name: string; hindiName: string }> = {
-  1: { name: 'Mesha', hindiName: 'मेष' },
-  2: { name: 'Vrishabha', hindiName: 'वृषभ' },
-  3: { name: 'Mithuna', hindiName: 'मिथुन' },
-  4: { name: 'Karka', hindiName: 'कर्क' },
-  5: { name: 'Simha', hindiName: 'सिंह' },
-  6: { name: 'Kanya', hindiName: 'कन्या' },
-  7: { name: 'Tula', hindiName: 'तुला' },
-  8: { name: 'Vrischika', hindiName: 'वृश्चिक' },
-  9: { name: 'Dhanu', hindiName: 'धनु' },
-  10: { name: 'Makara', hindiName: 'मकर' },
-  11: { name: 'Kumbha', hindiName: 'कुम्भ' },
-  12: { name: 'Meena', hindiName: 'मीन' },
-};
+// Fixed South Indian Zodiac Map
+const SOUTH_ZODIAC_GRID: { signIndex: number; abbrev: string; name: string; col: number; row: number; x: number; y: number }[] = [
+  { signIndex: 12, abbrev: 'Pi', name: 'Meena', col: 0, row: 0, x: 10, y: 10 },
+  { signIndex: 1, abbrev: 'Ar', name: 'Mesha', col: 1, row: 0, x: 80, y: 10 },
+  { signIndex: 2, abbrev: 'Ta', name: 'Vrishabha', col: 2, row: 0, x: 150, y: 10 },
+  { signIndex: 3, abbrev: 'Ge', name: 'Mithuna', col: 3, row: 0, x: 220, y: 10 },
+  { signIndex: 4, abbrev: 'Cn', name: 'Karka', col: 3, row: 1, x: 220, y: 80 },
+  { signIndex: 5, abbrev: 'Le', name: 'Simha', col: 3, row: 2, x: 220, y: 150 },
+  { signIndex: 6, abbrev: 'Vi', name: 'Kanya', col: 3, row: 3, x: 220, y: 220 },
+  { signIndex: 7, abbrev: 'Li', name: 'Tula', col: 2, row: 3, x: 150, y: 220 },
+  { signIndex: 8, abbrev: 'Sc', name: 'Vrischika', col: 1, row: 3, x: 80, y: 220 },
+  { signIndex: 9, abbrev: 'Sg', name: 'Dhanu', col: 0, row: 3, x: 10, y: 220 },
+  { signIndex: 10, abbrev: 'Cp', name: 'Makara', col: 0, row: 2, x: 10, y: 150 },
+  { signIndex: 11, abbrev: 'Aq', name: 'Kumbha', col: 0, row: 1, x: 10, y: 80 },
+];
 
 export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }) => {
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH'>('NORTH');
@@ -50,7 +52,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
 
   const lagnaSign = lagnaInfo.currentLagnaSign;
 
-  // Given house number 1 to 12 in North Indian chart, get zodiac sign index (1-12)
+  // Get sign number for House 1..12 in North Indian chart
   const getSignForHouse = (houseNum: number): number => {
     return ((lagnaSign - 1 + houseNum - 1) % 12) + 1;
   };
@@ -60,11 +62,27 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
     return PLANET_POSITIONS.filter(p => p.signIndex === signIdx).map(p => p.symbol);
   };
 
-  // Get planets inside a house (1-12)
+  // Get planets inside a house (1-12) for North Chart
   const getPlanetsInHouse = (houseNum: number): string[] => {
     const signIdx = getSignForHouse(houseNum);
     return getPlanetsInSign(signIdx);
   };
+
+  // House Label Positions for North Indian Diamond Chart SVG (300x300 canvas)
+  const NORTH_HOUSE_POSITIONS: { houseNum: number; x: number; y: number; px: number; py: number }[] = [
+    { houseNum: 1, x: 150, y: 55, px: 150, py: 78 },   // H1 (Top Center Diamond - Lagna)
+    { houseNum: 2, x: 80, y: 35, px: 80, py: 55 },     // H2 (Upper Left)
+    { houseNum: 3, x: 35, y: 80, px: 35, py: 100 },    // H3 (Left Upper)
+    { houseNum: 4, x: 75, y: 150, px: 75, py: 170 },   // H4 (Left Center Diamond)
+    { houseNum: 5, x: 35, y: 220, px: 35, py: 240 },   // H5 (Left Lower)
+    { houseNum: 6, x: 80, y: 265, px: 80, py: 280 },   // H6 (Lower Left)
+    { houseNum: 7, x: 150, y: 235, px: 150, py: 255 }, // H7 (Bottom Center Diamond)
+    { houseNum: 8, x: 220, y: 265, px: 220, py: 280 }, // H8 (Lower Right)
+    { houseNum: 9, x: 265, y: 220, px: 265, py: 240 }, // H9 (Right Lower)
+    { houseNum: 10, x: 225, y: 150, px: 225, py: 170 },// H10 (Right Center Diamond)
+    { houseNum: 11, x: 265, y: 80, px: 265, py: 100 }, // H11 (Right Upper)
+    { houseNum: 12, x: 220, y: 35, px: 220, py: 55 },  // H12 (Upper Right)
+  ];
 
   return (
     <View style={styles.card}>
@@ -111,119 +129,145 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
       </View>
 
       {/* Chart Visualization */}
-      {chartStyle === 'NORTH' ? (
-        /* North Indian Diamond Chart Grid */
-        <View style={styles.northChartContainer}>
-          {/* Top Row: H12, H1 (Lagna), H2 */}
-          <View style={styles.chartRow}>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(12)}</Text>
-              <Text style={styles.houseLabel}>H12</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(12).join(' ')}</Text>
-            </View>
-            <View style={[styles.houseBox, styles.lagnaHouseBox]}>
-              <Text style={styles.lagnaTag}>Lag</Text>
-              <Text style={[styles.signNum, { color: Colors.maroon }]}>{getSignForHouse(1)}</Text>
-              <Text style={[styles.houseLabel, { color: Colors.maroon }]}>H1 (Lagna)</Text>
-              <Text style={styles.planetTextBold}>{getPlanetsInHouse(1).join(' ') || '-'}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(2)}</Text>
-              <Text style={styles.houseLabel}>H2</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(2).join(' ')}</Text>
-            </View>
-          </View>
+      <View style={styles.chartWrapper}>
+        {chartStyle === 'NORTH' ? (
+          /* North Indian Diamond Chart (Exact Match to @image1) */
+          <Svg width={300} height={300} viewBox="0 0 300 300" style={styles.svgChart}>
+            {/* Background Parchment Box */}
+            <Rect x={10} y={10} width={280} height={280} fill="#FAF5EC" stroke="#D4A359" strokeWidth={3} rx={4} />
 
-          {/* Middle Row: H11, Center, H3 */}
-          <View style={styles.chartRow}>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(11)}</Text>
-              <Text style={styles.houseLabel}>H11</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(11).join(' ')}</Text>
-            </View>
-            <View style={styles.centerChartBox}>
-              <Text style={styles.centerOm}>🕉️</Text>
-              <Text style={styles.centerTitle}>GOCHAR</Text>
-              <Text style={styles.centerSub}>{panchang.tithi.name}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(3)}</Text>
-              <Text style={styles.houseLabel}>H3</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(3).join(' ')}</Text>
-            </View>
-          </View>
+            {/* Inner Gold Ornamental Border Lines */}
+            <Rect x={14} y={14} width={272} height={272} fill="none" stroke="#C49347" strokeWidth={1} />
 
-          {/* Row 3: H10, H4, H5 */}
-          <View style={styles.chartRow}>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(10)}</Text>
-              <Text style={styles.houseLabel}>H10</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(10).join(' ')}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(4)}</Text>
-              <Text style={styles.houseLabel}>H4</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(4).join(' ')}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(5)}</Text>
-              <Text style={styles.houseLabel}>H5</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(5).join(' ')}</Text>
-            </View>
-          </View>
+            {/* Main Diagonal Lines */}
+            <Line x1={10} y1={10} x2={290} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
+            <Line x1={290} y1={10} x2={10} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
 
-          {/* Bottom Row: H9, H8, H7, H6 */}
-          <View style={styles.chartRow}>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(9)}</Text>
-              <Text style={styles.houseLabel}>H9</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(9).join(' ')}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(8)}</Text>
-              <Text style={styles.houseLabel}>H8</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(8).join(' ')}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(7)}</Text>
-              <Text style={styles.houseLabel}>H7</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(7).join(' ')}</Text>
-            </View>
-            <View style={styles.houseBox}>
-              <Text style={styles.signNum}>{getSignForHouse(6)}</Text>
-              <Text style={styles.houseLabel}>H6</Text>
-              <Text style={styles.planetText}>{getPlanetsInHouse(6).join(' ')}</Text>
-            </View>
-          </View>
-        </View>
-      ) : (
-        /* South Indian Grid Chart */
-        <View style={styles.southChartContainer}>
-          {[12, 1, 2, 3, 11, 4, 10, 5, 9, 8, 7, 6].map((signIdx) => {
-            const isLagna = signIdx === lagnaSign;
-            const planets = getPlanetsInSign(signIdx);
-            const meta = SIGN_NAMES[signIdx];
+            {/* Midpoint Diamond Polygon */}
+            <Polygon points="150,10 290,150 150,290 10,150" fill="none" stroke="#5D3A00" strokeWidth={1.8} />
 
-            return (
-              <View key={signIdx} style={[styles.southCell, isLagna && styles.southLagnaCell]}>
-                <View style={styles.southCellHeader}>
-                  <Text style={[styles.southSignName, isLagna && { color: Colors.maroon }]}>
-                    {meta.hindiName} ({signIdx})
-                  </Text>
-                  {isLagna && <Text style={styles.southLagnaBadge}>Lagna</Text>}
-                </View>
-                <Text style={styles.southPlanetsText}>{planets.join('  ') || '-'}</Text>
-              </View>
-            );
-          })}
-        </View>
-      )}
+            {/* Houses 1 to 12 Labels & Planets */}
+            {NORTH_HOUSE_POSITIONS.map((hp) => {
+              const signIdx = getSignForHouse(hp.houseNum);
+              const planets = getPlanetsInHouse(hp.houseNum);
+
+              return (
+                <G key={hp.houseNum}>
+                  {/* Sign Number */}
+                  <SvgText
+                    x={hp.x}
+                    y={hp.y}
+                    fontSize={15}
+                    fontWeight="bold"
+                    fill={hp.houseNum === 1 ? '#800000' : '#5D3A00'}
+                    textAnchor="middle"
+                  >
+                    {signIdx}
+                  </SvgText>
+
+                  {/* "Lagna" Subtitle under House 1 */}
+                  {hp.houseNum === 1 && (
+                    <SvgText
+                      x={hp.x}
+                      y={hp.y + 16}
+                      fontSize={13}
+                      fontWeight="bold"
+                      fill="#800000"
+                      textAnchor="middle"
+                    >
+                      Lagna
+                    </SvgText>
+                  )}
+
+                  {/* Planets inside House */}
+                  {planets.length > 0 && (
+                    <SvgText
+                      x={hp.px}
+                      y={hp.houseNum === 1 ? hp.py + 10 : hp.py}
+                      fontSize={11}
+                      fontWeight="900"
+                      fill={hp.houseNum === 1 ? '#D84315' : '#1B5E20'}
+                      textAnchor="middle"
+                    >
+                      {planets.join(' ')}
+                    </SvgText>
+                  )}
+                </G>
+              );
+            })}
+          </Svg>
+        ) : (
+          /* South Indian Grid Chart (Exact Match to @image2) */
+          <Svg width={300} height={300} viewBox="0 0 300 300" style={styles.svgChart}>
+            {/* Background Parchment Box */}
+            <Rect x={10} y={10} width={280} height={280} fill="#FAF5EC" stroke="#D4A359" strokeWidth={3} rx={4} />
+
+            {/* Grid Dividers (4x4 Perimeter Grid) */}
+            <Line x1={80} y1={10} x2={80} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
+            <Line x1={150} y1={10} x2={150} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
+            <Line x1={220} y1={10} x2={220} y2={290} stroke="#5D3A00" strokeWidth={1.5} />
+
+            <Line x1={10} y1={80} x2={290} y2={80} stroke="#5D3A00" strokeWidth={1.5} />
+            <Line x1={10} y1={150} x2={290} y2={150} stroke="#5D3A00" strokeWidth={1.5} />
+            <Line x1={10} y1={220} x2={290} y2={220} stroke="#5D3A00" strokeWidth={1.5} />
+
+            {/* Center Merged Box */}
+            <Rect x={80} y={80} width={140} height={140} fill="#F4EADB" stroke="#5D3A00" strokeWidth={1.5} />
+            <SvgText x={150} y={145} fontSize={14} fontWeight="bold" fill="#800000" textAnchor="middle">GOCHAR</SvgText>
+            <SvgText x={150} y={165} fontSize={11} fontWeight="bold" fill="#C49347" textAnchor="middle">KUNDALI</SvgText>
+
+            {/* Render 12 Fixed Sign Cells */}
+            {SOUTH_ZODIAC_GRID.map((cell) => {
+              const isLagna = cell.signIndex === lagnaSign;
+              const planets = getPlanetsInSign(cell.signIndex);
+
+              return (
+                <G key={cell.signIndex}>
+                  {/* Sign Abbreviation (Ar, Ta, Ge, Cn, Le, Vi, Li, Sc, Sg, Cp, Aq, Pi) */}
+                  <SvgText
+                    x={cell.x + 35}
+                    y={cell.y + 32}
+                    fontSize={17}
+                    fontWeight="bold"
+                    fill={isLagna ? '#800000' : '#5D3A00'}
+                    textAnchor="middle"
+                  >
+                    {cell.abbrev}
+                  </SvgText>
+
+                  {/* Double Slash '//' for Lagna Sign Corner (as in @image2) */}
+                  {isLagna && (
+                    <G>
+                      <Line x1={cell.x + 52} y1={cell.y + 12} x2={cell.x + 64} y2={cell.y + 24} stroke="#800000" strokeWidth={2} />
+                      <Line x1={cell.x + 57} y1={cell.y + 12} x2={cell.x + 69} y2={cell.y + 24} stroke="#800000" strokeWidth={2} />
+                    </G>
+                  )}
+
+                  {/* Planets inside Sign Cell */}
+                  {planets.length > 0 && (
+                    <SvgText
+                      x={cell.x + 35}
+                      y={cell.y + 54}
+                      fontSize={11}
+                      fontWeight="900"
+                      fill={isLagna ? '#D84315' : '#1B5E20'}
+                      textAnchor="middle"
+                    >
+                      {planets.join(' ')}
+                    </SvgText>
+                  )}
+                </G>
+              );
+            })}
+          </Svg>
+        )}
+      </View>
 
       {/* Planetary Legend */}
       <View style={styles.legendBox}>
         <Text style={styles.legendTitle}>🪐 Planetary Symbols Key (ग्रह संकेत):</Text>
         <Text style={styles.legendText}>
-          <Text style={{ fontWeight: 'bold' }}>Su</Text>: Sun (सूर्य) • <Text style={{ fontWeight: 'bold' }}>Mo</Text>: Moon (चंद्र) • <Text style={{ fontWeight: 'bold' }}>Ma</Text>: Mars (मंगल) • <Text style={{ fontWeight: 'bold' }}>Me</Text>: Mercury (बुध) • <Text style={{ fontWeight: 'bold' }}>Ju</Text>: Jupiter (गुरु) • <Text style={{ fontWeight: 'bold' }}>Ve</Text>: Venus (शुक्र) • <Text style={{ fontWeight: 'bold' }}>Sa</Text>: Saturn (शनि) • <Text style={{ fontWeight: 'bold' }}>Ra</Text>: Rahu (राहु) • <Text style={{ fontWeight: 'bold' }}>Ke</Text>: Ketu (केतु)
+          <Text style={{ fontWeight: 'bold' }}>Su</Text>: Sun • <Text style={{ fontWeight: 'bold' }}>Mo</Text>: Moon • <Text style={{ fontWeight: 'bold' }}>Ma</Text>: Mars • <Text style={{ fontWeight: 'bold' }}>Me</Text>: Mercury • <Text style={{ fontWeight: 'bold' }}>Ju</Text>: Jupiter • <Text style={{ fontWeight: 'bold' }}>Ve</Text>: Venus • <Text style={{ fontWeight: 'bold' }}>Sa</Text>: Saturn • <Text style={{ fontWeight: 'bold' }}>Ra</Text>: Rahu • <Text style={{ fontWeight: 'bold' }}>Ke</Text>: Ketu
         </Text>
       </View>
 
@@ -361,141 +405,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  northChartContainer: {
-    backgroundColor: '#FAF5EE',
-    borderRadius: 14,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#E0D0B8',
-    marginBottom: 14,
-  },
-  chartRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  houseBox: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 8,
-    marginHorizontal: 3,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    minHeight: 65,
-    justifyContent: 'space-between',
-    position: 'relative',
-  },
-  lagnaHouseBox: {
-    backgroundColor: '#FFF8E1',
-    borderColor: Colors.accentGold,
-    borderWidth: 1.5,
-  },
-  lagnaTag: {
-    position: 'absolute',
-    top: 3,
-    right: 4,
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    backgroundColor: '#FFE0B2',
-    paddingHorizontal: 4,
-    borderRadius: 4,
-  },
-  signNum: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  houseLabel: {
-    fontSize: 9,
-    color: Colors.textMuted,
-    fontWeight: '600',
-  },
-  planetText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.primaryDark,
-    marginTop: 2,
-  },
-  planetTextBold: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: Colors.maroon,
-    marginTop: 2,
-  },
-  centerChartBox: {
-    flex: 1,
-    backgroundColor: Colors.maroon,
-    borderRadius: 10,
+  chartWrapper: {
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 3,
-    padding: 6,
+    marginVertical: 10,
   },
-  centerOm: {
-    fontSize: 18,
-    color: Colors.accentGold,
-  },
-  centerTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: Colors.accentGold,
-  },
-  centerSub: {
-    fontSize: 8,
-    color: '#FFFFFF',
-  },
-  southChartContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    backgroundColor: '#FAF5EE',
+  svgChart: {
     borderRadius: 14,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#E0D0B8',
-    marginBottom: 14,
-  },
-  southCell: {
-    width: '31%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    minHeight: 55,
-    justifyContent: 'space-between',
-  },
-  southLagnaCell: {
-    backgroundColor: '#FFF8E1',
-    borderColor: Colors.accentGold,
-    borderWidth: 1.5,
-  },
-  southCellHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  southSignName: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  southLagnaBadge: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    backgroundColor: '#FFE0B2',
-    paddingHorizontal: 4,
-    borderRadius: 4,
-  },
-  southPlanetsText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.primaryDark,
-    marginTop: 4,
+    elevation: 2,
   },
   legendBox: {
     backgroundColor: '#F5F5F5',
@@ -532,7 +449,7 @@ const styles = StyleSheet.create({
   },
   lagnaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify.content: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 10,

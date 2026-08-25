@@ -1178,65 +1178,95 @@
     }
 
     function drawNorthIndianKundali(grahas) {
-      const h7Planets = grahas.filter(g => g.house === 7 || g.rashiIdx === 1).map(g => `${g.symbol} ${g.name.split(' ')[0].substring(0,2)}`).join(' ');
-      const h3Planets = grahas.filter(g => g.house === 3 || g.rashiIdx === 9).map(g => `${g.symbol} ${g.name.split(' ')[0].substring(0,2)}`).join(' ');
-      const h4Planets = grahas.filter(g => g.house === 4 || g.rashiIdx === 10).map(g => `${g.symbol} ${g.name.split(' ')[0].substring(0,2)}`).join(' ');
-      const h2Planets = grahas.filter(g => g.house === 2 || g.rashiIdx === 8).map(g => `${g.symbol} ${g.name.split(' ')[0].substring(0,2)}`).join(' ');
-      const h10Planets = grahas.filter(g => g.house === 10 || g.rashiIdx === 4).map(g => `${g.symbol} ${g.name.split(' ')[0].substring(0,2)}`).join(' ');
+      const lagnaSign = 5; // Simha (Leo)
+
+      const getSignForHouse = (houseNum) => ((lagnaSign - 1 + houseNum - 1) % 12) + 1;
+      const getPlanetsInHouse = (houseNum) => {
+        const signIdx = getSignForHouse(houseNum);
+        return grahas.filter(g => g.rashiIdx === (signIdx - 1)).map(g => g.symbol).join(' ');
+      };
+
+      const houseCoords = [
+        { h:1, x:150, y:55, px:150, py:78 },
+        { h:2, x:80, y:35, px:80, py:55 },
+        { h:3, x:35, y:80, px:35, py:100 },
+        { h:4, x:75, y:150, px:75, py:170 },
+        { h:5, x:35, y:220, px:35, py:240 },
+        { h:6, x:80, y:265, px:80, py:280 },
+        { h:7, x:150, y:235, px:150, py:255 },
+        { h:8, x:220, y:265, px:220, py:280 },
+        { h:9, x:265, y:220, px:265, py:240 },
+        { h:10, x:225, y:150, px:225, py:170 },
+        { h:11, x:265, y:80, px:265, py:100 },
+        { h:12, x:210, y:35, px:210, py:55 }
+      ];
 
       return `
         <svg class="kundali-svg" viewBox="0 0 300 300">
-          <rect x="10" y="10" width="280" height="280" fill="#FFFDF6" stroke="#800000" stroke-width="3"/>
-          <line x1="10" y1="10" x2="290" y2="290" stroke="#800000" stroke-width="1.5"/>
-          <line x1="290" y1="10" x2="10" y2="290" stroke="#800000" stroke-width="1.5"/>
-          <polygon points="150,10 290,150 150,290 10,150" fill="none" stroke="#800000" stroke-width="2"/>
+          <rect x="10" y="10" width="280" height="280" fill="#FAF5EC" stroke="#D4A359" stroke-width="3" rx="4"/>
+          <rect x="14" y="14" width="272" height="272" fill="none" stroke="#C49347" stroke-width="1"/>
 
-          <text x="150" y="45" font-size="12" font-weight="bold" fill="#D84315" text-anchor="middle">1 (Lagna)</text>
-          <text x="80" y="40" font-size="11" font-weight="bold" fill="#888">2</text>
-          <text x="70" y="60" font-size="10" font-weight="bold" fill="#800000">${h2Planets || '♄ Sa'}</text>
-          <text x="40" y="80" font-size="11" font-weight="bold" fill="#888">3</text>
-          <text x="40" y="100" font-size="10" font-weight="bold" fill="#800000">${h3Planets || '☿ Me ♀ Ve'}</text>
-          <text x="70" y="150" font-size="12" font-weight="bold" fill="#D84315">4</text>
-          <text x="70" y="170" font-size="10" font-weight="bold" fill="#800000">${h4Planets || '☀️ Su ☊ Ra'}</text>
-          <text x="150" y="270" font-size="12" font-weight="bold" fill="#D84315" text-anchor="middle">7th House</text>
-          <text x="150" y="250" font-size="12" font-weight="bold" fill="#2E7D32" text-anchor="middle">${h7Planets || '🌙 Mo ♂️ Ma ♃ Ju'}</text>
-          <text x="230" y="150" font-size="12" font-weight="bold" fill="#D84315">10</text>
-          <text x="230" y="170" font-size="10" font-weight="bold" fill="#800000">${h10Planets || '☋ Ke'}</text>
+          <line x1="10" y1="10" x2="290" y2="290" stroke="#5D3A00" stroke-width="1.5"/>
+          <line x1="290" y1="10" x2="10" y2="290" stroke="#5D3A00" stroke-width="1.5"/>
+          <polygon points="150,10 290,150 150,290 10,150" fill="none" stroke="#5D3A00" stroke-width="1.8"/>
+
+          ${houseCoords.map(item => {
+            const signIdx = getSignForHouse(item.h);
+            const planets = getPlanetsInHouse(item.h);
+            return `
+              <text x="${item.x}" y="${item.y}" font-size="15" font-weight="bold" fill="${item.h===1?'#800000':'#5D3A00'}" text-anchor="middle">${signIdx}</text>
+              ${item.h === 1 ? `<text x="${item.x}" y="${item.y+16}" font-size="13" font-weight="bold" fill="#800000" text-anchor="middle">Lagna</text>` : ''}
+              ${planets ? `<text x="${item.px}" y="${item.h===1?item.py+10:item.py}" font-size="11" font-weight="900" fill="${item.h===1?'#D84315':'#1B5E20'}" text-anchor="middle">${planets}</text>` : ''}
+            `;
+          }).join('')}
         </svg>
       `;
     }
 
     function drawSouthIndianKundali(grahas) {
-      const tauPlanets = grahas.filter(g => g.rashiIdx === 1).map(g => `${g.symbol}${g.name.split(' ')[0].substring(0,2)}`).join(' ');
-      const aquPlanets = grahas.filter(g => g.rashiIdx === 10).map(g => `${g.symbol}${g.name.split(' ')[0].substring(0,2)}`).join(' ');
-      const capPlanets = grahas.filter(g => g.rashiIdx === 9).map(g => `${g.symbol}${g.name.split(' ')[0].substring(0,2)}`).join(' ');
+      const lagnaSign = 5; // Simha (Leo)
+      const southGrid = [
+        { signIdx:12, abbrev:'Pi', x:10, y:10 },
+        { signIdx:1, abbrev:'Ar', x:80, y:10 },
+        { signIdx:2, abbrev:'Ta', x:150, y:10 },
+        { signIdx:3, abbrev:'Ge', x:220, y:10 },
+        { signIdx:4, abbrev:'Cn', x:220, y:80 },
+        { signIdx:5, abbrev:'Le', x:220, y:150 },
+        { signIdx:6, abbrev:'Vi', x:220, y:220 },
+        { signIdx:7, abbrev:'Li', x:150, y:220 },
+        { signIdx:8, abbrev:'Sc', x:80, y:220 },
+        { signIdx:9, abbrev:'Sg', x:10, y:220 },
+        { signIdx:10, abbrev:'Cp', x:10, y:150 },
+        { signIdx:11, abbrev:'Aq', x:10, y:80 }
+      ];
 
       return `
         <svg class="kundali-svg" viewBox="0 0 300 300">
-          <rect x="10" y="10" width="280" height="280" fill="#FFFDF6" stroke="#800000" stroke-width="3"/>
-          <line x1="80" y1="10" x2="80" y2="290" stroke="#800000" stroke-width="1.5"/>
-          <line x1="150" y1="10" x2="150" y2="290" stroke="#800000" stroke-width="1.5"/>
-          <line x1="220" y1="10" x2="220" y2="290" stroke="#800000" stroke-width="1.5"/>
+          <rect x="10" y="10" width="280" height="280" fill="#FAF5EC" stroke="#D4A359" stroke-width="3" rx="4"/>
+          <line x1="80" y1="10" x2="80" y2="290" stroke="#5D3A00" stroke-width="1.5"/>
+          <line x1="150" y1="10" x2="150" y2="290" stroke="#5D3A00" stroke-width="1.5"/>
+          <line x1="220" y1="10" x2="220" y2="290" stroke="#5D3A00" stroke-width="1.5"/>
 
-          <line x1="10" y1="80" x2="290" y2="80" stroke="#800000" stroke-width="1.5"/>
-          <line x1="10" y1="150" x2="290" y2="150" stroke="#800000" stroke-width="1.5"/>
-          <line x1="10" y1="220" x2="290" y2="220" stroke="#800000" stroke-width="1.5"/>
+          <line x1="10" y1="80" x2="290" y2="80" stroke="#5D3A00" stroke-width="1.5"/>
+          <line x1="10" y1="150" x2="290" y2="150" stroke="#5D3A00" stroke-width="1.5"/>
+          <line x1="10" y1="220" x2="290" y2="220" stroke="#5D3A00" stroke-width="1.5"/>
 
-          <rect x="80" y="80" width="140" height="140" fill="#FFF8E1" stroke="#FF6F00" stroke-width="2"/>
-          <text x="150" y="145" font-size="14" font-weight="bold" fill="#800000" text-anchor="middle">South Indian</text>
-          <text x="150" y="165" font-size="11" font-weight="bold" fill="#D84315" text-anchor="middle">Fixed Rashi Chart</text>
+          <rect x="80" y="80" width="140" height="140" fill="#F4EADB" stroke="#5D3A00" stroke-width="1.5"/>
+          <text x="150" y="145" font-size="14" font-weight="bold" fill="#800000" text-anchor="middle">GOCHAR</text>
+          <text x="150" y="165" font-size="11" font-weight="bold" fill="#C49347" text-anchor="middle">KUNDALI</text>
 
-          <text x="45" y="30" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Meena</text>
-          <text x="115" y="30" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Mesha</text>
-          <text x="185" y="30" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Vrishabha (7th H)</text>
-          <text x="185" y="55" font-size="11" font-weight="bold" fill="#2E7D32" text-anchor="middle">${tauPlanets || '🌙 Mo ♂️ Ma'}</text>
-          <text x="255" y="30" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Mithuna</text>
-          <text x="255" y="175" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Simha</text>
-          <text x="255" y="245" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Kanya</text>
-          <text x="45" y="175" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Makara</text>
-          <text x="45" y="195" font-size="10" font-weight="bold" fill="#800000" text-anchor="middle">${capPlanets || '☿ Me ♀ Ve'}</text>
-          <text x="45" y="105" font-size="10" font-weight="bold" fill="#888" text-anchor="middle">Kumbha</text>
-          <text x="45" y="125" font-size="10" font-weight="bold" fill="#800000" text-anchor="middle">${aquPlanets || '☀️ Su ☊ Ra'}</text>
+          ${southGrid.map(cell => {
+            const isLagna = cell.signIdx === lagnaSign;
+            const planets = grahas.filter(g => g.rashiIdx === (cell.signIdx - 1)).map(g => g.symbol).join(' ');
+            return `
+              <text x="${cell.x+35}" y="${cell.y+32}" font-size="17" font-weight="bold" fill="${isLagna?'#800000':'#5D3A00'}" text-anchor="middle">${cell.abbrev}</text>
+              ${isLagna ? `
+                <line x1="${cell.x+52}" y1="${cell.y+12}" x2="${cell.x+64}" y2="${cell.y+24}" stroke="#800000" stroke-width="2"/>
+                <line x1="${cell.x+57}" y1="${cell.y+12}" x2="${cell.x+69}" y2="${cell.y+24}" stroke="#800000" stroke-width="2"/>
+              ` : ''}
+              ${planets ? `<text x="${cell.x+35}" y="${cell.y+54}" font-size="11" font-weight="900" fill="${isLagna?'#D84315':'#1B5E20'}" text-anchor="middle">${planets}</text>` : ''}
+            `;
+          }).join('')}
         </svg>
       `;
     }
