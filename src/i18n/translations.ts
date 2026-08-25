@@ -73,6 +73,18 @@ export interface TranslationKeys {
   amavasyaRitual: string;
   tithiStarts: string;
   tithiEnds: string;
+
+  // Reminders Section Keys
+  reminderSectionTitle: string;
+  purnimaReminderLabel: string;
+  purnimaReminderSub: string;
+  amavasyaReminderLabel: string;
+  amavasyaReminderSub: string;
+  reminderTimingHeader: string;
+  reminderSameDay: string;
+  reminder1DayBefore: string;
+  reminder2DaysBefore: string;
+  reminder5DaysBefore: string;
 }
 
 export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
@@ -146,6 +158,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'Pitru Tarpana & Daan Ritual',
     tithiStarts: 'Tithi (Lunar Day) Starts',
     tithiEnds: 'Ends',
+
+    reminderSectionTitle: '🔔 Purnima & Amavasya Arrival Reminders',
+    purnimaReminderLabel: '🌕 Full Moon (Purnima / Poonam) Alert',
+    purnimaReminderSub: 'Get notified for upcoming Satyanarayan Vrat & Moon Puja',
+    amavasyaReminderLabel: '🌑 New Moon (Amavasya) Alert',
+    amavasyaReminderSub: 'Get notified for upcoming Pitru Tarpana & Daan Ritual',
+    reminderTimingHeader: '⏰ Remind Me:',
+    reminderSameDay: 'On Same Day',
+    reminder1DayBefore: '1 Day Before',
+    reminder2DaysBefore: '2 Days Before',
+    reminder5DaysBefore: '5 Days Before',
   },
   hi: {
     appName: 'सोलराइज़ पंचांग',
@@ -217,6 +240,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'पितृ तर्पण, दान एवं पवित्र स्नान',
     tithiStarts: 'तिथि (चंद्र दिवस) प्रारंभ',
     tithiEnds: 'समाप्त',
+
+    reminderSectionTitle: '🔔 पूर्णिमा (पूनम) एवं अमावस्या रिमाइंडर अलर्ट',
+    purnimaReminderLabel: '🌕 पूर्णिमा (पूनम) अलर्ट',
+    purnimaReminderSub: 'आगामी सत्यनारायण व्रत एवं चंद्र दर्शन की पूर्व सूचना पाएं',
+    amavasyaReminderLabel: '🌑 अमावस्या अलर्ट',
+    amavasyaReminderSub: 'आगामी पितृ तर्पण एवं दान कार्य हेतु सूचना प्राप्त करें',
+    reminderTimingHeader: '⏰ रिमाइंडर कब प्राप्त करें:',
+    reminderSameDay: 'उसी दिन',
+    reminder1DayBefore: '१ दिन पहले',
+    reminder2DaysBefore: '२ दिन पहले',
+    reminder5DaysBefore: '५ दिन पहले',
   },
   en: {
     appName: 'SoulRise Panchang',
@@ -288,6 +322,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'Pitru Tarpana & Daan Ritual',
     tithiStarts: 'Lunar Day (Tithi) Starts',
     tithiEnds: 'Ends',
+
+    reminderSectionTitle: '🔔 Purnima & Amavasya Arrival Reminders',
+    purnimaReminderLabel: '🌕 Full Moon (Purnima / Poonam) Alert',
+    purnimaReminderSub: 'Get notified for upcoming Satyanarayan Vrat & Moon Puja',
+    amavasyaReminderLabel: '🌑 New Moon (Amavasya) Alert',
+    amavasyaReminderSub: 'Get notified for upcoming Pitru Tarpana & Daan Ritual',
+    reminderTimingHeader: '⏰ Remind Me:',
+    reminderSameDay: 'On Same Day',
+    reminder1DayBefore: '1 Day Before',
+    reminder2DaysBefore: '2 Days Before',
+    reminder5DaysBefore: '5 Days Before',
   },
   ta: {
     appName: 'சோல்ரைஸ் பஞ்சாங்கம்',
@@ -359,6 +404,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'பித்ரு தர்ப்பணம் & தானம்',
     tithiStarts: 'திதி (சந்திர நாள்) தொடக்கம்',
     tithiEnds: 'முடிவு',
+
+    reminderSectionTitle: '🔔 பௌர்ணமி மற்றும் அமாவாசை நினைவூட்டல்',
+    purnimaReminderLabel: '🌕 பௌர்ணமி நினைவூட்டல்',
+    purnimaReminderSub: 'பௌர்ணமி விரதம் மற்றும் பூஜைகளுக்கான நினைவூட்டல் பெறுக',
+    amavasyaReminderLabel: '🌑 அமாவாசை நினைவூட்டல்',
+    amavasyaReminderSub: 'அமாவாசை பித்ரு தர்ப்பணம் மற்றும் தானத்திற்கான நினைவூட்டல்',
+    reminderTimingHeader: '⏰ நினைவூட்டல் நேரம்:',
+    reminderSameDay: 'அன்றைய தினத்தில்',
+    reminder1DayBefore: '1 நாள் முன்பு',
+    reminder2DaysBefore: '2 நாட்கள் முன்பு',
+    reminder5DaysBefore: '5 நாட்கள் முன்பு',
   },
   te: {
     appName: 'సోల్‌రైజ్ పంచాంగం',
@@ -430,6 +486,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'పితృ తర్పణం & దాన ధర్మాలు',
     tithiStarts: 'తిథి (చంద్ర దినం) ప్రారంభం',
     tithiEnds: 'ముగింపు',
+
+    reminderSectionTitle: '🔔 పౌర్ణమి మరియు అమావాస్య రిమైండర్లు',
+    purnimaReminderLabel: '🌕 పౌర్ణమి రిమైండర్',
+    purnimaReminderSub: 'సత్యనారాయణ వ్రతం మరియు చంద్ర పూజ కోసం నోటిఫికేషన్లు',
+    amavasyaReminderLabel: '🌑 అమావాస్య రిమైండర్',
+    amavasyaReminderSub: 'పితృ తర్పణం మరియు దానాల కోసం రిమైండర్',
+    reminderTimingHeader: '⏰ రిమైండర్ సమయం:',
+    reminderSameDay: 'అదే రోజున',
+    reminder1DayBefore: '1 రోజు ముందు',
+    reminder2DaysBefore: '2 రోజులు ముందు',
+    reminder5DaysBefore: '5 రోజులు ముందు',
   },
   bn: {
     appName: 'সোলরাইজ পঞ্জিকা',
@@ -478,7 +545,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     festivalsTitle: '🚩 হিন্দু উৎসব ও ব্রত তালিকা',
     festivalsSub: 'আসন্ন প্রধান উৎসব, একাদশী ও ব্রতের সময়সূচী',
     searchFestivals: 'উৎসব, পূজা খুঁজুন...',
-    rashiphalTitle: '♈ আজকের রাশিফল',
+    rashiphalTitle: '২৪ আজকের রাশিফল',
     rashiphalSub: '১২টি রাশির দৈনন্দিন জ্যোতিষ পূর্বাভাস',
     settingsTitle: '⚙️ সেটিংস ও অবস্থান',
     settingsSub: 'শহর, ভাষা ও পঞ্জিকা গণনানীতি পরিবর্তন করুন',
@@ -501,6 +568,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'পিতৃ তর্পণ ও দান ধর্ম',
     tithiStarts: 'তিথি (চন্দ্র দিবস) শুরু',
     tithiEnds: 'শেষ',
+
+    reminderSectionTitle: '🔔 পূর্ণিমা ও অমাবস্যা রিমাইন্ডার',
+    purnimaReminderLabel: '🌕 পূর্ণিমা রিমাইন্ডার',
+    purnimaReminderSub: 'সত্যনারায়ণ ব্রত ও চন্দ্র পূজার আগাম নোটিফিকেশন পান',
+    amavasyaReminderLabel: '🌑 অমাবস্যা রিমাইন্ডার',
+    amavasyaReminderSub: 'পিতৃ তর্পণ ও দানের জন্য রিমাইন্ডার পান',
+    reminderTimingHeader: '⏰ রিমাইন্ডার কখন চান:',
+    reminderSameDay: 'সেই দিনই',
+    reminder1DayBefore: '১ দিন আগে',
+    reminder2DaysBefore: '২ দিন আগে',
+    reminder5DaysBefore: '৫ দিন আগে',
   },
   mr: {
     appName: 'सोलराईझ पंचांग',
@@ -549,7 +627,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     festivalsTitle: '🚩 हिंदू सण व व्रतांची यादी',
     festivalsSub: 'येणारे सण, एकादशी व उपवासाच्या तारखा',
     searchFestivals: 'सण, पूजा शोधा...',
-    rashiphalTitle: '♈ दैनिक राशीभविष्य',
+    rashiphalTitle: '<ctrl42> दैनिक राशीभविष्य',
     rashiphalSub: '१२ राशींचे आजचे राशीभविष्य व मार्गदर्शन',
     settingsTitle: '⚙️ सेटिंग्ज व स्थान',
     settingsSub: 'शहर, भाषा व पंचांग पद्धत बदला',
@@ -572,6 +650,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'पितृ तर्पण व दान कर्म',
     tithiStarts: 'तिथी (चंद्र दिवस) प्रारंभ',
     tithiEnds: 'समाप्त',
+
+    reminderSectionTitle: '🔔 पौर्णिमा व अमावस्या स्मरणपत्र (रिमाइंडर)',
+    purnimaReminderLabel: '🌕 पौर्णिमा स्मरणपत्र',
+    purnimaReminderSub: 'सत्यनारायण पूजा व व्रताची आधीच सूचना मिळवा',
+    amavasyaReminderLabel: '🌑 अमावस्या स्मरणपत्र',
+    amavasyaReminderSub: 'पितृ तर्पण व दानासाठी सूचना मिळवा',
+    reminderTimingHeader: '⏰ स्मरणपत्र कधी हवे:',
+    reminderSameDay: 'त्याच दिवशी',
+    reminder1DayBefore: '१ दिवस आधी',
+    reminder2DaysBefore: '२ दिवस आधी',
+    reminder5DaysBefore: '५ दिवस आधी',
   },
   ru: {
     appName: 'СоулРайз Панчанг',
@@ -643,6 +732,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'Питру Тарпана и Даан',
     tithiStarts: 'Начало Титхи (лунного дня)',
     tithiEnds: 'До',
+
+    reminderSectionTitle: '🔔 Напоминания о Пурниме и Амавасье',
+    purnimaReminderLabel: '🌕 Напоминание о Пурниме (Полнолунии)',
+    purnimaReminderSub: 'Получать уведомления о Сатьянараяна Врате и ритуалах',
+    amavasyaReminderLabel: '🌑 Напоминание об Амавасье (Новолунии)',
+    amavasyaReminderSub: 'Получать уведомления о Питру Тарпане и подношениях',
+    reminderTimingHeader: '⏰ Напомнить:',
+    reminderSameDay: 'В тот же день',
+    reminder1DayBefore: 'За 1 день',
+    reminder2DaysBefore: 'За 2 дня',
+    reminder5DaysBefore: 'За 5 дней',
   },
   fr: {
     appName: 'SoulRise Panchang',
@@ -714,6 +814,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'Pitru Tarpana & Don Sacré',
     tithiStarts: 'Début du Tithi (jour lunaire)',
     tithiEnds: 'Fin',
+
+    reminderSectionTitle: '🔔 Rappels Purnima et Amavasya',
+    purnimaReminderLabel: '🌕 Rappel Pleine Lune (Purnima)',
+    purnimaReminderSub: 'Soyez notifié pour les rituels de Purnima',
+    amavasyaReminderLabel: '🌑 Rappel Nouvelle Lune (Amavasya)',
+    amavasyaReminderSub: 'Soyez notifié pour Pitru Tarpana et dons',
+    reminderTimingHeader: '⏰ Me rappeler :',
+    reminderSameDay: 'Le jour même',
+    reminder1DayBefore: '1 jour avant',
+    reminder2DaysBefore: '2 jours avant',
+    reminder5DaysBefore: '5 jours avant',
   },
   es: {
     appName: 'SoulRise Panchang',
@@ -785,6 +896,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'Ritual de Pitru Tarpana y Daan',
     tithiStarts: 'Inicio del Tithi (día lunar)',
     tithiEnds: 'Fin',
+
+    reminderSectionTitle: '🔔 Recordatorios de Purnima y Amavasya',
+    purnimaReminderLabel: '🌕 Recordatorio de Luna Llena (Purnima)',
+    purnimaReminderSub: 'Recibe notificaciones para el culto de Purnima',
+    amavasyaReminderLabel: '🌑 Recordatorio de Luna Nueva (Amavasya)',
+    amavasyaReminderSub: 'Recibe notificaciones para Pitru Tarpana y donaciones',
+    reminderTimingHeader: '⏰ Recordarme:',
+    reminderSameDay: 'El mismo día',
+    reminder1DayBefore: '1 día antes',
+    reminder2DaysBefore: '2 días antes',
+    reminder5DaysBefore: '5 días antes',
   },
   he: {
     appName: 'סולרייז פנצ\'אנג',
@@ -833,7 +955,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     festivalsTitle: '🚩 מדריך חגים וצומות הינדים',
     festivalsSub: 'גלה חגים קרובים וימי צום מבורכים',
     searchFestivals: 'חפש חג, טקס...',
-    rashiphalTitle: '♈ הורוסקופ יומי',
+    rashiphalTitle: '<ctrl42> הורוסקופ יומי',
     rashiphalSub: 'תחזית אסטרולוגית ל-12 המזלות',
     settingsTitle: '⚙️ הגדרות ומיקום',
     settingsSub: 'התאם עיר, שפה ומערכת חישוב',
@@ -856,6 +978,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'טקס פיטרו תרפנה ותרומה',
     tithiStarts: 'תחילת יום הירח (טיטהי)',
     tithiEnds: 'סיום',
+
+    reminderSectionTitle: '🔔 תזכורות פורנימה ואמאבסיה',
+    purnimaReminderLabel: '🌕 תזכורת ירח מלא (פורנימה)',
+    purnimaReminderSub: 'קבל התראות על טקסי פורנימה וצומות',
+    amavasyaReminderLabel: '🌑 תזכורת ירח חדש (אמאבסיה)',
+    amavasyaReminderSub: 'קבל התראות על טקסי אמאבסיה ותרומות',
+    reminderTimingHeader: '⏰ הזכר לי:',
+    reminderSameDay: 'באותו היום',
+    reminder1DayBefore: 'יום אחד לפני',
+    reminder2DaysBefore: 'יומיים לפני',
+    reminder5DaysBefore: '5 ימים לפני',
   },
   id: {
     appName: 'SoulRise Panchang',
@@ -904,7 +1037,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     festivalsTitle: '🚩 Direktori Hari Raya & Puasa Hindu',
     festivalsSub: 'Temukan hari raya dan puasa mendatang',
     searchFestivals: 'Cari hari raya, puja...',
-    rashiphalTitle: '♈ Ramalan Zodiak Harian',
+    rashiphalTitle: '<ctrl42> Ramalan Zodiak Harian',
     rashiphalSub: 'Prediksi astrologi harian untuk 12 Zodiak',
     settingsTitle: '⚙️ Pengaturan & Lokasi',
     settingsSub: 'Sesuaikan kota, bahasa, dan sistem perhitungan',
@@ -927,6 +1060,17 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'Ritual Pitru Tarpana & Daan',
     tithiStarts: 'Mulai Tithi (Hari Lunar)',
     tithiEnds: 'Selesai',
+
+    reminderSectionTitle: '🔔 Pengingat Purnima & Amavasya',
+    purnimaReminderLabel: '🌕 Pengingat Bulan Purnama (Purnima)',
+    purnimaReminderSub: 'Dapatkan pemberitahuan untuk ritual Purnima',
+    amavasyaReminderLabel: '🌑 Pengingat Bulan Baru (Amavasya)',
+    amavasyaReminderSub: 'Dapatkan pemberitahuan untuk ritual Amavasya',
+    reminderTimingHeader: '⏰ Ingatkan Saya:',
+    reminderSameDay: 'Pada Hari H',
+    reminder1DayBefore: '1 Hari Sebelum',
+    reminder2DaysBefore: '2 Hari Sebelum',
+    reminder5DaysBefore: '5 Hari Sebelum',
   },
   th: {
     appName: 'โซลไรซ์ ปฏิทินฮินดู',
@@ -975,7 +1119,7 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     festivalsTitle: '🚩 ทำเนียบวันสำคัญและวันถือศีลอดฮินดู',
     festivalsSub: 'ค้นหาวันสำคัญทางศาสนา วันพระ และวันถือศีลอด',
     searchFestivals: 'ค้นหาวันเทศกาล พิธีบูชา...',
-    rashiphalTitle: '♈ ดวงชะตาประจำวัน',
+    rashiphalTitle: '<ctrl42> ดวงชะตาประจำวัน',
     rashiphalSub: 'คำทำนายดวงชะตาประจำวันสำหรับ 12 ราศี',
     settingsTitle: '⚙️ การตั้งค่าและสถานที่',
     settingsSub: 'ปรับแต่งเมือง ภาษา และระบบการคำนวณ',
@@ -998,5 +1142,16 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationKeys> = {
     amavasyaRitual: 'พิธีปิตฤตర్పณและการบริจาคทาน',
     tithiStarts: 'เริ่มต้นดิถี (วันทางจันทรคติ)',
     tithiEnds: 'สิ้นสุด',
+
+    reminderSectionTitle: '🔔 การแจ้งเตือนปูรณมีและอมาวสี',
+    purnimaReminderLabel: '🌕 การแจ้งเตือนวันเพ็ญ (ปูรณมี)',
+    purnimaReminderSub: 'รับการแจ้งเตือนสำหรับพิธีปูรณมีและวันพระ',
+    amavasyaReminderLabel: '🌑 การแจ้งเตือนวันจันทร์ดับ (อมาวสี)',
+    amavasyaReminderSub: 'รับการแจ้งเตือนสำหรับพิธีอมาวสีและการทำบุญ',
+    reminderTimingHeader: '⏰ แจ้งเตือนฉัน:',
+    reminderSameDay: 'ในวันเดียวกัน',
+    reminder1DayBefore: '1 วันล่วงหน้า',
+    reminder2DaysBefore: '2 วันล่วงหน้า',
+    reminder5DaysBefore: '5 วันล่วงหน้า',
   },
 };

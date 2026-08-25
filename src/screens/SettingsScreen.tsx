@@ -37,12 +37,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
   const [useChoghadiyaNotif, setUseChoghadiyaNotif] = useState(false);
 
+  // Purnima & Amavasya Reminder States
+  const [purnimaNotif, setPurnimaNotif] = useState(true);
+  const [amavasyaNotif, setAmavasyaNotif] = useState(true);
+  const [reminderDays, setReminderDays] = useState<number>(1); // 0 (same day), 1, 2, or 5 days before
+
   useEffect(() => {
     (async () => {
       const stored = await AsyncStorage.getItem(CHOGHADIYA_NOTIF_KEY);
       if (stored === 'true') {
         setUseChoghadiyaNotif(true);
       }
+      const pNotif = await AsyncStorage.getItem('PURNIMA_REMINDER_ENABLED');
+      if (pNotif !== null) setPurnimaNotif(pNotif === 'true');
+      const aNotif = await AsyncStorage.getItem('AMAVASYA_REMINDER_ENABLED');
+      if (aNotif !== null) setAmavasyaNotif(aNotif === 'true');
+      const rDays = await AsyncStorage.getItem('MOON_REMINDER_TIMING_DAYS');
+      if (rDays !== null) setReminderDays(parseInt(rDays, 10));
     })();
   }, []);
 
@@ -55,6 +66,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     } else {
       await cancelChoghadiyaNotification();
     }
+  };
+
+  const handlePurnimaToggle = async (val: boolean) => {
+    setPurnimaNotif(val);
+    await AsyncStorage.setItem('PURNIMA_REMINDER_ENABLED', val ? 'true' : 'false');
+  };
+
+  const handleAmavasyaToggle = async (val: boolean) => {
+    setAmavasyaNotif(val);
+    await AsyncStorage.setItem('AMAVASYA_REMINDER_ENABLED', val ? 'true' : 'false');
+  };
+
+  const handleSelectTimingDays = async (days: number) => {
+    setReminderDays(days);
+    await AsyncStorage.setItem('MOON_REMINDER_TIMING_DAYS', days.toString());
   };
 
   const handleGpsToggle = async (val: boolean) => {
@@ -158,6 +184,77 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </View>
         </View>
 
+        {/* Purnima & Amavasya Reminders Card (NEW) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t('reminderSectionTitle')}</Text>
+
+          {/* Purnima Reminder Switch */}
+          <View style={styles.switchRow}>
+            <View style={styles.switchTextContainer}>
+              <Text style={styles.switchLabel}>{t('purnimaReminderLabel')}</Text>
+              <Text style={styles.switchSub}>{t('purnimaReminderSub')}</Text>
+            </View>
+            <Switch
+              value={purnimaNotif}
+              onValueChange={handlePurnimaToggle}
+              trackColor={{ false: '#767577', true: Colors.primary }}
+              thumbColor={purnimaNotif ? Colors.accentGold : '#f4f3f4'}
+            />
+          </View>
+
+          {/* Amavasya Reminder Switch */}
+          <View style={styles.switchRow}>
+            <View style={styles.switchTextContainer}>
+              <Text style={styles.switchLabel}>{t('amavasyaReminderLabel')}</Text>
+              <Text style={styles.switchSub}>{t('amavasyaReminderSub')}</Text>
+            </View>
+            <Switch
+              value={amavasyaNotif}
+              onValueChange={handleAmavasyaToggle}
+              trackColor={{ false: '#767577', true: Colors.primary }}
+              thumbColor={amavasyaNotif ? Colors.accentGold : '#f4f3f4'}
+            />
+          </View>
+
+          <View style={styles.timingPillDivider} />
+
+          {/* Reminder Timing Selector */}
+          <Text style={styles.timingHeaderLabel}>{t('reminderTimingHeader')}</Text>
+          <View style={styles.timingPillRow}>
+            {[
+              { days: 0, label: t('reminderSameDay') },
+              { days: 1, label: t('reminder1DayBefore') },
+              { days: 2, label: t('reminder2DaysBefore') },
+              { days: 5, label: t('reminder5DaysBefore') }
+            ].map(item => (
+              <TouchableOpacity
+                key={`pill-${item.days}`}
+                style={[
+                  styles.timingPill,
+                  reminderDays === item.days && styles.timingPillActive
+                ]}
+                onPress={() => handleSelectTimingDays(item.days)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.timingPillText,
+                    reminderDays === item.days && styles.timingPillTextActive
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.infoHint}>
+            Status: {purnimaNotif || amavasyaNotif ? `🟢 Notification configured (${reminderDays === 0 ? 'On same day' : `${reminderDays} day(s) before`})` : '⚪ Reminders Disabled'}
+          </Text>
+        </View>
+
         {/* Timings & Persistent Notifications */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>⏰ Timings & Persistent Notifications</Text>
@@ -220,44 +317,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
       {/* City Picker Modal */}
       <Modal
+        visible={isModalVisible}
         animationType="slide"
         transparent={true}
-        visible={isModalVisible}
         onRequestClose={onCloseCityModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalHeaderTitle}>Select City</Text>
+              <Text style={styles.modalTitle}>Select City / Location</Text>
               <TouchableOpacity onPress={onCloseCityModal}>
-                <Text style={styles.closeText}>Done</Text>
+                <Text style={styles.closeBtn}>✕</Text>
               </TouchableOpacity>
             </View>
 
             <FlatList
               data={DEFAULT_CITIES}
-              keyExtractor={item => item.name}
-              renderItem={({ item }) => {
-                const isSelected = item.name === selectedCity.name;
-                return (
-                  <TouchableOpacity
-                    style={[styles.cityItem, isSelected && styles.cityItemSelected]}
-                    onPress={() => {
-                      onSelectCity(item);
-                      onCloseCityModal();
-                    }}
-                  >
-                    <Text style={styles.cityPin}>📍</Text>
-                    <View style={styles.cityItemTextContainer}>
-                      <Text style={[styles.cityItemName, isSelected && styles.cityItemNameSelected]}>
-                        {item.name} ({item.hindiName})
-                      </Text>
-                      <Text style={styles.cityItemCountry}>{item.stateCountry}</Text>
-                    </View>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              }}
+              keyExtractor={(item) => item.name}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.cityItem,
+                    selectedCity.name === item.name && styles.selectedCityItem
+                  ]}
+                  onPress={() => {
+                    setUseGps(false);
+                    onSelectCity(item);
+                    onCloseCityModal();
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.itemCityName}>{item.name} ({item.hindiName})</Text>
+                    <Text style={styles.itemStateText}>{item.stateCountry}</Text>
+                  </View>
+                  {selectedCity.name === item.name && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              )}
             />
           </View>
         </View>
@@ -267,17 +364,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.creamBg,
-  },
+  container: { flex: 1, backgroundColor: Colors.creamBg },
   header: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.maroon,
     paddingTop: 16,
     paddingBottom: 14,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   headerTitle: {
     fontSize: 20,
@@ -286,23 +380,21 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 12,
-    color: Colors.primaryLight,
+    color: Colors.accentGold,
     marginTop: 2,
   },
-  content: {
-    padding: 16,
-  },
+  content: { padding: 16 },
   card: {
     backgroundColor: Colors.cardBg,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 14,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     elevation: 2,
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
     marginBottom: 12,
@@ -311,12 +403,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.creamBg,
+    backgroundColor: '#FAF5EE',
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FFE0B2',
-    marginBottom: 12,
+    borderColor: Colors.border,
   },
   cityLeft: {
     flexDirection: 'row',
@@ -334,23 +425,27 @@ const styles = StyleSheet.create({
   },
   citySubText: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   changeBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.primaryDark,
+    color: Colors.maroon,
+    marginLeft: 8,
   },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F0E0D0',
   },
   switchTextContainer: {
     flex: 1,
-    paddingRight: 10,
+    marginRight: 12,
   },
   switchLabel: {
     fontSize: 13,
@@ -360,19 +455,55 @@ const styles = StyleSheet.create({
   switchSub: {
     fontSize: 11,
     color: Colors.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
   },
   infoHint: {
     fontSize: 11,
-    color: Colors.primaryDark,
-    fontWeight: '600',
-    marginTop: 8,
-    backgroundColor: Colors.creamBg,
-    padding: 8,
-    borderRadius: 8,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+    marginTop: 10,
+  },
+  timingPillDivider: {
+    height: 1,
+    backgroundColor: '#F0E0D0',
+    marginVertical: 12,
+  },
+  timingHeaderLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 8,
+  },
+  timingPillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  timingPill: {
+    flex: 1,
+    minWidth: '22%',
+    backgroundColor: '#FAF5EE',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  timingPillActive: {
+    backgroundColor: Colors.maroon,
+    borderColor: Colors.maroon,
+  },
+  timingPillText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  timingPillTextActive: {
+    color: '#FFFFFF',
   },
   aboutText: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 12,
@@ -382,17 +513,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 6,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: '#F0E0D0',
   },
   versionLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
-    fontWeight: '600',
+    color: Colors.textSecondary,
   },
   versionValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: Colors.maroon,
   },
   modalOverlay: {
     flex: 1,
@@ -403,58 +533,54 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardBg,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    padding: 16,
     maxHeight: '75%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  modalHeaderTitle: {
-    fontSize: 18,
+  modalTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
   },
-  closeText: {
-    fontSize: 14,
+  closeBtn: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.primary,
+    color: Colors.textMuted,
   },
   cityItem: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#F0E0D0',
   },
-  cityItemSelected: {
-    backgroundColor: '#FFF8E1',
+  selectedCityItem: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
   },
-  cityPin: {
-    fontSize: 16,
-    marginRight: 12,
-  },
-  cityItemTextContainer: {
-    flex: 1,
-  },
-  cityItemName: {
+  itemCityName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: Colors.textPrimary,
   },
-  cityItemNameSelected: {
-    fontWeight: 'bold',
-    color: Colors.primaryDark,
-  },
-  cityItemCountry: {
+  itemStateText: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   checkmark: {
-    color: Colors.auspiciousGreen,
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
 });
