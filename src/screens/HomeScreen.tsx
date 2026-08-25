@@ -10,6 +10,7 @@ import { ChoghadiyaGrid } from '../components/ChoghadiyaGrid';
 import { GocharKundaliCard } from '../components/GocharKundaliCard';
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
 interface HomeScreenProps {
   panchang: PanchangDayData;
@@ -34,9 +35,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onToday,
   onNavigateToFestivals,
 }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('LIMBS');
   const [showLangModal, setShowLangModal] = useState(false);
+
+  const locHeroTithi = getLocalizedTithi(panchang.tithi.number || 13, language);
+  const locHeroPaksha = getLocalizedPakshaName(panchang.tithi.paksha === 'KRISHNA' ? 'KRISHNA' : 'SHUKLA', language);
+  const showHindiScript = language === 'hi' || language === 'hinglish';
 
   return (
     <View style={styles.container}>
@@ -55,9 +60,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Hero Celestial Banner */}
         <View style={styles.heroCard}>
           <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.heroTithiName}>{panchang.tithi.name} ({panchang.tithi.hindiName})</Text>
-              <Text style={styles.heroPakshaText}>{panchang.tithi.pakshaHindi} • {panchang.samvat.monthNameHindi} • {panchang.samvat.vikramSamvat} विक्रम</Text>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.heroTithiName} numberOfLines={1} adjustsFontSizeToFit>
+                {locHeroTithi.name} {showHindiScript && panchang.tithi.hindiName ? `(${panchang.tithi.hindiName})` : ''}
+              </Text>
+              <Text style={styles.heroPakshaText} numberOfLines={1} adjustsFontSizeToFit>
+                {locHeroPaksha} • {panchang.samvat.monthName} • {panchang.samvat.vikramSamvat} {showHindiScript ? 'विक्रम' : 'Vikram'}
+              </Text>
             </View>
             <View style={styles.heroActiveTag}>
               <Text style={styles.heroActiveTagText}>🌕 {t('activeTithi')}</Text>

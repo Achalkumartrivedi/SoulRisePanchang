@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleArea}>
           <Text style={styles.appTitle} numberOfLines={1} adjustsFontSizeToFit>🕉️ {t('appName')}</Text>
           <Text style={styles.samvatSubtitle} numberOfLines={1} adjustsFontSizeToFit>
-            {samvat.monthNameHindi} • {samvat.vikramSamvat} विक्रम • {samvat.rituHindi}
+            {language === 'hi' || language === 'hinglish' ? samvat.monthNameHindi : samvat.monthName} • {samvat.vikramSamvat} {language === 'hi' || language === 'hinglish' ? 'विक्रम' : 'Vikram Samvat'}
           </Text>
         </View>
 
