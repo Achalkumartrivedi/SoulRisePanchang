@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../theme/colors';
 import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
@@ -14,9 +15,12 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 
 type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'RASHIPHAL' | 'SETTINGS';
 
+const CITY_STORAGE_KEY = 'SOULRISE_SELECTED_CITY';
+const GPS_STORAGE_KEY = 'SOULRISE_USE_GPS';
+
 export const AppNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabName>('TODAY');
-  const [selectedCity, setSelectedCity] = useState<CityLocation>(DEFAULT_CITIES[0]); // New Delhi
+  const [selectedCity, setSelectedCity] = useState<CityLocation>(DEFAULT_CITIES[0]); // Default New Delhi
   const [currentDateIso, setCurrentDateIso] = useState<string>(() => {
     const d = new Date();
     const y = d.getFullYear();
@@ -29,6 +33,17 @@ export const AppNavigator: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
+        const savedCityJson = await AsyncStorage.getItem(CITY_STORAGE_KEY);
+        const savedUseGps = await AsyncStorage.getItem(GPS_STORAGE_KEY);
+
+        // If user manually selected a custom city in settings, preserve it!
+        if (savedCityJson && savedUseGps === 'false') {
+          const city = JSON.parse(savedCityJson);
+          setSelectedCity(city);
+          return;
+        }
+
+        // Otherwise request location permission on launch
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
           const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
@@ -42,7 +57,7 @@ export const AppNavigator: React.FC = () => {
             if (geocode && geocode.length > 0) {
               const place = geocode[0];
               const name = place.city || place.subregion || place.region || 'Current Location';
-              cityName = `${name} (Current GPS)`;
+              cityName = `${name} (GPS)`;
               hindiName = name;
             }
           } catch (err) {
@@ -59,12 +74,26 @@ export const AppNavigator: React.FC = () => {
           };
 
           setSelectedCity(userGpsCity);
+          await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
+          await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
+        } else if (savedCityJson) {
+          setSelectedCity(JSON.parse(savedCityJson));
         }
       } catch (e) {
-        console.log('GPS Location Error:', e);
+        console.log('App launch location init error:', e);
       }
     })();
   }, []);
+
+  const handleSelectCity = async (city: CityLocation) => {
+    setSelectedCity(city);
+    try {
+      await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(city));
+      await AsyncStorage.setItem(GPS_STORAGE_KEY, city.stateCountry === 'GPS Location' ? 'true' : 'false');
+    } catch (e) {
+      console.log('Save city error:', e);
+    }
+  };
 
   const currentDateObj = new Date(currentDateIso + 'T00:00:00');
   const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity);
@@ -128,7 +157,7 @@ export const AppNavigator: React.FC = () => {
         {activeTab === 'SETTINGS' && (
           <SettingsScreen
             selectedCity={selectedCity}
-            onSelectCity={setSelectedCity}
+            onSelectCity={handleSelectCity}
             isModalVisible={isCityModalVisible}
             onOpenCityModal={() => setIsCityModalVisible(true)}
             onCloseCityModal={() => setIsCityModalVisible(false)}
