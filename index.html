@@ -204,15 +204,33 @@
         <div class="brand-title">🕉️ SoulRise Panchang</div>
         <div class="brand-subtitle" id="samvatSubtitle">Shravana • Shukla Paksha • 2083 Vikrama Samvata</div>
       </div>
-      <select class="city-picker" id="citySelect" onchange="onCityChange(this.value)">
-        <option value="Mumbai">Mumbai, India (मुंबई)</option>
-        <option value="New Delhi">New Delhi, India (नई दिल्ली)</option>
-        <option value="Varanasi">Varanasi, India (वाराणसी)</option>
-        <option value="Bengaluru">Bengaluru, India (बेंगलुरु)</option>
-        <option value="Kolkata">Kolkata, India (कोलकाता)</option>
-        <option value="Jaipur">Jaipur, India (जयपुर)</option>
-        <option value="Kathmandu">Kathmandu, Nepal (काठमाडौँ)</option>
-      </select>
+      <div style="display:flex; gap:8px;">
+        <select class="city-picker" id="langSelect" onchange="onLangChange(this.value)">
+          <option value="hinglish" selected>🇮🇳 Hinglish (Default)</option>
+          <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
+          <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+          <option value="bn">🇮🇳 বাংলা (Bengali)</option>
+          <option value="mr">🇮🇳 मराठी (Marathi)</option>
+          <option value="ru">🇷🇺 Русский (Russian)</option>
+          <option value="fr">🇫🇷 Français (French)</option>
+          <option value="es">🇪🇸 Español (Spanish)</option>
+          <option value="he">🇮🇱 עברית (Hebrew)</option>
+          <option value="id">🇮🇩 Bahasa Indonesia</option>
+          <option value="th">🇹🇭 ไทย (Thai)</option>
+        </select>
+
+        <select class="city-picker" id="citySelect" onchange="onCityChange(this.value)">
+          <option value="Mumbai">Mumbai, India (मुंबई)</option>
+          <option value="New Delhi">New Delhi, India (नई दिल्ली)</option>
+          <option value="Varanasi">Varanasi, India (वाराणसी)</option>
+          <option value="Bengaluru">Bengaluru, India (बेंगलुरु)</option>
+          <option value="Kolkata">Kolkata, India (कोलकाता)</option>
+          <option value="Jaipur">Jaipur, India (जयपुर)</option>
+          <option value="Kathmandu">Kathmandu, Nepal (काठमाडौँ)</option>
+        </select>
+      </div>
     </div>
 
     <div class="date-nav">
@@ -561,6 +579,16 @@
     function switchChogTime(type) { activeChogTimeType = type; renderView(); }
     function changeDate(days) { currentDate.setDate(currentDate.getDate() + days); renderView(); }
     function resetToday() { currentDate = new Date(); calendarMonth = currentDate.getMonth(); calendarYear = currentDate.getFullYear(); renderView(); }
+    let selectedLang = 'hinglish';
+    function onLangChange(val) {
+      selectedLang = val;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('SOULRISE_SELECTED_LANGUAGE', val);
+        }
+      } catch(e) {}
+      renderView();
+    }
     function onCityChange(val) { selectedCityName = val; renderView(); }
 
     function formatDateToIso(d) {

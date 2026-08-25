@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, CityLocation } from '../types/panchang';
 import { Header } from '../components/Header';
@@ -8,6 +8,8 @@ import { SunMoonWidget } from '../components/SunMoonWidget';
 import { MuhuratCard } from '../components/MuhuratCard';
 import { ChoghadiyaGrid } from '../components/ChoghadiyaGrid';
 import { GocharKundaliCard } from '../components/GocharKundaliCard';
+import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HomeScreenProps {
   panchang: PanchangDayData;
@@ -32,7 +34,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onToday,
   onNavigateToFestivals,
 }) => {
+  const { t } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('LIMBS');
+  const [showLangModal, setShowLangModal] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -41,6 +45,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         selectedCity={selectedCity}
         samvat={panchang.samvat}
         onOpenCityPicker={onOpenCityPicker}
+        onOpenLanguagePicker={() => setShowLangModal(true)}
         onPrevDay={onPrevDay}
         onNextDay={onNextDay}
         onToday={onToday}
@@ -55,7 +60,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Text style={styles.heroPakshaText}>{panchang.tithi.pakshaHindi} • {panchang.samvat.monthNameHindi} • {panchang.samvat.vikramSamvat} विक्रम</Text>
             </View>
             <View style={styles.heroActiveTag}>
-              <Text style={styles.heroActiveTagText}>🌕 Active Tithi</Text>
+              <Text style={styles.heroActiveTagText}>🌕 {t('activeTithi')}</Text>
             </View>
           </View>
 
@@ -63,22 +68,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.astroGrid}>
             <View style={styles.astroItem}>
               <Text style={styles.astroIcon}>🌅</Text>
-              <Text style={styles.astroLabel}>Sunrise</Text>
+              <Text style={styles.astroLabel}>{t('sunrise')}</Text>
               <Text style={styles.astroVal}>{panchang.sunMoon.sunrise}</Text>
             </View>
             <View style={styles.astroItem}>
               <Text style={styles.astroIcon}>🌇</Text>
-              <Text style={styles.astroLabel}>Sunset</Text>
+              <Text style={styles.astroLabel}>{t('sunset')}</Text>
               <Text style={styles.astroVal}>{panchang.sunMoon.sunset}</Text>
             </View>
             <View style={styles.astroItem}>
               <Text style={styles.astroIcon}>🌙</Text>
-              <Text style={styles.astroLabel}>Moonrise</Text>
+              <Text style={styles.astroLabel}>{t('moonrise')}</Text>
               <Text style={styles.astroVal}>{panchang.sunMoon.moonrise}</Text>
             </View>
             <View style={styles.astroItem}>
               <Text style={styles.astroIcon}>🌘</Text>
-              <Text style={styles.astroLabel}>Moonset</Text>
+              <Text style={styles.astroLabel}>{t('moonset')}</Text>
               <Text style={styles.astroVal}>{panchang.sunMoon.moonset}</Text>
             </View>
           </View>
@@ -91,7 +96,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('LIMBS')}
           >
             <Text style={styles.subTabIcon}>🪔</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'LIMBS' && styles.subTabTextActive]}>Panchangam (5 Limbs)</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'LIMBS' && styles.subTabTextActive]}>{t('limbsTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -99,7 +104,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('MUHURAT')}
           >
             <Text style={styles.subTabIcon}>✨</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'MUHURAT' && styles.subTabTextActive]}>Muhurat & Timings</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'MUHURAT' && styles.subTabTextActive]}>{t('muhuratTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -107,7 +112,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('CHOGHADIYA')}
           >
             <Text style={styles.subTabIcon}>⏱️</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'CHOGHADIYA' && styles.subTabTextActive]}>Choghadiya</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'CHOGHADIYA' && styles.subTabTextActive]}>{t('choghadiyaTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -115,45 +120,44 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('PLANETS')}
           >
             <Text style={styles.subTabIcon}>🪐</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'PLANETS' && styles.subTabTextActive]}>Planetary & Kundali</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'PLANETS' && styles.subTabTextActive]}>{t('planetsTab')}</Text>
           </TouchableOpacity>
         </ScrollView>
 
-        {/* Sub-Tab Dynamic Views */}
-        {activeSubTab === 'LIMBS' && <PanchangLimbCard panchang={panchang} />}
-
-        {activeSubTab === 'MUHURAT' && (
-          <MuhuratCard
-            auspicious={panchang.auspiciousMuhurats}
-            inauspicious={panchang.inauspiciousMuhurats}
-          />
-        )}
-
-        {activeSubTab === 'CHOGHADIYA' && (
-          <ChoghadiyaGrid
-            dayChoghadiya={panchang.dayChoghadiya}
-            nightChoghadiya={panchang.nightChoghadiya}
-          />
-        )}
-
-        {activeSubTab === 'PLANETS' && (
+        {/* Sub-Tab Views */}
+        {activeSubTab === 'LIMBS' && (
           <View>
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                style={styles.saveBtn}
-                onPress={() => Alert.alert("Saved", `Kundali snapshot saved for ${currentDateIso}`)}
-              >
-                <Text style={styles.saveBtnText}>💾 1-Click Save Kundali</Text>
-              </TouchableOpacity>
-            </View>
-
-            <GocharKundaliCard panchang={panchang} />
+            <Text style={styles.sectionHeaderTitle}>🪔 {t('panchangamHeader')} - {selectedCity.name}</Text>
+            <PanchangLimbCard panchang={panchang} />
             <SunMoonWidget sunMoon={panchang.sunMoon} />
           </View>
         )}
 
-        <View style={styles.bottomSpacer} />
+        {activeSubTab === 'MUHURAT' && (
+          <View>
+            <Text style={styles.sectionHeaderTitle}>✨ {t('muhuratHeader')} - {selectedCity.name}</Text>
+            <MuhuratCard auspicious={panchang.auspiciousMuhurats} inauspicious={panchang.inauspiciousMuhurats} />
+          </View>
+        )}
+
+        {activeSubTab === 'CHOGHADIYA' && (
+          <View>
+            <ChoghadiyaGrid dayChoghadiya={panchang.dayChoghadiya} nightChoghadiya={panchang.nightChoghadiya} />
+          </View>
+        )}
+
+        {activeSubTab === 'PLANETS' && (
+          <View>
+            <GocharKundaliCard panchang={panchang} />
+          </View>
+        )}
       </ScrollView>
+
+      {/* Language Selection Modal */}
+      <LanguageSelectionModal
+        visible={showLangModal}
+        onClose={() => setShowLangModal(false)}
+      />
     </View>
   );
 };
@@ -164,80 +168,77 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.creamBg,
   },
   scrollContent: {
-    paddingVertical: 12,
+    paddingBottom: 30,
   },
   heroCard: {
-    backgroundColor: '#2B1810',
+    backgroundColor: Colors.maroon,
     borderRadius: 20,
-    padding: 18,
+    padding: 16,
     marginHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.accentGold,
+    marginTop: 14,
+    marginBottom: 10,
     elevation: 4,
   },
   heroTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
   },
   heroTithiName: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.accentGold,
+    color: '#FFD700',
   },
   heroPakshaText: {
     fontSize: 12,
     color: '#FFE0B2',
     marginTop: 2,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   heroActiveTag: {
     backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    borderColor: Colors.accentGold,
-    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFD700',
   },
   heroActiveTagText: {
-    color: Colors.accentGold,
+    color: '#FFD700',
     fontSize: 11,
     fontWeight: 'bold',
   },
   astroGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    marginTop: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
     borderRadius: 14,
     padding: 12,
   },
   astroItem: {
     alignItems: 'center',
-    flex: 1,
   },
   astroIcon: {
-    fontSize: 20,
-    marginBottom: 2,
+    fontSize: 18,
   },
   astroLabel: {
     fontSize: 10,
     color: '#FFE0B2',
-    fontWeight: 'bold',
+    marginTop: 2,
+    fontWeight: '600',
   },
   astroVal: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginTop: 2,
   },
   subTabScroll: {
-    marginHorizontal: 16,
-    marginBottom: 8,
+    marginVertical: 10,
   },
   subTabContent: {
-    flexDirection: 'row',
+    paddingHorizontal: 16,
     gap: 8,
   },
   subTabItem: {
@@ -246,18 +247,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardBg,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.border,
-    elevation: 1,
   },
   subTabItemActive: {
     backgroundColor: Colors.maroon,
     borderColor: Colors.maroon,
   },
   subTabIcon: {
-    fontSize: 18,
-    marginRight: 8,
+    fontSize: 16,
+    marginRight: 6,
   },
   subTabText: {
     fontSize: 13,
@@ -267,23 +267,12 @@ const styles = StyleSheet.create({
   subTabTextActive: {
     color: '#FFFFFF',
   },
-  actionRow: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
-  saveBtn: {
-    backgroundColor: Colors.auspiciousGreen,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  saveBtnText: {
-    color: '#FFFFFF',
+  sectionHeaderTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
-    fontSize: 13,
-  },
-  bottomSpacer: {
-    height: 30,
+    color: Colors.maroon,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 6,
   },
 });

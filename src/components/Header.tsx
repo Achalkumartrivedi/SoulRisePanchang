@@ -2,12 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { CityLocation, SamvatInfo } from '../types/panchang';
+import { useLanguage } from '../context/LanguageContext';
+import { SUPPORTED_LANGUAGES } from '../types/language';
 
 interface HeaderProps {
   currentDateIso: string;
   selectedCity: CityLocation;
   samvat: SamvatInfo;
   onOpenCityPicker: () => void;
+  onOpenLanguagePicker: () => void;
   onPrevDay: () => void;
   onNextDay: () => void;
   onToday: () => void;
@@ -18,10 +21,14 @@ export const Header: React.FC<HeaderProps> = ({
   selectedCity,
   samvat,
   onOpenCityPicker,
+  onOpenLanguagePicker,
   onPrevDay,
   onNextDay,
   onToday
 }) => {
+  const { language, t } = useLanguage();
+  const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
+
   const dateObj = new Date(currentDateIso + 'T00:00:00');
   const formattedDateStr = dateObj.toLocaleDateString('en-US', {
     weekday: 'short',
@@ -34,20 +41,28 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={styles.container}>
       {/* Top Title Bar */}
       <View style={styles.topRow}>
-        <View>
-          <Text style={styles.appTitle}>🕉️ SoulRise Panchang</Text>
+        <View style={styles.titleArea}>
+          <Text style={styles.appTitle}>🕉️ {t('appName')}</Text>
           <Text style={styles.samvatSubtitle}>
-            {samvat.monthNameHindi} • {samvat.pakshaHindi || 'शुक्ल'} • {samvat.vikramSamvat} विक्रम
+            {samvat.monthNameHindi} • {samvat.vikramSamvat} विक्रम • {samvat.rituHindi}
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.cityBadge} onPress={onOpenCityPicker} activeOpacity={0.7}>
-          <Text style={styles.cityIcon}>📍</Text>
-          <View>
-            <Text style={styles.cityName}>{selectedCity.name}</Text>
-            <Text style={styles.cityHindi}>{selectedCity.hindiName}</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.actionsRow}>
+          {/* 🌐 Language Switcher Button */}
+          <TouchableOpacity style={styles.langBadge} onPress={onOpenLanguagePicker} activeOpacity={0.7}>
+            <Text style={styles.langFlag}>{currentLangObj.flag}</Text>
+            <Text style={styles.langText}>{currentLangObj.name}</Text>
+          </TouchableOpacity>
+
+          {/* 📍 City Location Button */}
+          <TouchableOpacity style={styles.cityBadge} onPress={onOpenCityPicker} activeOpacity={0.7}>
+            <Text style={styles.cityIcon}>📍</Text>
+            <View>
+              <Text style={styles.cityName}>{selectedCity.name}</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Date Navigation Bar */}
@@ -58,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <TouchableOpacity style={styles.dateDisplay} onPress={onToday} activeOpacity={0.8}>
           <Text style={styles.dateText}>{formattedDateStr}</Text>
-          <Text style={styles.todayBadge}>Today</Text>
+          <Text style={styles.todayBadge}>{t('today')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.arrowBtn} onPress={onNextDay}>
@@ -78,10 +93,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     elevation: 4,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   topRow: {
     flexDirection: 'row',
@@ -89,77 +100,96 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  titleArea: {
+    flex: 1,
+  },
   appTitle: {
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
   },
   samvatSubtitle: {
-    fontSize: 13,
-    color: Colors.accentGold,
-    fontWeight: '600',
+    fontSize: 11,
+    color: '#FFE0B2',
     marginTop: 2,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  langBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  langFlag: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  langText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   cityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   cityIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    fontSize: 12,
+    marginRight: 4,
   },
   cityName: {
-    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: 'bold',
-    fontSize: 12,
-  },
-  cityHindi: {
-    color: Colors.primaryLight,
-    fontSize: 10,
+    color: '#FFFFFF',
   },
   dateBar: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    borderRadius: 12,
-    paddingVertical: 6,
+    borderRadius: 14,
     paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   arrowBtn: {
     padding: 8,
-    borderRadius: 8,
   },
   arrowText: {
-    color: Colors.accentGold,
-    fontSize: 16,
+    fontSize: 14,
+    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   dateDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   dateText: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-    marginRight: 8,
   },
   todayBadge: {
     backgroundColor: Colors.accentGold,
     color: Colors.maroon,
     fontSize: 10,
     fontWeight: 'bold',
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 8,
-    overflow: 'hidden',
+    borderRadius: 10,
   },
 });
