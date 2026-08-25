@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import { Colors } from '../theme/colors';
 import { CityLocation } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
@@ -20,7 +21,49 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onOpenCityModal,
 }) => {
   const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
-  const [useGps, setUseGps] = useState(false);
+  const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
+
+  const handleGpsToggle = async (val: boolean) => {
+    setUseGps(val);
+    if (val) {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const { latitude, longitude } = loc.coords;
+
+          let cityName = 'Current Location';
+          let hindiName = 'वर्तमान स्थान';
+
+          try {
+            const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+            if (geocode && geocode.length > 0) {
+              const place = geocode[0];
+              const name = place.city || place.subregion || place.region || 'Current Location';
+              cityName = `${name} (Current GPS)`;
+              hindiName = name;
+            }
+          } catch (err) {}
+
+          onSelectCity({
+            name: cityName,
+            hindiName,
+            stateCountry: 'GPS Location',
+            latitude,
+            longitude,
+            timeZoneId: 'Asia/Kolkata'
+          });
+          Alert.alert('📍 Location Detected', `Coordinates updated to ${cityName}`);
+        } else {
+          Alert.alert('Permission Denied', 'GPS location permission was denied.');
+          setUseGps(false);
+        }
+      } catch (e) {
+        Alert.alert('Location Error', 'Failed to detect device coordinates.');
+        setUseGps(false);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -53,7 +96,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </View>
             <Switch
               value={useGps}
-              onValueChange={setUseGps}
+              onValueChange={handleGpsToggle}
               trackColor={{ false: '#767577', true: Colors.primary }}
               thumbColor={useGps ? Colors.accentGold : '#f4f3f4'}
             />

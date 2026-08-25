@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import * as Location from 'expo-location';
 import { Colors } from '../theme/colors';
 import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
@@ -24,6 +25,46 @@ export const AppNavigator: React.FC = () => {
     return `${y}-${m}-${day}`;
   });
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const { latitude, longitude } = loc.coords;
+
+          let cityName = 'Current Location';
+          let hindiName = 'वर्तमान स्थान';
+
+          try {
+            const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+            if (geocode && geocode.length > 0) {
+              const place = geocode[0];
+              const name = place.city || place.subregion || place.region || 'Current Location';
+              cityName = `${name} (Current GPS)`;
+              hindiName = name;
+            }
+          } catch (err) {
+            console.log('Reverse geocode error:', err);
+          }
+
+          const userGpsCity: CityLocation = {
+            name: cityName,
+            hindiName,
+            stateCountry: 'GPS Location',
+            latitude,
+            longitude,
+            timeZoneId: 'Asia/Kolkata'
+          };
+
+          setSelectedCity(userGpsCity);
+        }
+      } catch (e) {
+        console.log('GPS Location Error:', e);
+      }
+    })();
+  }, []);
 
   const currentDateObj = new Date(currentDateIso + 'T00:00:00');
   const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity);
