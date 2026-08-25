@@ -62,7 +62,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.heroTop}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.heroTithiName} numberOfLines={1} adjustsFontSizeToFit>
-                {locHeroTithi.name} {showHindiScript && panchang.tithi.hindiName ? `(${panchang.tithi.hindiName})` : ''}
+                {locHeroTithi.name}
               </Text>
               <Text style={styles.heroPakshaText} numberOfLines={1} adjustsFontSizeToFit>
                 {locHeroPaksha} • {panchang.samvat.monthName} • {panchang.samvat.vikramSamvat} {showHindiScript ? 'विक्रम' : 'Vikram'}

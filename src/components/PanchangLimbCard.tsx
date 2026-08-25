@@ -16,7 +16,32 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
   const locTithi = getLocalizedTithi(tithi.number || 13, language);
   const locPaksha = getLocalizedPakshaName(tithi.paksha === 'KRISHNA' ? 'KRISHNA' : 'SHUKLA', language);
 
-  const showHindiScript = language === 'hi' || language === 'hinglish';
+  const isHindi = language === 'hi';
+  const isHinglish = language === 'hinglish';
+
+  // Clean Limb Labels without redundant bracket noise
+  const tithiLabel = isHindi ? 'तिथि' : 'Tithi';
+  const nakshatraLabel = isHindi ? 'नक्षत्र' : 'Nakshatra';
+  const yogaLabel = isHindi ? 'योग' : 'Yoga';
+  const karanaLabel = isHindi ? 'करण' : 'Karana';
+  const vaaraLabel = isHindi ? 'वार' : 'Vaara';
+
+  // Clean Limb Values
+  const displayTithiName = locTithi.name;
+  const displayNakshatraName = isHindi ? nakshatra.hindiName : nakshatra.name;
+  const displayYogaName = isHindi ? yoga.hindiName : yoga.name;
+  const displayKaranaName = isHindi ? karana.hindiName : karana.name;
+
+  let displayVaaraName = vaara.name;
+  if (isHindi) {
+    displayVaaraName = vaara.hindiName; // e.g. "मंगलवार"
+  } else if (isHinglish) {
+    // Extract Sanskrit/Hinglish day name without English (e.g. "Mangalavara")
+    displayVaaraName = vaara.name.split(' ')[0] || vaara.name;
+  }
+
+  const startsText = isHindi ? 'प्रारंभ' : 'Starts';
+  const endsText = isHindi ? 'समाप्त' : 'Ends';
 
   return (
     <View style={styles.card}>
@@ -27,17 +52,17 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>🌑</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.limbLabel}>Tithi {showHindiScript ? '(तिथि)' : ''}</Text>
+            <Text style={styles.limbLabel}>{tithiLabel}</Text>
             <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
-              {locTithi.name} {showHindiScript && tithi.hindiName ? `(${tithi.hindiName})` : ''}
+              {displayTithiName}
             </Text>
             <Text style={styles.limbSub} numberOfLines={1} adjustsFontSizeToFit>{locPaksha} • {locTithi.desc}</Text>
             <View style={styles.timingPillRow}>
               <View style={styles.startPill}>
-                <Text style={styles.startPillText}>Starts: {tithi.startTimeFormatted || 'Aug 25, 06:22 AM'}</Text>
+                <Text style={styles.startPillText}>{startsText}: {tithi.startTimeFormatted || '06:22 AM'}</Text>
               </View>
               <View style={styles.endPill}>
-                <Text style={styles.endPillText}>Ends: {tithi.endTimeFormatted}</Text>
+                <Text style={styles.endPillText}>{endsText}: {tithi.endTimeFormatted}</Text>
               </View>
             </View>
           </View>
@@ -56,17 +81,17 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>⭐</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.limbLabel}>Nakshatra {showHindiScript ? '(नक्षत्र)' : ''}</Text>
+            <Text style={styles.limbLabel}>{nakshatraLabel}</Text>
             <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
-              {nakshatra.name} {showHindiScript && nakshatra.hindiName ? `(${nakshatra.hindiName})` : ''}
+              {displayNakshatraName}
             </Text>
             <Text style={styles.limbSub} numberOfLines={1} adjustsFontSizeToFit>Ruler: {nakshatra.ruler} • Deity: {nakshatra.deity}</Text>
             <View style={styles.timingPillRow}>
               <View style={styles.startPill}>
-                <Text style={styles.startPillText}>Starts: {nakshatra.startTimeFormatted || 'Aug 25, 04:15 AM'}</Text>
+                <Text style={styles.startPillText}>{startsText}: {nakshatra.startTimeFormatted || '04:15 AM'}</Text>
               </View>
               <View style={styles.endPill}>
-                <Text style={styles.endPillText}>Ends: {nakshatra.endTimeFormatted}</Text>
+                <Text style={styles.endPillText}>{endsText}: {nakshatra.endTimeFormatted}</Text>
               </View>
             </View>
           </View>
@@ -80,15 +105,15 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>☸️</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.limbLabel}>Yoga {showHindiScript ? '(योग)' : ''}</Text>
+            <Text style={styles.limbLabel}>{yogaLabel}</Text>
             <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
-              {yoga.name} {showHindiScript && yoga.hindiName ? `(${yoga.hindiName})` : ''}
+              {displayYogaName}
             </Text>
             <Text style={styles.limbSub} numberOfLines={1}>{yoga.endTimeFormatted}</Text>
           </View>
         </View>
         <View style={[styles.statusTag, { backgroundColor: yoga.isAuspicious ? Colors.auspiciousGreen : Colors.inauspiciousRed }]}>
-          <Text style={styles.statusTagText}>{yoga.isAuspicious ? (showHindiScript ? 'शुभ' : 'Auspicious') : (showHindiScript ? 'अशुभ' : 'Inauspicious')}</Text>
+          <Text style={styles.statusTagText}>{yoga.isAuspicious ? (isHindi ? 'शुभ' : 'Auspicious') : (isHindi ? 'अशुभ' : 'Inauspicious')}</Text>
         </View>
       </View>
 
@@ -99,9 +124,9 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>⏳</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.limbLabel}>Karana {showHindiScript ? '(करण)' : ''}</Text>
+            <Text style={styles.limbLabel}>{karanaLabel}</Text>
             <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
-              {karana.name} {showHindiScript && karana.hindiName ? `(${karana.hindiName})` : ''}
+              {displayKaranaName}
             </Text>
             <Text style={styles.limbSub} numberOfLines={1}>{karana.category} • {karana.endTimeFormatted}</Text>
           </View>
@@ -115,9 +140,9 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>☀️</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.limbLabel}>Vaara {showHindiScript ? '(वार)' : ''}</Text>
+            <Text style={styles.limbLabel}>{vaaraLabel}</Text>
             <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
-              {vaara.name} {showHindiScript && vaara.hindiName ? `(${vaara.hindiName})` : ''}
+              {displayVaaraName}
             </Text>
             <Text style={styles.limbSub} numberOfLines={1}>Planet: {vaara.rulingPlanet} • Deity: {vaara.deity}</Text>
           </View>
@@ -148,7 +173,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingVertical: 6,
   },
   limbLeft: {
     flexDirection: 'row',
@@ -156,86 +180,82 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   limbIcon: {
-    fontSize: 18,
-    marginRight: 10,
+    fontSize: 22,
+    marginRight: 12,
     marginTop: 2,
   },
   limbLabel: {
     fontSize: 11,
-    color: Colors.textMuted,
     fontWeight: 'bold',
+    color: Colors.textMuted,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   limbValueBold: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
     marginTop: 2,
   },
   limbSub: {
-    fontSize: 11,
+    fontSize: 12,
     color: Colors.textSecondary,
     marginTop: 2,
-    fontWeight: '500',
   },
   timingPillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 6,
+    marginTop: 8,
   },
   startPill: {
     backgroundColor: '#E8F5E9',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#C8E6C9',
   },
   startPillText: {
     fontSize: 10,
-    color: '#2E7D32',
     fontWeight: 'bold',
+    color: '#2E7D32',
   },
   endPill: {
     backgroundColor: '#FFF3E0',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
   },
   endPillText: {
     fontSize: 10,
+    fontWeight: 'bold',
     color: '#E65100',
-    fontWeight: 'bold',
-  },
-  specialBadge: {
-    backgroundColor: Colors.accentGold,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginLeft: 6,
-  },
-  specialBadgeText: {
-    color: Colors.maroon,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  statusTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginLeft: 6,
-  },
-  statusTagText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
   divider: {
     height: 1,
     backgroundColor: '#F0E0D0',
-    marginVertical: 6,
+    marginVertical: 12,
+  },
+  specialBadge: {
+    backgroundColor: Colors.accentGold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginLeft: 6,
+  },
+  specialBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  statusTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginLeft: 6,
+  },
+  statusTagText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
 });
