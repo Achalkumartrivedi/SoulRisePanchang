@@ -44,7 +44,7 @@ const YOGA_DATA: [string, string][] = [
   ['Vishkambha', 'विष्कम्भ'], ['Priti', 'प्रीति'], ['Ayushman', 'आयुष्मान'],
   ['Saubhagya', 'सौभाग्य'], ['Shobhana', 'शोभन'], ['Atiganda', 'अतिगण्ड'],
   ['Sukarma', 'सुकर्मा'], ['Dhriti', 'धृति'], ['Shula', 'शूल'],
-  ['Ganda', 'गण्ड'], ['Vriddhi', 'वृद्धि'], ['Dhruva', 'ध्रुव'],
+  ['Ganda', 'गण्ड'], ['Vriddhi', 'वृद्धि'], ['Dhruva', 'धरुव'],
   ['Vyaghata', 'व्याघात'], ['Harshana', 'हर्षण'], ['Vajra', 'वज्र'],
   ['Siddhi', 'सिद्धि'], ['Vyatipata', 'व्यतीपात'], ['Variyan', 'वरीयान्'],
   ['Parigha', 'परिघ'], ['Shiva', 'शिव'], ['Siddha', 'सिद्ध'],
@@ -75,36 +75,61 @@ const HINDU_MONTHS: [string, string][] = [
 ];
 
 export function getTimezoneOffsetMinutes(timeZoneId: string = 'Asia/Kolkata', date: Date = new Date()): { offsetMin: number; tzAbbrev: string } {
-  try {
-    let tzAbbrev = 'IST';
+  const tzMap: Record<string, { offsetMin: number; tzAbbrev: string }> = {
+    'Asia/Kolkata': { offsetMin: 330, tzAbbrev: 'IST' },
+    'Asia/Kathmandu': { offsetMin: 345, tzAbbrev: 'NPT' },
+    'Europe/Moscow': { offsetMin: 180, tzAbbrev: 'MSK' },
+    'Asia/Yekaterinburg': { offsetMin: 300, tzAbbrev: 'YEKT' },
+    'Asia/Novosibirsk': { offsetMin: 420, tzAbbrev: 'NOVT' },
+    'Asia/Vladivostok': { offsetMin: 600, tzAbbrev: 'VLAT' },
+    'Europe/Paris': { offsetMin: 120, tzAbbrev: 'CEST' },
+    'Europe/Madrid': { offsetMin: 120, tzAbbrev: 'CEST' },
+    'America/Toronto': { offsetMin: -240, tzAbbrev: 'EDT' },
+    'America/New_York': { offsetMin: -240, tzAbbrev: 'EDT' },
+    'America/Vancouver': { offsetMin: -420, tzAbbrev: 'PDT' },
+    'America/Los_Angeles': { offsetMin: -420, tzAbbrev: 'PDT' },
+    'Asia/Jakarta': { offsetMin: 420, tzAbbrev: 'WIB' },
+    'Asia/Makassar': { offsetMin: 480, tzAbbrev: 'WITA' },
+    'Asia/Bangkok': { offsetMin: 420, tzAbbrev: 'ICT' },
+    'Asia/Jerusalem': { offsetMin: 180, tzAbbrev: 'IDT' },
+    'Europe/London': { offsetMin: 60, tzAbbrev: 'BST' },
+    'Asia/Dubai': { offsetMin: 240, tzAbbrev: 'GST' },
+    'Australia/Sydney': { offsetMin: 600, tzAbbrev: 'AEST' },
+  };
 
-    if (timeZoneId === 'Asia/Kolkata') tzAbbrev = 'IST';
-    else if (timeZoneId === 'Europe/Moscow') tzAbbrev = 'MSK';
-    else if (timeZoneId === 'Asia/Yekaterinburg') tzAbbrev = 'YEKT';
-    else if (timeZoneId === 'Asia/Novosibirsk') tzAbbrev = 'NOVT';
-    else if (timeZoneId === 'Asia/Vladivostok') tzAbbrev = 'VLAT';
-    else if (timeZoneId === 'Europe/Paris' || timeZoneId === 'Europe/Madrid') tzAbbrev = 'CET';
-    else if (timeZoneId === 'America/Toronto' || timeZoneId === 'America/New_York') tzAbbrev = 'EST';
-    else if (timeZoneId === 'America/Vancouver' || timeZoneId === 'America/Los_Angeles') tzAbbrev = 'PST';
-    else if (timeZoneId === 'Asia/Jakarta') tzAbbrev = 'WIB';
-    else if (timeZoneId === 'Asia/Makassar') tzAbbrev = 'WITA';
-    else if (timeZoneId === 'Asia/Bangkok') tzAbbrev = 'ICT';
-    else if (timeZoneId === 'Asia/Jerusalem') tzAbbrev = 'IST (IL)';
-    else if (timeZoneId === 'Europe/London') tzAbbrev = 'GMT';
-    else if (timeZoneId === 'Asia/Dubai') tzAbbrev = 'GST';
-    else if (timeZoneId === 'Australia/Sydney') tzAbbrev = 'AEST';
-    else {
-      const parts = timeZoneId.split('/');
-      tzAbbrev = (parts[parts.length - 1] || 'LOCAL').substring(0, 4).toUpperCase();
+  if (tzMap[timeZoneId]) {
+    return tzMap[timeZoneId];
+  }
+
+  try {
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: timeZoneId,
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric',
+      hour12: false
+    };
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(date);
+
+    let year = date.getUTCFullYear();
+    let month = date.getUTCMonth();
+    let day = date.getUTCDate();
+    let hour = date.getUTCHours();
+    let minute = date.getUTCMinutes();
+
+    for (const p of parts) {
+      if (p.type === 'year') year = parseInt(p.value, 10);
+      if (p.type === 'month') month = parseInt(p.value, 10) - 1;
+      if (p.type === 'day') day = parseInt(p.value, 10);
+      if (p.type === 'hour') hour = parseInt(p.value, 10) % 24;
+      if (p.type === 'minute') minute = parseInt(p.value, 10);
     }
 
-    const localString = date.toLocaleString('en-US', { timeZone: timeZoneId });
-    const utcString = date.toLocaleString('en-US', { timeZone: 'UTC' });
-    const localDate = new Date(localString);
-    const utcDate = new Date(utcString);
-    const offsetMin = Math.round((localDate.getTime() - utcDate.getTime()) / (1000 * 60));
+    const targetTime = Date.UTC(year, month, day, hour, minute);
+    const utcTime = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes());
+    const offsetMin = Math.round((targetTime - utcTime) / (1000 * 60));
 
-    return { offsetMin, tzAbbrev };
+    return { offsetMin: isNaN(offsetMin) ? 330 : offsetMin, tzAbbrev: 'LOCAL' };
   } catch (e) {
     return { offsetMin: 330, tzAbbrev: 'IST' };
   }
@@ -114,7 +139,6 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   const dateIso = formatDateIso(date);
   const year = date.getFullYear();
 
-  // Dynamic sunrise & sunset in city's local timezone
   const { sunrise, sunset } = calculateSunriseSunset(date, city.latitude, city.longitude, city.timeZoneId || 'Asia/Kolkata');
   const { tzAbbrev } = getTimezoneOffsetMinutes(city.timeZoneId || 'Asia/Kolkata', date);
 
@@ -140,7 +164,6 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
     displayTithiHindi = 'अमावस्या';
   }
 
-  // Dynamic Tithi timing calculation
   const tithiEndHour = Math.floor((18 + (tithiIndex * 0.7)) % 24);
   const tithiEndMin = Math.floor((tithiIndex * 19) % 60);
 
@@ -312,7 +335,7 @@ const ZODIAC_SIGNS = [
 
 export function calculateLagnasForDay(date: Date, sunriseStr: string, sunSignIndex: number) {
   const parts = sunriseStr.split(' ');
-  const [hStr, mStr] = parts[0].split(':');
+  const [hStr, mStr] = (parts[0] || '06:00').split(':');
   let h = parseInt(hStr, 10) || 6;
   const m = parseInt(mStr, 10) || 0;
   if (parts.length > 1 && parts[1].toUpperCase() === 'PM' && h < 12) h += 12;
@@ -436,6 +459,7 @@ function getDayOfYear(date: Date): number {
 }
 
 function formatMinToTimeStr(minutes: number): string {
+  if (isNaN(minutes)) return '06:00 AM';
   let normalized = Math.round(minutes) % 1440;
   if (normalized < 0) normalized += 1440;
 
@@ -449,11 +473,12 @@ function formatMinToTimeStr(minutes: number): string {
 }
 
 function formatShiftedTime(timeStr: string, shiftHours: number): string {
+  if (!timeStr || timeStr.includes('NaN')) return '06:00 PM';
   const parts = timeStr.split(' ');
-  const [hStr, mStr] = parts[0].split(':');
-  let h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
-  const ampm = parts[1];
+  const [hStr, mStr] = (parts[0] || '06:00').split(':');
+  let h = parseInt(hStr, 10) || 6;
+  const m = parseInt(mStr, 10) || 0;
+  const ampm = parts[1] || 'AM';
   const tzAbbrev = parts[2] || '';
 
   if (ampm === 'PM' && h < 12) h += 12;
