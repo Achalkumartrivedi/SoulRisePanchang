@@ -96,7 +96,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('LIMBS')}
           >
             <Text style={styles.subTabIcon}>🪔</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'LIMBS' && styles.subTabTextActive]}>{t('limbsTab')}</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'LIMBS' && styles.subTabTextActive]} numberOfLines={1}>{t('limbsTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -104,7 +104,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('MUHURAT')}
           >
             <Text style={styles.subTabIcon}>✨</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'MUHURAT' && styles.subTabTextActive]}>{t('muhuratTab')}</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'MUHURAT' && styles.subTabTextActive]} numberOfLines={1}>{t('muhuratTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -112,7 +112,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('CHOGHADIYA')}
           >
             <Text style={styles.subTabIcon}>⏱️</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'CHOGHADIYA' && styles.subTabTextActive]}>{t('choghadiyaTab')}</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'CHOGHADIYA' && styles.subTabTextActive]} numberOfLines={1}>{t('choghadiyaTab')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -120,14 +120,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setActiveSubTab('PLANETS')}
           >
             <Text style={styles.subTabIcon}>🪐</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'PLANETS' && styles.subTabTextActive]}>{t('planetsTab')}</Text>
+            <Text style={[styles.subTabText, activeSubTab === 'PLANETS' && styles.subTabTextActive]} numberOfLines={1}>{t('planetsTab')}</Text>
           </TouchableOpacity>
         </ScrollView>
 
         {/* Sub-Tab Views */}
         {activeSubTab === 'LIMBS' && (
           <View>
-            <Text style={styles.sectionHeaderTitle}>🪔 {t('panchangamHeader')} - {selectedCity.name}</Text>
+            <Text style={styles.sectionHeaderTitle} numberOfLines={2} adjustsFontSizeToFit>🪔 {t('panchangamHeader')} - {selectedCity.name}</Text>
             <PanchangLimbCard panchang={panchang} />
             <SunMoonWidget sunMoon={panchang.sunMoon} />
           </View>

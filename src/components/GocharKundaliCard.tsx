@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Rect, Line, Polygon, Text as SvgText, G } from 'react-native-svg';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, DailyLagnaItem } from '../types/panchang';
+import { useLanguage } from '../context/LanguageContext';
 
 interface GocharKundaliCardProps {
   panchang: PanchangDayData;
@@ -52,6 +53,7 @@ const SOUTH_ZODIAC_GRID = [
 ];
 
 export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }) => {
+  const { t } = useLanguage();
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH'>('NORTH');
   const [refMode, setRefMode] = useState<ReferenceMode>('LAGNA');
 
@@ -111,7 +113,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
       {/* Header Row with North/South Toggle cleanly contained */}
       <View style={styles.headerRow}>
         <View style={styles.titleBox}>
-          <Text style={styles.cardTitle}>🪐 Gochar Kundali (गोचर कुण्डली)</Text>
+          <Text style={styles.cardTitle} numberOfLines={1} adjustsFontSizeToFit>🪐 {t('gocharKundaliHeader')}</Text>
         </View>
 
         {/* Segmented Control - North vs South Indian */}
@@ -120,8 +122,8 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
             style={[styles.chartToggleBtn, chartStyle === 'NORTH' && styles.chartToggleBtnActive]}
             onPress={() => setChartStyle('NORTH')}
           >
-            <Text style={[styles.chartToggleText, chartStyle === 'NORTH' && styles.chartToggleTextActive]}>
-              North (उत्तर)
+            <Text style={[styles.chartToggleText, chartStyle === 'NORTH' && styles.chartToggleTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+              {t('northIndian')}
             </Text>
           </TouchableOpacity>
 
@@ -129,8 +131,8 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
             style={[styles.chartToggleBtn, chartStyle === 'SOUTH' && styles.chartToggleBtnActive]}
             onPress={() => setChartStyle('SOUTH')}
           >
-            <Text style={[styles.chartToggleText, chartStyle === 'SOUTH' && styles.chartToggleTextActive]}>
-              South (दक्षिण)
+            <Text style={[styles.chartToggleText, chartStyle === 'SOUTH' && styles.chartToggleTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+              {t('southIndian')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -142,11 +144,11 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           style={[styles.refModeBtn, refMode === 'LAGNA' && styles.refModeBtnActive]}
           onPress={() => setRefMode('LAGNA')}
         >
-          <Text style={[styles.refModeText, refMode === 'LAGNA' && styles.refModeTextActive]}>
-            🌅 Asc
+          <Text style={[styles.refModeText, refMode === 'LAGNA' && styles.refModeTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+            🌅 {t('ascendant')}
           </Text>
-          <Text style={[styles.refModeSubText, refMode === 'LAGNA' && styles.refModeSubTextActive]}>
-            Rising Lagna
+          <Text style={[styles.refModeSubText, refMode === 'LAGNA' && styles.refModeSubTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+            {t('risingLagna')}
           </Text>
         </TouchableOpacity>
 
@@ -154,11 +156,11 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           style={[styles.refModeBtn, refMode === 'MOON' && styles.refModeBtnActive]}
           onPress={() => setRefMode('MOON')}
         >
-          <Text style={[styles.refModeText, refMode === 'MOON' && styles.refModeTextActive]}>
-            🌙 Moon Sign
+          <Text style={[styles.refModeText, refMode === 'MOON' && styles.refModeTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+            🌙 {t('moonSign')}
           </Text>
-          <Text style={[styles.refModeSubText, refMode === 'MOON' && styles.refModeSubTextActive]}>
-            Chandra Lagna
+          <Text style={[styles.refModeSubText, refMode === 'MOON' && styles.refModeSubTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+            {t('chandraLagna')}
           </Text>
         </TouchableOpacity>
 
@@ -166,11 +168,11 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           style={[styles.refModeBtn, refMode === 'SUN' && styles.refModeBtnActive]}
           onPress={() => setRefMode('SUN')}
         >
-          <Text style={[styles.refModeText, refMode === 'SUN' && styles.refModeTextActive]}>
-            ☀️ Sun Sign
+          <Text style={[styles.refModeText, refMode === 'SUN' && styles.refModeTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+            ☀️ {t('sunSign')}
           </Text>
-          <Text style={[styles.refModeSubText, refMode === 'SUN' && styles.refModeSubTextActive]}>
-            Surya Lagna
+          <Text style={[styles.refModeSubText, refMode === 'SUN' && styles.refModeSubTextActive]} numberOfLines={1} adjustsFontSizeToFit>
+            {t('suryaLagna')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -182,12 +184,12 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
             {refMode === 'MOON' ? '🌙' : refMode === 'SUN' ? '☀️' : '🌅'}
           </Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.lagnaTitleText}>
-              {refMode === 'MOON' ? 'Moon Sign (Chandra Lagna) : Capricorn (Makara) (मकर)' :
-               refMode === 'SUN' ? 'Sun Sign (Surya Lagna) : Leo (Simha) (सिंह)' :
-               `Asc (Rising Lagna) : ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
+            <Text style={styles.lagnaTitleText} numberOfLines={2} adjustsFontSizeToFit>
+              {refMode === 'MOON' ? `${t('moonSign')} (${t('chandraLagna')}) : Capricorn (Makara) (मकर)` :
+               refMode === 'SUN' ? `${t('sunSign')} (${t('suryaLagna')}) : Leo (Simha) (सिंह)` :
+               `${t('ascendant')} (${t('risingLagna')}) : ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
             </Text>
-            <Text style={styles.lagnaTimeSub}>
+            <Text style={styles.lagnaTimeSub} numberOfLines={1} adjustsFontSizeToFit>
               {refMode === 'MOON' ? '1st House = Makara (Capricorn)' :
                refMode === 'SUN' ? '1st House = Simha (Leo)' :
                `Rising Window: ${lagnaInfo.startTime} - ${lagnaInfo.endTime}`}
@@ -244,7 +246,7 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
                       fill="#800000"
                       textAnchor="middle"
                     >
-                      {refMode === 'MOON' ? 'Chandra Lagna' : refMode === 'SUN' ? 'Surya Lagna' : 'Rising Lagna'}
+                      {refMode === 'MOON' ? t('chandraLagna') : refMode === 'SUN' ? t('suryaLagna') : t('risingLagna')}
                     </SvgText>
                   )}
 
@@ -300,8 +302,8 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
 
             {/* Center Merged Box */}
             <Rect x={80} y={80} width={140} height={140} fill="#F4EADB" stroke="#5D3A00" strokeWidth={1.5} />
-            <SvgText x={150} y={140} fontSize={13} fontWeight="bold" fill="#800000" textAnchor="middle">
-              {refMode === 'MOON' ? 'CHANDRA LAGNA' : refMode === 'SUN' ? 'SURYA LAGNA' : 'RISING LAGNA'}
+            <SvgText x={150} y={140} fontSize={12} fontWeight="bold" fill="#800000" textAnchor="middle">
+              {refMode === 'MOON' ? t('chandraLagna').toUpperCase() : refMode === 'SUN' ? t('suryaLagna').toUpperCase() : t('risingLagna').toUpperCase()}
             </SvgText>
             <SvgText x={150} y={160} fontSize={10} fontWeight="bold" fill="#C49347" textAnchor="middle">
               {refMode === 'MOON' ? '1st House = Moon Sign' : refMode === 'SUN' ? '1st House = Sun Sign' : '1st House = Ascendant'}
@@ -447,9 +449,10 @@ const styles = StyleSheet.create({
   },
   titleBox: {
     flexShrink: 1,
+    flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: Colors.maroon,
   },
@@ -462,7 +465,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0B2',
   },
   chartToggleBtn: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 9,
   },
@@ -484,10 +487,12 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 12,
     justifyContent: 'space-between',
+    gap: 4,
   },
   refModeBtn: {
     flex: 1,
     paddingVertical: 6,
+    paddingHorizontal: 2,
     borderRadius: 9,
     alignItems: 'center',
   },
@@ -495,7 +500,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.maroon,
   },
   refModeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: Colors.textSecondary,
   },
@@ -548,6 +553,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
     marginLeft: 6,
+    flexShrink: 0,
   },
   activeLagnaBadgeText: {
     color: '#FFFFFF',

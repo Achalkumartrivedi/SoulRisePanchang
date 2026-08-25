@@ -183,6 +183,9 @@ const styles = StyleSheet.create({
   langLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   flagIcon: {
     fontSize: 26,

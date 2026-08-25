@@ -42,8 +42,8 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Title Bar */}
       <View style={styles.topRow}>
         <View style={styles.titleArea}>
-          <Text style={styles.appTitle}>🕉️ {t('appName')}</Text>
-          <Text style={styles.samvatSubtitle}>
+          <Text style={styles.appTitle} numberOfLines={1} adjustsFontSizeToFit>🕉️ {t('appName')}</Text>
+          <Text style={styles.samvatSubtitle} numberOfLines={1} adjustsFontSizeToFit>
             {samvat.monthNameHindi} • {samvat.vikramSamvat} विक्रम • {samvat.rituHindi}
           </Text>
         </View>
@@ -52,14 +52,14 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 🌐 Language Switcher Button */}
           <TouchableOpacity style={styles.langBadge} onPress={onOpenLanguagePicker} activeOpacity={0.7}>
             <Text style={styles.langFlag}>{currentLangObj.flag}</Text>
-            <Text style={styles.langText}>{currentLangObj.name}</Text>
+            <Text style={styles.langText} numberOfLines={1} adjustsFontSizeToFit>{currentLangObj.name}</Text>
           </TouchableOpacity>
 
           {/* 📍 City Location Button */}
           <TouchableOpacity style={styles.cityBadge} onPress={onOpenCityPicker} activeOpacity={0.7}>
             <Text style={styles.cityIcon}>📍</Text>
             <View>
-              <Text style={styles.cityName}>{selectedCity.name}</Text>
+              <Text style={styles.cityName} numberOfLines={1} adjustsFontSizeToFit>{selectedCity.name}</Text>
             </View>
           </TouchableOpacity>
         </View>
