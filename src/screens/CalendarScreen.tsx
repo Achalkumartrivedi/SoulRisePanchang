@@ -13,18 +13,41 @@ interface CalendarScreenProps {
   onSelectDate: (dateIso: string) => void;
 }
 
-const TITHI_NAMES = [
-  "Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami", "Shasthi", "Saptami",
-  "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Purnima",
-  "Pratipada", "Dwitiya", "Tritiya", "Chaturthi", "Panchami", "Shasthi", "Saptami",
-  "Ashtami", "Navami", "Dashami", "Ekadashi", "Dwadashi", "Trayodashi", "Chaturdashi", "Amavasya"
-];
-
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
+
+export function getLocalizedDateString(date: Date, lang: string): string {
+  const localeMap: Record<string, string> = {
+    hinglish: 'en-US',
+    hi: 'hi-IN',
+    en: 'en-US',
+    ta: 'ta-IN',
+    te: 'te-IN',
+    bn: 'bn-IN',
+    mr: 'mr-IN',
+    ru: 'ru-RU',
+    fr: 'fr-FR',
+    es: 'es-ES',
+    he: 'he-IL',
+    id: 'id-ID',
+    th: 'th-TH'
+  };
+
+  try {
+    const locale = localeMap[lang] || 'en-US';
+    return date.toLocaleDateString(locale, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+}
 
 const getJulianDay = (d: Date) => {
   let y = d.getFullYear();
@@ -271,10 +294,10 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   <Text style={styles.summaryMoonIcon}>🌕</Text>
                   <View style={{ flex: 1, marginRight: 6 }}>
                     <Text style={styles.summaryDateText}>
-                      {item.dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      {getLocalizedDateString(item.dateObj, language)}
                     </Text>
                     <Text style={styles.summaryTimingText}>
-                      Tithi Starts: {item.panchang.tithi.startTimeFormatted || '06:15 AM'} • Ends: {item.panchang.tithi.endTimeFormatted}
+                      Tithi Starts: {item.panchang.tithi.startTimeFormatted} • Ends: {item.panchang.tithi.endTimeFormatted}
                     </Text>
                     <Text style={styles.summaryRitualText}>✨ {t('purnimaRitual')}</Text>
                   </View>
@@ -306,10 +329,10 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   <Text style={styles.summaryMoonIcon}>🌑</Text>
                   <View style={{ flex: 1, marginRight: 6 }}>
                     <Text style={styles.summaryDateText}>
-                      {item.dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      {getLocalizedDateString(item.dateObj, language)}
                     </Text>
                     <Text style={styles.summaryTimingText}>
-                      Tithi Starts: {item.panchang.tithi.startTimeFormatted || '05:45 AM'} • Ends: {item.panchang.tithi.endTimeFormatted}
+                      Tithi Starts: {item.panchang.tithi.startTimeFormatted} • Ends: {item.panchang.tithi.endTimeFormatted}
                     </Text>
                     <Text style={styles.summaryRitualText}>✨ {t('amavasyaRitual')}</Text>
                   </View>
@@ -339,7 +362,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             <View style={styles.modalHeader}>
               <View style={{ flex: 1, marginRight: 8 }}>
                 <Text style={styles.modalDateTitle} numberOfLines={1} adjustsFontSizeToFit>
-                  🕉️ {mDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                  🕉️ {getLocalizedDateString(mDate, language)}
                 </Text>
                 <Text style={styles.modalSubtitle} numberOfLines={1} adjustsFontSizeToFit>
                   {mMonthName} • {mPakshaFull} • Samvat 2083
@@ -358,7 +381,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
             {/* Tithi Details */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>🌑 Tithi {showHindiScript ? '(तिथि)' : ''} Timings</Text>
+              <Text style={styles.timingBoxTitle}>🌑 Tithi {showHindiScript ? '(तिथि)' : ''} Timings ({mPanchang.city.name})</Text>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Active Tithi:</Text>
                 <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
@@ -368,7 +391,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Tithi Starts:</Text>
                 <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>
-                  {mPanchang.tithi.startTimeFormatted || '06:15 AM'}
+                  {mPanchang.tithi.startTimeFormatted}
                 </Text>
               </View>
               <View style={styles.timingRow}>
@@ -381,7 +404,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
             {/* Nakshatra Details */}
             <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>⭐ Nakshatra {showHindiScript ? '(नक्षत्र)' : ''} Timings</Text>
+              <Text style={styles.timingBoxTitle}>⭐ Nakshatra {showHindiScript ? '(नक्षत्र)' : ''} Timings ({mPanchang.city.name})</Text>
               <View style={styles.timingRow}>
                 <Text style={styles.timingLabel}>Nakshatra Name:</Text>
                 <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
