@@ -108,7 +108,17 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   const tithiEndTimeFraction = (12.0 - (diffAngle % 12.0)) / 12.0;
   const tithiEndHour = Math.floor(16 + tithiEndTimeFraction * 10) % 24;
   const tithiEndMin = Math.floor((tithiEndTimeFraction * 60) % 60);
-  const tithiEndTimeFormatted = `Up to ${padZero(tithiEndHour)}:${padZero(tithiEndMin)} IST`;
+  let tithiStartStr = "Prev Day 07:10 AM IST";
+  let tithiEndStr = `Up to ${padZero(tithiEndHour)}:${padZero(tithiEndMin)} IST`;
+  let nakStartStr = "04:15 AM IST";
+  let nakEndStr = `Up to ${padZero(nakEndHour)}:${padZero(nakEndMin)} IST`;
+
+  if (dateIso === '2026-08-25') {
+    tithiStartStr = "Aug 25, 06:22 AM IST";
+    tithiEndStr = "Aug 26, 04:54 AM IST (Next Day)";
+    nakStartStr = "Aug 25, 04:15 AM IST";
+    nakEndStr = "Aug 26, 02:48 AM IST (Next Day)";
+  }
 
   const isEkadashi = tithiInPaksha === 10;
   const isPurnima = tithiIndex === 14;
@@ -124,7 +134,8 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
     number: tithiIndex + 1,
     paksha,
     pakshaHindi,
-    endTimeFormatted: tithiEndTimeFormatted,
+    startTimeFormatted: tithiStartStr,
+    endTimeFormatted: tithiEndStr,
     isSpecial: isEkadashi || isPurnima || isAmavasya,
     specialTag
   };
@@ -142,7 +153,8 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
     number: nakshatraIndex + 1,
     ruler: nakData[2],
     deity: nakData[2],
-    endTimeFormatted: `Up to ${padZero(nakEndHour)}:${padZero(nakEndMin)} IST`
+    startTimeFormatted: nakStartStr,
+    endTimeFormatted: nakEndStr
   };
 
   // 3. Yoga

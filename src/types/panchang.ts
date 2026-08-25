@@ -15,6 +15,7 @@ export interface TithiInfo {
   number: number;
   paksha: Paksha;
   pakshaHindi: string;
+  startTimeFormatted?: string;
   endTimeFormatted: string;
   isSpecial: boolean;
   specialTag?: string;
@@ -26,6 +27,7 @@ export interface NakshatraInfo {
   number: number;
   ruler: string;
   deity: string;
+  startTimeFormatted?: string;
   endTimeFormatted: string;
 }
 

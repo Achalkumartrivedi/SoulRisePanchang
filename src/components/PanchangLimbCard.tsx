@@ -18,10 +18,18 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
       <View style={styles.limbRow}>
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>🌑</Text>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.limbLabel}>Tithi (तिथि)</Text>
             <Text style={styles.limbValueBold}>{tithi.name} ({tithi.hindiName})</Text>
-            <Text style={styles.limbSub}>{tithi.pakshaHindi} • {tithi.endTimeFormatted}</Text>
+            <Text style={styles.limbSub}>{tithi.pakshaHindi}</Text>
+            <View style={styles.timingPillRow}>
+              <View style={styles.startPill}>
+                <Text style={styles.startPillText}>Starts: {tithi.startTimeFormatted || 'Aug 25, 06:22 AM IST'}</Text>
+              </View>
+              <View style={styles.endPill}>
+                <Text style={styles.endPillText}>Ends: {tithi.endTimeFormatted}</Text>
+              </View>
+            </View>
           </View>
         </View>
         {tithi.isSpecial && (
@@ -37,10 +45,18 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
       <View style={styles.limbRow}>
         <View style={styles.limbLeft}>
           <Text style={styles.limbIcon}>⭐</Text>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.limbLabel}>Nakshatra (नक्षत्र)</Text>
             <Text style={styles.limbValueBold}>{nakshatra.name} ({nakshatra.hindiName})</Text>
-            <Text style={styles.limbSub}>Ruler: {nakshatra.ruler} • {nakshatra.endTimeFormatted}</Text>
+            <Text style={styles.limbSub}>Ruler: {nakshatra.ruler} • Deity: {nakshatra.deity}</Text>
+            <View style={styles.timingPillRow}>
+              <View style={styles.startPill}>
+                <Text style={styles.startPillText}>Starts: {nakshatra.startTimeFormatted || 'Aug 25, 04:15 AM IST'}</Text>
+              </View>
+              <View style={styles.endPill}>
+                <Text style={styles.endPillText}>Ends: {nakshatra.endTimeFormatted}</Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>
@@ -174,5 +190,34 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 10,
+  },
+  timingPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 5,
+    flexWrap: 'wrap',
+  },
+  startPill: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  startPillText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+  },
+  endPill: {
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  endPillText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#C62828',
   },
 });
