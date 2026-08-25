@@ -159,6 +159,8 @@
     .moon-icon { font-size: 13px; }
 
     .tithi-name-tag { font-size: 10px; font-weight: 800; color: #444; background: #F5F5F5; padding: 2px 5px; border-radius: 4px; display: inline-block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .month-paksha-tag { font-size: 9px; font-weight: 800; color: #800000; background: #FFF3E0; padding: 1px 4px; border-radius: 4px; margin-top: 2px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .badge-ritual { font-size: 8px; font-weight: 900; color: #D84315; background: #FFE0B2; border: 1px solid #FFB74D; padding: 1px 3px; border-radius: 3px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
     
     .badge-purnima { background: #FFD700; color: #800000; font-size: 9px; font-weight: 900; padding: 2px 4px; border-radius: 4px; }
     .badge-amavasya { background: #212121; color: #FFFFFF; font-size: 9px; font-weight: 900; padding: 2px 4px; border-radius: 4px; }
@@ -777,6 +779,31 @@
         const tithiIdx = calculateTithiForDate(dateObj);
         const tithiName = TITHI_NAMES[tithiIdx];
 
+        let hinduMonthName = "Shravan";
+        if (calendarMonth === 7 && d > 27) hinduMonthName = "Bhadrapada";
+        else if (calendarMonth === 8 && d <= 11) hinduMonthName = "Bhadrapada";
+        else if (calendarMonth === 8 && d > 11) hinduMonthName = "Bhadrapada";
+
+        const pakshaShort = tithiIdx <= 14 ? "Shu." : "Kru.";
+        const monthPakshaDisplay = `${hinduMonthName} - ${pakshaShort}`;
+
+        const MINI_RITUALS_MAP = {
+          "2026-08-14": "🌸 Nag Panchami",
+          "2026-08-17": "🌺 Shravan Somvar",
+          "2026-08-18": "🌸 Mangala Gauri",
+          "2026-08-21": "🌺 Varalakshmi Vrat",
+          "2026-08-23": "🌿 Putrada Ekadashi",
+          "2026-08-24": "🔱 Soma Pradosh",
+          "2026-08-25": "🌸 ManglaGauri Pujan",
+          "2026-08-27": "🪔 Raksha Bandhan",
+          "2026-08-29": "🌾 Randhan Chhath",
+          "2026-08-30": "🐘 Sankashti Chaturthi",
+          "2026-08-31": "❄️ Shitala Satam",
+          "2026-09-04": "🪔 Krishna Janmashtami",
+          "2026-09-14": "🐘 Ganesh Chaturthi"
+        };
+        const miniRitual = MINI_RITUALS_MAP[dateIso];
+
         let moonIcon = '🌒';
         if (tithiIdx === 14) moonIcon = '🌕';
         else if (tithiIdx === 29) moonIcon = '🌑';
@@ -792,6 +819,8 @@
               <span class="moon-icon">${moonIcon}</span>
             </div>
 
+            <div class="month-paksha-tag">${monthPakshaDisplay}</div>
+
             ${tithiIdx === 14 ? `
               <div class="badge-purnima">🌕 Purnima</div>
             ` : tithiIdx === 29 ? `
@@ -803,6 +832,8 @@
             ` : `
               <div class="tithi-name-tag">${tithiName}</div>
             `}
+
+            ${miniRitual ? `<div class="badge-ritual">${miniRitual}</div>` : ''}
           </div>
         `;
       }

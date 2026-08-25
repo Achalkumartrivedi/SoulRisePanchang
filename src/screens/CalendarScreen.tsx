@@ -98,6 +98,30 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
             const tithiIdx = calculateTithiForDate(dateObj);
             const tithiName = TITHI_NAMES[tithiIdx];
 
+            let hinduMonthName = "Shravan";
+            if (month === 7 && dayNum > 27) hinduMonthName = "Bhadrapada";
+            else if (month === 8 && dayNum <= 11) hinduMonthName = "Bhadrapada";
+
+            const pakshaShort = tithiIdx <= 14 ? "Shu." : "Kru.";
+            const monthPakshaDisplay = `${hinduMonthName} - ${pakshaShort}`;
+
+            const MINI_RITUALS_MAP: { [key: string]: string } = {
+              "2026-08-14": "🌸 Nag Panchami",
+              "2026-08-17": "🌺 Shravan Somvar",
+              "2026-08-18": "🌸 Mangala Gauri",
+              "2026-08-21": "🌺 Varalakshmi Vrat",
+              "2026-08-23": "🌿 Putrada Ekadashi",
+              "2026-08-24": "🔱 Soma Pradosh",
+              "2026-08-25": "🌸 ManglaGauri Pujan",
+              "2026-08-27": "🪔 Raksha Bandhan",
+              "2026-08-29": "🌾 Randhan Chhath",
+              "2026-08-30": "🐘 Sankashti Chaturthi",
+              "2026-08-31": "❄️ Shitala Satam",
+              "2026-09-04": "🪔 Krishna Janmashtami",
+              "2026-09-14": "🐘 Ganesh Chaturthi"
+            };
+            const miniRitual = MINI_RITUALS_MAP[dateIso];
+
             let moonIcon = '🌒';
             if (tithiIdx === 14) moonIcon = '🌕';
             else if (tithiIdx === 29) moonIcon = '🌑';
@@ -122,6 +146,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
                   <Text style={styles.moonIconText}>{moonIcon}</Text>
                 </View>
 
+                <Text style={styles.monthPakshaText} numberOfLines={1}>{monthPakshaDisplay}</Text>
+
                 {tithiIdx === 14 ? (
                   <View style={styles.purnimaBadge}><Text style={styles.purnimaBadgeText}>🌕 Purnima</Text></View>
                 ) : tithiIdx === 29 ? (
@@ -133,6 +159,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) 
                 ) : (
                   <Text style={styles.tithiText} numberOfLines={1}>{tithiName}</Text>
                 )}
+
+                {miniRitual ? (
+                  <View style={styles.ritualBadge}>
+                    <Text style={styles.ritualBadgeText} numberOfLines={1}>{miniRitual}</Text>
+                  </View>
+                ) : null}
               </TouchableOpacity>
             );
           })}
@@ -165,30 +197,33 @@ const styles = StyleSheet.create({
   weekdayText: { fontSize: 12, fontWeight: 'bold', color: Colors.textSecondary, width: 40, textAlign: 'center' },
   sunText: { color: Colors.inauspiciousRed },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  emptyDayCell: { width: '14.28%', height: 75 },
+  emptyDayCell: { width: '14.28%', height: 85 },
   dayCell: {
     width: '14.28%',
-    height: 75,
+    height: 85,
     borderWidth: 0.5,
     borderColor: '#E0E0E0',
     borderRadius: 8,
-    padding: 4,
-    justify: 'space-between',
+    padding: 3,
+    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
   },
   holidayCell: { backgroundColor: '#FFEBEE', borderColor: '#EF9A9A' },
   todayCell: { borderWidth: 2, borderColor: Colors.primary, backgroundColor: '#FFF8E1' },
   dayTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dayNumText: { fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary },
+  dayNumText: { fontSize: 11, fontWeight: 'bold', color: Colors.textPrimary },
   holidayDayNum: { color: Colors.inauspiciousRed },
-  moonIconText: { fontSize: 10 },
-  tithiText: { fontSize: 9, color: '#666', fontWeight: 'bold', marginTop: 4 },
-  purnimaBadge: { backgroundColor: '#FFD700', borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1, marginTop: 4 },
+  moonIconText: { fontSize: 9 },
+  monthPakshaText: { fontSize: 8, color: '#800000', fontWeight: 'bold', backgroundColor: '#FFF3E0', borderRadius: 3, textAlign: 'center', paddingVertical: 1 },
+  tithiText: { fontSize: 8, color: '#666', fontWeight: 'bold', textAlign: 'center' },
+  purnimaBadge: { backgroundColor: '#FFD700', borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
   purnimaBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#800000', textAlign: 'center' },
-  amavasyaBadge: { backgroundColor: '#212121', borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1, marginTop: 4 },
+  amavasyaBadge: { backgroundColor: '#212121', borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
   amavasyaBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
-  ekadashiBadge: { backgroundColor: Colors.auspiciousGreen, borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1, marginTop: 4 },
+  ekadashiBadge: { backgroundColor: Colors.auspiciousGreen, borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
   ekadashiBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
-  festBadge: { backgroundColor: Colors.inauspiciousRed, borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1, marginTop: 4 },
+  festBadge: { backgroundColor: Colors.inauspiciousRed, borderRadius: 4, paddingHorizontal: 2, paddingVertical: 1 },
   festBadgeText: { fontSize: 8, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
+  ritualBadge: { backgroundColor: '#FFE0B2', borderRadius: 3, paddingHorizontal: 2, paddingVertical: 1, borderWidth: 0.5, borderColor: '#FFB74D' },
+  ritualBadgeText: { fontSize: 7, fontWeight: 'bold', color: '#D84315', textAlign: 'center' },
 });
