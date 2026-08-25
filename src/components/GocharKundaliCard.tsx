@@ -181,11 +181,11 @@ export const GocharKundaliCard: React.FC<GocharKundaliCardProps> = ({ panchang }
           <Text style={styles.lagnaIcon}>
             {refMode === 'MOON' ? '🌙' : refMode === 'SUN' ? '☀️' : '🌅'}
           </Text>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.lagnaTitleText}>
-              {refMode === 'MOON' ? 'Chandra Lagna (Moon in 1st House)' :
-               refMode === 'SUN' ? 'Surya Lagna (Sun in 1st House)' :
-               `Rising Lagna (Ascendant): ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
+              {refMode === 'MOON' ? 'Moon Sign (Chandra Lagna) : Capricorn (Makara) (मकर)' :
+               refMode === 'SUN' ? 'Sun Sign (Surya Lagna) : Leo (Simha) (सिंह)' :
+               `Asc (Rising Lagna) : ${lagnaInfo.name} (${lagnaInfo.hindiName})`}
             </Text>
             <Text style={styles.lagnaTimeSub}>
               {refMode === 'MOON' ? '1st House = Makara (Capricorn)' :
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justify.content: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
     gap: 8,
@@ -544,13 +544,14 @@ const styles = StyleSheet.create({
   },
   activeLagnaBadge: {
     backgroundColor: Colors.maroon,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginLeft: 6,
   },
   activeLagnaBadgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
   },
   chartWrapper: {
