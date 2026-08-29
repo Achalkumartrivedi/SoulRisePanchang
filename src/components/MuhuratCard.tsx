@@ -11,8 +11,14 @@ interface MuhuratCardProps {
 
 export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicious }) => {
   const { language, t } = useLanguage();
-  const showHindiScript = language === 'hi' || language === 'hinglish';
   const [activeInfoModal, setActiveInfoModal] = useState<'AUSPICIOUS' | 'INAUSPICIOUS' | null>(null);
+
+  const getCleanMuhuratName = (item: MuhuratTiming) => {
+    if (language === 'hi') {
+      return item.hindiName || item.name;
+    }
+    return item.name;
+  };
 
   return (
     <View style={styles.card}>
@@ -34,8 +40,8 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
       {auspicious.map((item, index) => (
         <View key={index} style={[styles.muhuratItem, styles.auspiciousBorder]}>
           <View style={styles.muhuratTop}>
-            <Text style={styles.muhuratName} numberOfLines={1} adjustsFontSizeToFit>
-              {item.name} {showHindiScript && item.hindiName ? `(${item.hindiName})` : ''}
+            <Text style={styles.muhuratName} numberOfLines={1}>
+              {getCleanMuhuratName(item)}
             </Text>
             <Text style={styles.auspiciousTime}>{item.startTime} - {item.endTime}</Text>
           </View>
@@ -61,8 +67,8 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
       {inauspicious.map((item, index) => (
         <View key={index} style={[styles.muhuratItem, styles.inauspiciousBorder]}>
           <View style={styles.muhuratTop}>
-            <Text style={styles.muhuratNameRed} numberOfLines={1} adjustsFontSizeToFit>
-              {item.name} {showHindiScript && item.hindiName ? `(${item.hindiName})` : ''}
+            <Text style={styles.muhuratNameRed} numberOfLines={1}>
+              {getCleanMuhuratName(item)}
             </Text>
             <Text style={styles.inauspiciousTime}>{item.startTime} - {item.endTime}</Text>
           </View>
