@@ -4,6 +4,7 @@ import { Colors } from '../theme/colors';
 import { MuhuratTiming } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
 import { ABHIJIT_GUIDE } from '../data/abhijitGuideRepository';
+import { BRAHMA_GUIDE } from '../data/brahmaGuideRepository';
 
 interface MuhuratCardProps {
   auspicious: MuhuratTiming[];
@@ -62,8 +63,10 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
   const { language, t } = useLanguage();
   const [activeInfoModal, setActiveInfoModal] = useState<'AUSPICIOUS' | 'INAUSPICIOUS' | null>(null);
   const [showAbhijitDetailModal, setShowAbhijitDetailModal] = useState<boolean>(false);
+  const [showBrahmaDetailModal, setShowBrahmaDetailModal] = useState<boolean>(false);
 
-  const guide = ABHIJIT_GUIDE[language] || ABHIJIT_GUIDE.hinglish;
+  const abhijitGuide = ABHIJIT_GUIDE[language] || ABHIJIT_GUIDE.hinglish;
+  const brahmaGuide = BRAHMA_GUIDE[language] || BRAHMA_GUIDE.hinglish;
 
   const getCleanMuhuratName = (item: MuhuratTiming) => {
     const isAbhijit = item.name.toLowerCase().includes('abhijit') || item.hindiName.includes('अभिजित') || item.hindiName.includes('अभिजीत');
@@ -105,6 +108,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
 
       {auspicious.map((item, index) => {
         const isAbhijit = item.name.toLowerCase().includes('abhijit') || item.hindiName.includes('अभिजित') || item.hindiName.includes('अभिजीत');
+        const isBrahma = item.name.toLowerCase().includes('brahma') || item.hindiName.includes('ब्रह्म');
 
         return (
           <TouchableOpacity
@@ -113,6 +117,8 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
             onPress={() => {
               if (isAbhijit) {
                 setShowAbhijitDetailModal(true);
+              } else if (isBrahma) {
+                setShowBrahmaDetailModal(true);
               } else {
                 setActiveInfoModal('AUSPICIOUS');
               }
@@ -202,60 +208,132 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         <View style={styles.modalOverlay}>
           <View style={styles.guideModalCard}>
             <View style={styles.guideHeader}>
-              <Text style={styles.guideHeaderTitle}>{guide.modalHeaderTitle}</Text>
+              <Text style={styles.guideHeaderTitle}>{abhijitGuide.modalHeaderTitle}</Text>
               <TouchableOpacity onPress={() => setShowAbhijitDetailModal(false)}>
                 <Text style={styles.closeBtnText}>✕</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.guideScroll} showsVerticalScrollIndicator={false}>
-              <Text style={styles.guideSubtitle}>{guide.subtitle}</Text>
+              <Text style={styles.guideSubtitle}>{abhijitGuide.subtitle}</Text>
 
               {/* What is Abhijit Time */}
               <View style={styles.guideBox}>
-                <Text style={styles.guideBoxTitle}>📌 {guide.whatIsTitle}</Text>
-                {guide.whatIsPoints.map((pt, idx) => (
+                <Text style={styles.guideBoxTitle}>📌 {abhijitGuide.whatIsTitle}</Text>
+                {abhijitGuide.whatIsPoints.map((pt, idx) => (
                   <Text key={idx} style={styles.guidePointText}>• {pt}</Text>
                 ))}
                 <View style={styles.examplePill}>
-                  <Text style={styles.examplePillText}>💡 {guide.exampleText}</Text>
+                  <Text style={styles.examplePillText}>💡 {abhijitGuide.exampleText}</Text>
                 </View>
               </View>
 
               {/* Meaning */}
               <View style={styles.guideBox}>
-                <Text style={styles.guideBoxTitle}>🔍 {guide.meaningTitle}</Text>
-                <Text style={styles.guideBodyText}>{guide.meaningText}</Text>
+                <Text style={styles.guideBoxTitle}>🔍 {abhijitGuide.meaningTitle}</Text>
+                <Text style={styles.guideBodyText}>{abhijitGuide.meaningText}</Text>
               </View>
 
               {/* Auspicious Reason */}
               <View style={styles.guideBox}>
-                <Text style={styles.guideBoxTitle}>☀️ {guide.auspiciousReasonTitle}</Text>
-                <Text style={styles.guideBodyText}>{guide.auspiciousReasonText}</Text>
+                <Text style={styles.guideBoxTitle}>☀️ {abhijitGuide.auspiciousReasonTitle}</Text>
+                <Text style={styles.guideBodyText}>{abhijitGuide.auspiciousReasonText}</Text>
               </View>
 
               {/* Good For */}
               <View style={styles.guideBoxGood}>
-                <Text style={styles.guideBoxTitleGood}>✅ {guide.goodForTitle}</Text>
-                {guide.goodForItems.map((item, idx) => (
+                <Text style={styles.guideBoxTitleGood}>✅ {abhijitGuide.goodForTitle}</Text>
+                {abhijitGuide.goodForItems.map((item, idx) => (
                   <Text key={idx} style={styles.guideGoodItem}>✔ {item}</Text>
                 ))}
               </View>
 
               {/* Avoid */}
               <View style={styles.guideBoxBad}>
-                <Text style={styles.guideBoxTitleBad}>⚠️ {guide.avoidTitle}</Text>
-                <Text style={styles.guideBadText}>{guide.avoidText}</Text>
+                <Text style={styles.guideBoxTitleBad}>⚠️ {abhijitGuide.avoidTitle}</Text>
+                <Text style={styles.guideBadText}>{abhijitGuide.avoidText}</Text>
               </View>
 
               {/* History */}
               <View style={styles.guideBoxHistory}>
-                <Text style={styles.guideBoxTitleHistory}>📜 {guide.historyTitle}</Text>
-                <Text style={styles.guideHistoryText}>{guide.historyText}</Text>
+                <Text style={styles.guideBoxTitleHistory}>📜 {abhijitGuide.historyTitle}</Text>
+                <Text style={styles.guideHistoryText}>{abhijitGuide.historyText}</Text>
               </View>
             </ScrollView>
 
             <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowAbhijitDetailModal(false)}>
+              <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 3. Detailed Brahma Time Educational Modal (13 Languages) */}
+      <Modal
+        visible={showBrahmaDetailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBrahmaDetailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.guideModalCard}>
+            <View style={styles.guideHeader}>
+              <Text style={styles.guideHeaderTitle}>{brahmaGuide.modalHeaderTitle}</Text>
+              <TouchableOpacity onPress={() => setShowBrahmaDetailModal(false)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.guideScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.guideSubtitle}>{brahmaGuide.subtitle}</Text>
+
+              {/* What is Brahma Muhurat */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>📌 {brahmaGuide.whatIsTitle}</Text>
+                <Text style={styles.guideBodyText}>{brahmaGuide.whatIsText}</Text>
+              </View>
+
+              {/* Meaning */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>🔍 {brahmaGuide.meaningTitle}</Text>
+                {brahmaGuide.meaningPoints.map((pt, idx) => (
+                  <Text key={idx} style={styles.guidePointText}>• {pt}</Text>
+                ))}
+                <Text style={[styles.guideBodyText, { marginTop: 4 }]}>{brahmaGuide.meaningSummary}</Text>
+              </View>
+
+              {/* Timing */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>⏰ {brahmaGuide.timingTitle}</Text>
+                {brahmaGuide.timingPoints.map((pt, idx) => (
+                  <Text key={idx} style={styles.guidePointText}>• {pt}</Text>
+                ))}
+              </View>
+
+              {/* Why Special */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>🌟 {brahmaGuide.whySpecialTitle}</Text>
+                {brahmaGuide.whySpecialPoints.map((pt, idx) => (
+                  <Text key={idx} style={styles.guidePointText}>• {pt}</Text>
+                ))}
+              </View>
+
+              {/* Best Activities */}
+              <View style={styles.guideBoxGood}>
+                <Text style={styles.guideBoxTitleGood}>✅ {brahmaGuide.bestActivitiesTitle}</Text>
+                {brahmaGuide.bestActivitiesItems.map((item, idx) => (
+                  <Text key={idx} style={styles.guideGoodItem}>✔ {item}</Text>
+                ))}
+              </View>
+
+              {/* Quick Fact */}
+              <View style={styles.guideBoxHistory}>
+                <Text style={styles.guideBoxTitleHistory}>💡 {brahmaGuide.quickFactTitle}</Text>
+                <Text style={styles.guideHistoryText}>{brahmaGuide.quickFactText}</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowBrahmaDetailModal(false)}>
               <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
             </TouchableOpacity>
           </View>
