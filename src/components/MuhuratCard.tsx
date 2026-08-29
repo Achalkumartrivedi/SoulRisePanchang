@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../theme/colors';
 import { MuhuratTiming } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
+import { ABHIJIT_GUIDE } from '../data/abhijitGuideRepository';
 
 interface MuhuratCardProps {
   auspicious: MuhuratTiming[];
@@ -12,6 +13,9 @@ interface MuhuratCardProps {
 export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicious }) => {
   const { language, t } = useLanguage();
   const [activeInfoModal, setActiveInfoModal] = useState<'AUSPICIOUS' | 'INAUSPICIOUS' | null>(null);
+  const [showAbhijitDetailModal, setShowAbhijitDetailModal] = useState<boolean>(false);
+
+  const guide = ABHIJIT_GUIDE[language] || ABHIJIT_GUIDE.hinglish;
 
   const getCleanMuhuratName = (item: MuhuratTiming) => {
     if (language === 'hi') {
@@ -37,17 +41,39 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         </TouchableOpacity>
       </View>
 
-      {auspicious.map((item, index) => (
-        <View key={index} style={[styles.muhuratItem, styles.auspiciousBorder]}>
-          <View style={styles.muhuratTop}>
-            <Text style={styles.muhuratName} numberOfLines={1}>
-              {getCleanMuhuratName(item)}
-            </Text>
-            <Text style={styles.auspiciousTime}>{item.startTime} - {item.endTime}</Text>
-          </View>
-          <Text style={styles.muhuratDesc}>{item.description}</Text>
-        </View>
-      ))}
+      {auspicious.map((item, index) => {
+        const isAbhijit = item.name.toLowerCase().includes('abhijit') || item.hindiName.includes('अभिजित') || item.hindiName.includes('अभिजीत');
+
+        return (
+          <TouchableOpacity
+            key={index}
+            style={[styles.muhuratItem, styles.auspiciousBorder]}
+            onPress={() => {
+              if (isAbhijit) {
+                setShowAbhijitDetailModal(true);
+              } else {
+                setActiveInfoModal('AUSPICIOUS');
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.muhuratTop}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                <Text style={styles.muhuratName} numberOfLines={1}>
+                  {getCleanMuhuratName(item)}
+                </Text>
+                {isAbhijit && (
+                  <View style={styles.tapDetailPill}>
+                    <Text style={styles.tapDetailText}>ℹ️ Tap Details</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.auspiciousTime}>{item.startTime} - {item.endTime}</Text>
+            </View>
+            <Text style={styles.muhuratDesc}>{item.description}</Text>
+          </TouchableOpacity>
+        );
+      })}
 
       <View style={styles.divider} />
 
@@ -76,7 +102,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         </View>
       ))}
 
-      {/* Info Modal Popup */}
+      {/* 1. General Info Modal Popup */}
       <Modal
         visible={activeInfoModal !== null}
         transparent
@@ -109,6 +135,76 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* 2. Detailed Abhijit Time Educational Modal (13 Languages) */}
+      <Modal
+        visible={showAbhijitDetailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAbhijitDetailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.guideModalCard}>
+            <View style={styles.guideHeader}>
+              <Text style={styles.guideHeaderTitle}>{guide.modalHeaderTitle}</Text>
+              <TouchableOpacity onPress={() => setShowAbhijitDetailModal(false)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.guideScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.guideSubtitle}>{guide.subtitle}</Text>
+
+              {/* What is Abhijit Time */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>📌 {guide.whatIsTitle}</Text>
+                {guide.whatIsPoints.map((pt, idx) => (
+                  <Text key={idx} style={styles.guidePointText}>• {pt}</Text>
+                ))}
+                <View style={styles.examplePill}>
+                  <Text style={styles.examplePillText}>💡 {guide.exampleText}</Text>
+                </View>
+              </View>
+
+              {/* Meaning */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>🔍 {guide.meaningTitle}</Text>
+                <Text style={styles.guideBodyText}>{guide.meaningText}</Text>
+              </View>
+
+              {/* Auspicious Reason */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>☀️ {guide.auspiciousReasonTitle}</Text>
+                <Text style={styles.guideBodyText}>{guide.auspiciousReasonText}</Text>
+              </View>
+
+              {/* Good For */}
+              <View style={styles.guideBoxGood}>
+                <Text style={styles.guideBoxTitleGood}>✅ {guide.goodForTitle}</Text>
+                {guide.goodForItems.map((item, idx) => (
+                  <Text key={idx} style={styles.guideGoodItem}>✔ {item}</Text>
+                ))}
+              </View>
+
+              {/* Avoid */}
+              <View style={styles.guideBoxBad}>
+                <Text style={styles.guideBoxTitleBad}>⚠️ {guide.avoidTitle}</Text>
+                <Text style={styles.guideBadText}>{guide.avoidText}</Text>
+              </View>
+
+              {/* History */}
+              <View style={styles.guideBoxHistory}>
+                <Text style={styles.guideBoxTitleHistory}>📜 {guide.historyTitle}</Text>
+                <Text style={styles.guideHistoryText}>{guide.historyText}</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowAbhijitDetailModal(false)}>
+              <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -178,8 +274,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textPrimary,
-    flex: 1,
-    marginRight: 8,
+  },
+  tapDetailPill: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 6,
+  },
+  tapDetailText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
   muhuratNameRed: {
     fontSize: 13,
@@ -212,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
   infoModalCard: {
     width: '100%',
@@ -266,10 +372,145 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
+    marginTop: 8,
   },
   gotItBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: 'bold',
+  },
+
+  // Guide Modal Styles
+  guideModalCard: {
+    width: '100%',
+    maxHeight: '85%',
+    backgroundColor: Colors.cardBg,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.accentGold,
+    elevation: 10,
+  },
+  guideHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  guideHeaderTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    flex: 1,
+    marginRight: 8,
+  },
+  guideScroll: {
+    paddingBottom: 10,
+  },
+  guideSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  guideBox: {
+    backgroundColor: '#FAF5EE',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  guideBoxTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 6,
+  },
+  guidePointText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  examplePill: {
+    backgroundColor: '#FFF8E1',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  examplePillText: {
+    fontSize: 11,
+    color: '#B78103',
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  guideBodyText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+    lineHeight: 18,
+  },
+  guideBoxGood: {
+    backgroundColor: '#E8F5E9',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#A5D6A7',
+  },
+  guideBoxTitleGood: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    marginBottom: 6,
+  },
+  guideGoodItem: {
+    fontSize: 12,
+    color: '#1B5E20',
+    lineHeight: 18,
+    marginBottom: 2,
+    fontWeight: '500',
+  },
+  guideBoxBad: {
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#FFCC80',
+  },
+  guideBoxTitleBad: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#E65100',
+    marginBottom: 4,
+  },
+  guideBadText: {
+    fontSize: 12,
+    color: '#BF360C',
+    lineHeight: 18,
+  },
+  guideBoxHistory: {
+    backgroundColor: '#F3E5F5',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#CE93D8',
+  },
+  guideBoxTitleHistory: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#6A1B9A',
+    marginBottom: 4,
+  },
+  guideHistoryText: {
+    fontSize: 11,
+    color: '#4A148C',
+    lineHeight: 17,
   },
 });

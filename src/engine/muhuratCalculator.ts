@@ -66,24 +66,24 @@ export function calculateMuhurats(
   return {
     auspicious: [
       {
-        name: 'Abhijit Muhurat',
-        hindiName: 'अभिजीत मुहूर्त',
+        name: 'Abhijit Auspicious Time',
+        hindiName: 'अभिजित समय',
         startTime: abhijitStart,
         endTime: abhijitEnd,
         isAuspicious: true,
         description: 'Most sacred and powerful auspicious window for all major endeavors and ceremonies.'
       },
       {
-        name: 'Brahma Muhurat',
-        hindiName: 'ब्रह्म मुहूर्त',
+        name: 'Brahma Time',
+        hindiName: 'ब्रह्म समय',
         startTime: brahmaStart,
         endTime: brahmaEnd,
         isAuspicious: true,
         description: 'Ideal time for meditation, prayer, spiritual study, and yoga.'
       },
       {
-        name: 'Vijaya Muhurat',
-        hindiName: 'विजय मुहूर्त',
+        name: 'Vijaya Time',
+        hindiName: 'विजय समय',
         startTime: vijayStart,
         endTime: vijayEnd,
         isAuspicious: true,
