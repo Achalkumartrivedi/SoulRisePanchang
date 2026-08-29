@@ -13,11 +13,12 @@ import {
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
 import { calculateBirthKundali, KundaliResult, KundaliDivisionalChart } from '../engine/kundaliEngine';
-import { GLOBAL_COUNTRIES, GlobalCountry, GlobalCity } from '../data/globalCities';
+import { GLOBAL_COUNTRIES, GlobalCountry } from '../data/globalCities';
 import { CityLocation } from '../types/panchang';
 import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
 import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
+import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, SavedKundaliProfile } from '../utils/profileStorage';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -62,6 +63,10 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     lng: 72.8311
   });
 
+  // Saved Kundali Profiles State
+  const [savedProfiles, setSavedProfiles] = useState<SavedKundaliProfile[]>([]);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+
   // Country & Preset City State
   const [selectedCountry, setSelectedCountry] = useState<GlobalCountry>(GLOBAL_COUNTRIES[0]);
 
@@ -71,6 +76,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [isSearching, setIsSearching] = useState(false);
 
   // Dropdown Picker Modal States
+  const [showSavedProfilesModal, setShowSavedProfilesModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showDayModal, setShowDayModal] = useState(false);
   const [showMonthModal, setShowMonthModal] = useState(false);
@@ -85,7 +91,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
   const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'GLOBAL'>('PARTICULARS');
 
-  // Kundali Result State (Calibrated against Achal ground-truth benchmark)
+  // Kundali Result State
   const [kundali, setKundali] = useState<KundaliResult | null>(() => {
     return calculateBirthKundali(
       'Achal',
@@ -97,6 +103,11 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
       72.8311
     );
   });
+
+  // Load saved profiles from AsyncStorage on mount
+  useEffect(() => {
+    getSavedProfiles().then(setSavedProfiles);
+  }, []);
 
   // Live Free Geocoding API Search debouncer
   useEffect(() => {
@@ -136,6 +147,53 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     setKundali(result);
   };
 
+  const handleSaveProfile = async () => {
+    const profileName = name.trim() || 'Achal';
+    const updated = await saveKundaliProfile({
+      name: profileName,
+      dobDay,
+      dobMonth,
+      dobYear,
+      tobHour,
+      tobMinute,
+      cityName: activeLocation.cityName,
+      lat: activeLocation.lat,
+      lng: activeLocation.lng
+    });
+    setSavedProfiles(updated);
+    setSaveSuccessMsg(`Saved "${profileName}"! ✓`);
+    setTimeout(() => setSaveSuccessMsg(''), 3000);
+  };
+
+  const handleSelectProfile = (p: SavedKundaliProfile) => {
+    setName(p.name);
+    setDobDay(p.dobDay);
+    setDobMonth(p.dobMonth);
+    setDobYear(p.dobYear);
+    setTobHour(p.tobHour);
+    setTobMinute(p.tobMinute);
+    setActiveLocation({
+      cityName: p.cityName,
+      lat: p.lat,
+      lng: p.lng
+    });
+
+    const day = parseInt(p.dobDay, 10) || 1;
+    const month = (parseInt(p.dobMonth, 10) || 1) - 1;
+    const year = parseInt(p.dobYear, 10) || 1990;
+    const h = parseInt(p.tobHour, 10) || 0;
+    const m = parseInt(p.tobMinute, 10) || 0;
+
+    const result = calculateBirthKundali(p.name, new Date(year, month, day), h, m, p.cityName, p.lat, p.lng);
+    setKundali(result);
+    setShowSavedProfilesModal(false);
+  };
+
+  const handleDeleteProfile = async (id: string) => {
+    const updated = await deleteKundaliProfile(id);
+    setSavedProfiles(updated);
+  };
+
   const activeChart: KundaliDivisionalChart | undefined = kundali?.divisionalCharts[activeChartKey];
 
   return (
@@ -155,6 +213,18 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
               <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* 1. Birth Details Form Card */}
                 <View style={styles.formCard}>
+                  
+                  {/* Saved Kundali Profiles Dropdown Picker */}
+                  <TouchableOpacity
+                    style={styles.savedProfilesBtn}
+                    onPress={() => setShowSavedProfilesModal(true)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.savedProfilesBtnText}>
+                      👤 Load Saved Profile ({savedProfiles.length}) ▼
+                    </Text>
+                  </TouchableOpacity>
+
                   <Text style={styles.formSectionTitle}>{loc.birthDetailsInput}</Text>
 
                   {/* Name Input */}
@@ -172,7 +242,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   {/* Date of Birth (DOB) Dropdowns */}
                   <Text style={styles.inputLabel}>{loc.dobLabel}</Text>
                   <View style={styles.dropdownRow}>
-                    {/* Day Picker */}
                     <TouchableOpacity
                       style={[styles.dropdownField, styles.col3]}
                       onPress={() => setShowDayModal(true)}
@@ -181,7 +250,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                       <Text style={styles.fieldArrow}>▼</Text>
                     </TouchableOpacity>
 
-                    {/* Month Picker */}
                     <TouchableOpacity
                       style={[styles.dropdownField, styles.col3]}
                       onPress={() => setShowMonthModal(true)}
@@ -190,7 +258,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                       <Text style={styles.fieldArrow}>▼</Text>
                     </TouchableOpacity>
 
-                    {/* Year Picker */}
                     <TouchableOpacity
                       style={[styles.dropdownField, styles.col3]}
                       onPress={() => setShowYearModal(true)}
@@ -203,7 +270,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   {/* Time of Birth (TOB) Dropdowns */}
                   <Text style={styles.inputLabel}>{loc.tobLabel}</Text>
                   <View style={styles.dropdownRow}>
-                    {/* Hour Picker */}
                     <TouchableOpacity
                       style={[styles.dropdownField, styles.col2]}
                       onPress={() => setShowHourModal(true)}
@@ -212,7 +278,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                       <Text style={styles.fieldArrow}>▼</Text>
                     </TouchableOpacity>
 
-                    {/* Minute Picker */}
                     <TouchableOpacity
                       style={[styles.dropdownField, styles.col2]}
                       onPress={() => setShowMinuteModal(true)}
@@ -238,10 +303,20 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                     <Text style={styles.dropdownArrow}>🔍 Search Place ▼</Text>
                   </TouchableOpacity>
 
-                  {/* Generate Button */}
-                  <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate} activeOpacity={0.8}>
-                    <Text style={styles.generateBtnText}>{loc.generateBtn}</Text>
-                  </TouchableOpacity>
+                  {/* Action Buttons Row: Generate + Save */}
+                  <View style={styles.actionBtnRow}>
+                    <TouchableOpacity style={[styles.actionBtn, styles.generateBtn]} onPress={handleGenerate} activeOpacity={0.8}>
+                      <Text style={styles.generateBtnText}>{loc.generateBtn}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={handleSaveProfile} activeOpacity={0.8}>
+                      <Text style={styles.saveBtnText}>💾 Save Profile</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {saveSuccessMsg ? (
+                    <Text style={styles.saveSuccessText}>{saveSuccessMsg}</Text>
+                  ) : null}
                 </View>
 
                 {/* 2. Kundali Results Container */}
@@ -546,6 +621,51 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
         </View>
       </TouchableWithoutFeedback>
 
+      {/* Saved Profiles Dropdown Modal */}
+      <Modal visible={showSavedProfilesModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowSavedProfilesModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <View style={styles.dropdownHeaderRow}>
+                  <Text style={styles.dropdownTitle}>👤 Select Saved Kundali Profile</Text>
+                  <TouchableOpacity onPress={() => setShowSavedProfilesModal(false)} style={styles.closeBtn}>
+                    <Text style={styles.closeBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {savedProfiles.length === 0 ? (
+                  <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 13, color: Colors.textMuted }}>No saved profiles yet.</Text>
+                    <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 4 }}>
+                      Generate a birth chart and tap "Save Profile" to store it here!
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView style={{ maxHeight: 300 }}>
+                    {savedProfiles.map(p => (
+                      <View key={p.id} style={styles.profileRowItem}>
+                        <TouchableOpacity style={{ flex: 1 }} onPress={() => handleSelectProfile(p)}>
+                          <Text style={styles.profileNameText}>👤 {p.name}</Text>
+                          <Text style={styles.profileSubText}>
+                            DOB: {p.dobDay}/{p.dobMonth}/{p.dobYear} • TOB: {p.tobHour}:{p.tobMinute}
+                          </Text>
+                          <Text style={styles.profileLocationText}>📍 {p.cityName}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.deleteProfileBtn} onPress={() => handleDeleteProfile(p.id)}>
+                          <Text style={styles.deleteProfileText}>🗑️</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
       {/* Free Live Global Location Search Modal */}
       <Modal visible={showLocationModal} animationType="fade" transparent>
         <TouchableWithoutFeedback onPress={() => setShowLocationModal(false)}>
@@ -559,7 +679,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </TouchableOpacity>
                 </View>
 
-                {/* Live Place Search Input */}
                 <TextInput
                   style={styles.citySearchInput}
                   value={placeSearchQuery}
@@ -576,7 +695,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 )}
 
                 <ScrollView style={{ maxHeight: 300 }}>
-                  {/* Live Search Suggestions from OpenStreetMap Nominatim */}
                   {searchResults.map((res, idx) => (
                     <TouchableOpacity
                       key={idx}
@@ -598,14 +716,12 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                     </TouchableOpacity>
                   ))}
 
-                  {/* Preset Country & City Quick Select Section */}
                   {searchResults.length === 0 && (
                     <View style={{ marginTop: 8 }}>
                       <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.maroon, marginBottom: 8 }}>
                         🌐 Or Pick Popular Presets ({selectedCountry.countryName}):
                       </Text>
                       
-                      {/* Country Selector Pills */}
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
                         {GLOBAL_COUNTRIES.map(c => (
                           <TouchableOpacity
@@ -620,7 +736,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         ))}
                       </ScrollView>
 
-                      {/* City Items */}
                       {selectedCountry.cities.map(c => (
                         <TouchableOpacity
                           key={c.cityName}
@@ -848,6 +963,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
+  savedProfilesBtn: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  savedProfilesBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
   formSectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -937,18 +1067,42 @@ const styles = StyleSheet.create({
     color: Colors.maroon,
   },
 
-  generateBtn: {
-    backgroundColor: Colors.maroon,
+  actionBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  actionBtn: {
+    flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 6,
+    justifyContent: 'center',
+  },
+  generateBtn: {
+    backgroundColor: Colors.maroon,
   },
   generateBtnText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
+  saveBtn: {
+    backgroundColor: '#2E7D32',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  saveSuccessText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    textAlign: 'center',
+    marginTop: 6,
+  },
+
   resultsContainer: {
     marginTop: 4,
   },
@@ -1037,12 +1191,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  northDiamondGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
   southFixedGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1057,10 +1205,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F0E0D0',
     minHeight: 64,
-  },
-  northHouseBox: {
-    backgroundColor: '#FFF8F0',
-    borderColor: '#FFCC80',
   },
   southHouseBox: {
     backgroundColor: '#F0F8FF',
@@ -1390,5 +1534,41 @@ const styles = StyleSheet.create({
   },
   pickerItemTextActive: {
     color: Colors.maroon,
+  },
+  profileRowItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  profileNameText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  profileSubText: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  profileLocationText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.primaryDark,
+    marginTop: 1,
+  },
+  deleteProfileBtn: {
+    backgroundColor: '#FFEBEE',
+    padding: 8,
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+  deleteProfileText: {
+    fontSize: 12,
   },
 });
