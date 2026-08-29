@@ -12,7 +12,7 @@ import {
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
 import { calculateBirthKundali, KundaliResult, KundaliDivisionalChart } from '../engine/kundaliEngine';
-import { DEFAULT_CITIES } from '../data/cities';
+import { GLOBAL_COUNTRIES, GlobalCountry, GlobalCity } from '../data/globalCities';
 import { CityLocation } from '../types/panchang';
 import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 
@@ -22,6 +22,16 @@ interface BirthChartModalProps {
   selectedCity: CityLocation;
 }
 
+const MONTHS_LIST = [
+  'Jan (01)', 'Feb (02)', 'Mar (03)', 'Apr (04)', 'May (05)', 'Jun (06)',
+  'Jul (07)', 'Aug (08)', 'Sep (09)', 'Oct (10)', 'Nov (11)', 'Dec (12)'
+];
+
+const DAYS_LIST = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+const YEARS_LIST = Array.from({ length: 87 }, (_, i) => (2026 - i).toString());
+const HOURS_LIST = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const MINUTES_LIST = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
 export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   visible,
   onClose,
@@ -30,17 +40,29 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const { language } = useLanguage();
   const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
 
-  // Form State
-  const [name, setName] = useState('Rahul Sharma');
+  // Form State - Name is empty by default per user directive
+  const [name, setName] = useState('');
   const [dobDay, setDobDay] = useState('15');
   const [dobMonth, setDobMonth] = useState('08');
   const [dobYear, setDobYear] = useState('1995');
   const [tobHour, setTobHour] = useState('10');
   const [tobMinute, setTobMinute] = useState('30');
-  const [city, setCity] = useState<CityLocation>(selectedCity);
 
-  // City Picker Dropdown Modal State
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  // Country & City Selection State
+  const [selectedCountry, setSelectedCountry] = useState<GlobalCountry>(GLOBAL_COUNTRIES[0]); // Default India
+  const [selectedGlobalCity, setSelectedGlobalCity] = useState<GlobalCity>(GLOBAL_COUNTRIES[0].cities[0]); // Default New Delhi
+
+  // Dropdown Picker Modal States
+  const [showCountryModal, setShowCountryModal] = useState(false);
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [showDayModal, setShowDayModal] = useState(false);
+  const [showMonthModal, setShowMonthModal] = useState(false);
+  const [showYearModal, setShowYearModal] = useState(false);
+  const [showHourModal, setShowHourModal] = useState(false);
+  const [showMinuteModal, setShowMinuteModal] = useState(false);
+
+  // Search Filters
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const [citySearchQuery, setCitySearchQuery] = useState('');
 
   // Default Chart Style is NORTH (North Indian Diamond Style)
@@ -52,7 +74,15 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 
   // Kundali Result State
   const [kundali, setKundali] = useState<KundaliResult | null>(() => {
-    return calculateBirthKundali('Rahul Sharma', new Date(1995, 7, 15), 10, 30, selectedCity.name, selectedCity.latitude, selectedCity.longitude);
+    return calculateBirthKundali(
+      'Rahul Sharma',
+      new Date(1995, 7, 15),
+      10,
+      30,
+      GLOBAL_COUNTRIES[0].cities[0].cityName,
+      GLOBAL_COUNTRIES[0].cities[0].lat,
+      GLOBAL_COUNTRIES[0].cities[0].lng
+    );
   });
 
   const handleGenerate = () => {
@@ -63,13 +93,24 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     const m = parseInt(tobMinute, 10) || 0;
 
     const dob = new Date(year, month, day);
-    const result = calculateBirthKundali(name, dob, h, m, city.name, city.latitude, city.longitude);
+    const result = calculateBirthKundali(
+      name || 'Devotee',
+      dob,
+      h,
+      m,
+      `${selectedGlobalCity.cityName}, ${selectedCountry.countryName}`,
+      selectedGlobalCity.lat,
+      selectedGlobalCity.lng
+    );
     setKundali(result);
   };
 
-  const filteredCities = DEFAULT_CITIES.filter(c => 
-    c.name.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
-    c.stateCountry.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
+  const filteredCountries = GLOBAL_COUNTRIES.filter(c =>
+    c.countryName.toLowerCase().includes(countrySearchQuery.toLowerCase())
+  );
+
+  const filteredCities = selectedCountry.cities.filter(c =>
+    c.cityName.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
     (c.hindiName && c.hindiName.includes(citySearchQuery))
   );
 
@@ -94,81 +135,96 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 <View style={styles.formCard}>
                   <Text style={styles.formSectionTitle}>{loc.birthDetailsInput}</Text>
 
-                  {/* Name Input */}
+                  {/* Name Input (Empty by default) */}
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{loc.fullName}</Text>
                     <TextInput
                       style={styles.textInput}
                       value={name}
                       onChangeText={setName}
-                      placeholder="Enter name"
+                      placeholder="Enter full name (Optional)"
                       placeholderTextColor={Colors.textMuted}
                     />
                   </View>
 
-                  {/* DOB Row */}
+                  {/* Date of Birth (DOB) Dropdowns */}
                   <Text style={styles.inputLabel}>{loc.dobLabel}</Text>
-                  <View style={styles.rowInputs}>
-                    <TextInput
-                      style={[styles.textInput, styles.col3]}
-                      value={dobDay}
-                      onChangeText={setDobDay}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                      placeholder="DD"
-                    />
-                    <TextInput
-                      style={[styles.textInput, styles.col3]}
-                      value={dobMonth}
-                      onChangeText={setDobMonth}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                      placeholder="MM"
-                    />
-                    <TextInput
-                      style={[styles.textInput, styles.col3]}
-                      value={dobYear}
-                      onChangeText={setDobYear}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      placeholder="YYYY"
-                    />
+                  <View style={styles.dropdownRow}>
+                    {/* Day Picker */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col3]}
+                      onPress={() => setShowDayModal(true)}
+                    >
+                      <Text style={styles.dropdownValText}>Day: {dobDay}</Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
+
+                    {/* Month Picker */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col3]}
+                      onPress={() => setShowMonthModal(true)}
+                    >
+                      <Text style={styles.dropdownValText}>{MONTHS_LIST[parseInt(dobMonth, 10) - 1] || 'Month'}</Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
+
+                    {/* Year Picker */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col3]}
+                      onPress={() => setShowYearModal(true)}
+                    >
+                      <Text style={styles.dropdownValText}>Year: {dobYear}</Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
                   </View>
 
-                  {/* TOB Row */}
+                  {/* Time of Birth (TOB) Dropdowns */}
                   <Text style={styles.inputLabel}>{loc.tobLabel}</Text>
-                  <View style={styles.rowInputs}>
-                    <TextInput
-                      style={[styles.textInput, styles.col2]}
-                      value={tobHour}
-                      onChangeText={setTobHour}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                      placeholder="HH (0-23)"
-                    />
-                    <TextInput
-                      style={[styles.textInput, styles.col2]}
-                      value={tobMinute}
-                      onChangeText={setTobMinute}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                      placeholder="MM (0-59)"
-                    />
+                  <View style={styles.dropdownRow}>
+                    {/* Hour Picker */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col2]}
+                      onPress={() => setShowHourModal(true)}
+                    >
+                      <Text style={styles.dropdownValText}>Hour: {tobHour} : 00</Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
+
+                    {/* Minute Picker */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col2]}
+                      onPress={() => setShowMinuteModal(true)}
+                    >
+                      <Text style={styles.dropdownValText}>Min: {tobMinute}</Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
                   </View>
 
-                  {/* City Selection Dropdown Field */}
-                  <Text style={styles.inputLabel}>{loc.cityLabel}</Text>
-                  <TouchableOpacity
-                    style={styles.dropdownBtn}
-                    onPress={() => setShowCityDropdown(true)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.dropdownCityName}>📍 {city.name}</Text>
-                      <Text style={styles.dropdownCitySub}>{city.stateCountry}</Text>
-                    </View>
-                    <Text style={styles.dropdownArrow}>▼ Change</Text>
-                  </TouchableOpacity>
+                  {/* Global Country & City Dropdowns */}
+                  <Text style={styles.inputLabel}>Global Country & City of Birth</Text>
+                  <View style={styles.dropdownRow}>
+                    {/* Country Dropdown */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col2]}
+                      onPress={() => setShowCountryModal(true)}
+                    >
+                      <Text style={styles.dropdownValText} numberOfLines={1}>
+                        {selectedCountry.flagEmoji} {selectedCountry.countryName}
+                      </Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
+
+                    {/* City Dropdown */}
+                    <TouchableOpacity
+                      style={[styles.dropdownField, styles.col2]}
+                      onPress={() => setShowCityModal(true)}
+                    >
+                      <Text style={styles.dropdownValText} numberOfLines={1}>
+                        📍 {selectedGlobalCity.cityName}
+                      </Text>
+                      <Text style={styles.fieldArrow}>▼</Text>
+                    </TouchableOpacity>
+                  </View>
 
                   {/* Generate Button */}
                   <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate} activeOpacity={0.8}>
@@ -289,7 +345,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                           Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style (Default)' : chartStyle === 'SOUTH' ? 'South Indian Fixed Style' : 'Global Grid'}
                         </Text>
 
-                        {/* Visual Chart Grid (North / South / Global) */}
+                        {/* Visual Chart Grid */}
                         <View style={chartStyle === 'NORTH' ? styles.northDiamondGrid : styles.diamondGrid}>
                           {activeChart.houses.map(h => (
                             <View key={h.houseNumber} style={[styles.houseBox, chartStyle === 'NORTH' && styles.northHouseBox]}>
@@ -466,45 +522,40 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
         </View>
       </TouchableWithoutFeedback>
 
-      {/* City Dropdown Search Modal */}
-      <Modal visible={showCityDropdown} animationType="fade" transparent>
-        <TouchableWithoutFeedback onPress={() => setShowCityDropdown(false)}>
+      {/* Global Country Selection Modal */}
+      <Modal visible={showCountryModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowCountryModal(false)}>
           <View style={styles.dropdownOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.dropdownModalCard}>
                 <View style={styles.dropdownHeaderRow}>
-                  <Text style={styles.dropdownTitle}>Select City of Birth</Text>
-                  <TouchableOpacity onPress={() => setShowCityDropdown(false)} style={styles.closeBtn}>
+                  <Text style={styles.dropdownTitle}>Select Country of Birth</Text>
+                  <TouchableOpacity onPress={() => setShowCountryModal(false)} style={styles.closeBtn}>
                     <Text style={styles.closeBtnText}>✕</Text>
                   </TouchableOpacity>
                 </View>
 
-                {/* City Live Search Bar */}
                 <TextInput
                   style={styles.citySearchInput}
-                  value={citySearchQuery}
-                  onChangeText={setCitySearchQuery}
-                  placeholder="🔍 Search city, state or country..."
+                  value={countrySearchQuery}
+                  onChangeText={setCountrySearchQuery}
+                  placeholder="🔍 Search country..."
                   placeholderTextColor={Colors.textMuted}
                 />
 
                 <ScrollView style={{ maxHeight: 350 }}>
-                  {filteredCities.map(c => (
+                  {filteredCountries.map(c => (
                     <TouchableOpacity
-                      key={c.name}
-                      style={[styles.cityListItem, city.name === c.name && styles.cityListItemActive]}
+                      key={c.countryCode}
+                      style={[styles.cityListItem, selectedCountry.countryCode === c.countryCode && styles.cityListItemActive]}
                       onPress={() => {
-                        setCity(c);
-                        setShowCityDropdown(false);
+                        setSelectedCountry(c);
+                        setSelectedGlobalCity(c.cities[0]); // Pick first city of selected country as default
+                        setShowCountryModal(false);
                       }}
                     >
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.cityItemName, city.name === c.name && styles.cityItemNameActive]}>
-                          {c.name} {c.hindiName ? `(${c.hindiName})` : ''}
-                        </Text>
-                        <Text style={styles.cityItemSub}>{c.stateCountry}</Text>
-                      </View>
-                      {city.name === c.name && <Text style={styles.checkIcon}>✓</Text>}
+                      <Text style={styles.cityItemName}>{c.flagEmoji} {c.countryName}</Text>
+                      {selectedCountry.countryCode === c.countryCode && <Text style={styles.checkIcon}>✓</Text>}
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -513,6 +564,191 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* City Selection Modal */}
+      <Modal visible={showCityModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowCityModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <View style={styles.dropdownHeaderRow}>
+                  <Text style={styles.dropdownTitle}>Select City ({selectedCountry.countryName})</Text>
+                  <TouchableOpacity onPress={() => setShowCityModal(false)} style={styles.closeBtn}>
+                    <Text style={styles.closeBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={styles.citySearchInput}
+                  value={citySearchQuery}
+                  onChangeText={setCitySearchQuery}
+                  placeholder="🔍 Search city..."
+                  placeholderTextColor={Colors.textMuted}
+                />
+
+                <ScrollView style={{ maxHeight: 350 }}>
+                  {filteredCities.map(c => (
+                    <TouchableOpacity
+                      key={c.cityName}
+                      style={[styles.cityListItem, selectedGlobalCity.cityName === c.cityName && styles.cityListItemActive]}
+                      onPress={() => {
+                        setSelectedGlobalCity(c);
+                        setShowCityModal(false);
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cityItemName, selectedGlobalCity.cityName === c.cityName && styles.cityItemNameActive]}>
+                          📍 {c.cityName} {c.hindiName ? `(${c.hindiName})` : ''}
+                        </Text>
+                      </View>
+                      {selectedGlobalCity.cityName === c.cityName && <Text style={styles.checkIcon}>✓</Text>}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Day Picker Modal */}
+      <Modal visible={showDayModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowDayModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <Text style={styles.dropdownTitle}>Select Day of Birth</Text>
+                <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                  {DAYS_LIST.map(d => (
+                    <TouchableOpacity
+                      key={d}
+                      style={[styles.pickerItem, dobDay === d && styles.pickerItemActive]}
+                      onPress={() => {
+                        setDobDay(d);
+                        setShowDayModal(false);
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, dobDay === d && styles.pickerItemTextActive]}>Day {d}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Month Picker Modal */}
+      <Modal visible={showMonthModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowMonthModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <Text style={styles.dropdownTitle}>Select Month of Birth</Text>
+                <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                  {MONTHS_LIST.map((m, idx) => {
+                    const mVal = (idx + 1).toString().padStart(2, '0');
+                    return (
+                      <TouchableOpacity
+                        key={m}
+                        style={[styles.pickerItem, dobMonth === mVal && styles.pickerItemActive]}
+                        onPress={() => {
+                          setDobMonth(mVal);
+                          setShowMonthModal(false);
+                        }}
+                      >
+                        <Text style={[styles.pickerItemText, dobMonth === mVal && styles.pickerItemTextActive]}>{m}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Year Picker Modal */}
+      <Modal visible={showYearModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowYearModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <Text style={styles.dropdownTitle}>Select Year of Birth</Text>
+                <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                  {YEARS_LIST.map(y => (
+                    <TouchableOpacity
+                      key={y}
+                      style={[styles.pickerItem, dobYear === y && styles.pickerItemActive]}
+                      onPress={() => {
+                        setDobYear(y);
+                        setShowYearModal(false);
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, dobYear === y && styles.pickerItemTextActive]}>{y}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Hour Picker Modal */}
+      <Modal visible={showHourModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowHourModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <Text style={styles.dropdownTitle}>Select Hour of Birth (24-Hour)</Text>
+                <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                  {HOURS_LIST.map(h => (
+                    <TouchableOpacity
+                      key={h}
+                      style={[styles.pickerItem, tobHour === h && styles.pickerItemActive]}
+                      onPress={() => {
+                        setTobHour(h);
+                        setShowHourModal(false);
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, tobHour === h && styles.pickerItemTextActive]}>{h}:00 Hours</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Minute Picker Modal */}
+      <Modal visible={showMinuteModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowMinuteModal(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <Text style={styles.dropdownTitle}>Select Minute of Birth</Text>
+                <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                  {MINUTES_LIST.map(m => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.pickerItem, tobMinute === m && styles.pickerItemActive]}
+                      onPress={() => {
+                        setTobMinute(m);
+                        setShowMinuteModal(false);
+                      }}
+                    >
+                      <Text style={[styles.pickerItemText, tobMinute === m && styles.pickerItemTextActive]}>{m} Minutes</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
     </Modal>
   );
 };
@@ -597,10 +833,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textPrimary,
   },
-  rowInputs: {
+  dropdownRow: {
     flexDirection: 'row',
     gap: 8,
     marginBottom: 8,
+  },
+  dropdownField: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  dropdownValText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  fieldArrow: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginLeft: 4,
   },
   col3: {
     flex: 1,
@@ -608,42 +866,12 @@ const styles = StyleSheet.create({
   col2: {
     flex: 1,
   },
-
-  // City Dropdown Styles
-  dropdownBtn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FAF5EE',
-    borderWidth: 1,
-    borderColor: Colors.maroon,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
-  },
-  dropdownCityName: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-  },
-  dropdownCitySub: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    marginTop: 1,
-  },
-  dropdownArrow: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-  },
-
   generateBtn: {
     backgroundColor: Colors.maroon,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
   generateBtnText: {
     color: '#FFFFFF',
@@ -1028,14 +1256,26 @@ const styles = StyleSheet.create({
   cityItemNameActive: {
     color: Colors.maroon,
   },
-  cityItemSub: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
   checkIcon: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  pickerItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  pickerItemActive: {
+    backgroundColor: '#FAF5EE',
+  },
+  pickerItemText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  pickerItemTextActive: {
     color: Colors.maroon,
   },
 });
