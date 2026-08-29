@@ -10,6 +10,54 @@ interface MuhuratCardProps {
   inauspicious: MuhuratTiming[];
 }
 
+const ABHIJIT_LANG_MAP: Record<string, string> = {
+  hinglish: 'Abhijit Muhurat',
+  hi: 'अभिजित मुहूर्त',
+  ta: 'அபிஜித் முகூர்த்தம்',
+  te: 'అభిజిత్ ముహుర్తం',
+  bn: 'অভিজিৎ মুহূর্ত',
+  mr: 'अभिजित मुहूर्त',
+  en: 'Abhijit Time',
+  ru: 'Время Абхиджит',
+  fr: 'Heure Abhijit',
+  es: 'Hora Abhijit',
+  he: "זמן אבהיג'יט",
+  id: 'Waktu Abhijit',
+  th: 'เวลาอภิจิต'
+};
+
+const BRAHMA_LANG_MAP: Record<string, string> = {
+  hinglish: 'Brahma Muhurat',
+  hi: 'ब्रह्म मुहूर्त',
+  ta: 'பிரம்ம முகூர்த்தம்',
+  te: 'బ్రహ్మ ముహుర్తం',
+  bn: 'ব্রহ্ম মুহূর্ত',
+  mr: 'ब्रह्म मुहूर्त',
+  en: 'Brahma Time',
+  ru: 'Время Брахма',
+  fr: 'Heure Brahma',
+  es: 'Hora Brahma',
+  he: 'זמן בראהמה',
+  id: 'Waktu Brahma',
+  th: 'เวลาพรหม'
+};
+
+const VIJAYA_LANG_MAP: Record<string, string> = {
+  hinglish: 'Vijaya Muhurat',
+  hi: 'विजय मुहूर्त',
+  ta: 'விஜய முகூர்த்தம்',
+  te: 'విజయ ముహుర్తం',
+  bn: 'বিজয় মুহূর্ত',
+  mr: 'विजय मुहूर्त',
+  en: 'Vijaya Time',
+  ru: 'Время Виджая',
+  fr: 'Heure Vijaya',
+  es: 'Hora Vijaya',
+  he: "זמן ויג'איה",
+  id: 'Waktu Vijaya',
+  th: 'เวลาวิชัย'
+};
+
 export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicious }) => {
   const { language, t } = useLanguage();
   const [activeInfoModal, setActiveInfoModal] = useState<'AUSPICIOUS' | 'INAUSPICIOUS' | null>(null);
@@ -18,6 +66,20 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
   const guide = ABHIJIT_GUIDE[language] || ABHIJIT_GUIDE.hinglish;
 
   const getCleanMuhuratName = (item: MuhuratTiming) => {
+    const isAbhijit = item.name.toLowerCase().includes('abhijit') || item.hindiName.includes('अभिजित') || item.hindiName.includes('अभिजीत');
+    const isBrahma = item.name.toLowerCase().includes('brahma') || item.hindiName.includes('ब्रह्म');
+    const isVijaya = item.name.toLowerCase().includes('vijaya') || item.hindiName.includes('विजय');
+
+    if (isAbhijit && ABHIJIT_LANG_MAP[language]) {
+      return ABHIJIT_LANG_MAP[language];
+    }
+    if (isBrahma && BRAHMA_LANG_MAP[language]) {
+      return BRAHMA_LANG_MAP[language];
+    }
+    if (isVijaya && VIJAYA_LANG_MAP[language]) {
+      return VIJAYA_LANG_MAP[language];
+    }
+
     if (language === 'hi') {
       return item.hindiName || item.name;
     }
@@ -267,18 +329,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textPrimary,
-  },
-  tapDetailPill: {
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginLeft: 6,
-  },
-  tapDetailText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+    flex: 1,
+    marginRight: 8,
   },
   muhuratNameRed: {
     fontSize: 13,
