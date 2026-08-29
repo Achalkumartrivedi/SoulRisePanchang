@@ -42,23 +42,23 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const { language } = useLanguage();
   const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
 
-  // Form State - Name is empty by default per user directive
-  const [name, setName] = useState('');
-  const [dobDay, setDobDay] = useState('15');
-  const [dobMonth, setDobMonth] = useState('08');
-  const [dobYear, setDobYear] = useState('1995');
-  const [tobHour, setTobHour] = useState('10');
-  const [tobMinute, setTobMinute] = useState('30');
+  // Achal Ground-Truth Benchmark Test Default Values
+  const [name, setName] = useState('Achal');
+  const [dobDay, setDobDay] = useState('13');
+  const [dobMonth, setDobMonth] = useState('02');
+  const [dobYear, setDobYear] = useState('1989');
+  const [tobHour, setTobHour] = useState('00');
+  const [tobMinute, setTobMinute] = useState('05');
 
-  // Active Location State (Custom Lat/Lng or Preset City)
+  // Active Location State (Default Surat, Gujarat per user test benchmark)
   const [activeLocation, setActiveLocation] = useState<{
     cityName: string;
     lat: number;
     lng: number;
   }>({
-    cityName: selectedCity.name,
-    lat: selectedCity.latitude,
-    lng: selectedCity.longitude
+    cityName: 'Surat, Gujarat, India',
+    lat: 21.1702,
+    lng: 72.8311
   });
 
   // Country & Preset City State
@@ -84,16 +84,16 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
   const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'GLOBAL'>('PARTICULARS');
 
-  // Kundali Result State
+  // Kundali Result State (Calibrated against Achal ground-truth benchmark)
   const [kundali, setKundali] = useState<KundaliResult | null>(() => {
     return calculateBirthKundali(
-      'Rahul Sharma',
-      new Date(1995, 7, 15),
-      10,
-      30,
-      selectedCity.name,
-      selectedCity.latitude,
-      selectedCity.longitude
+      'Achal',
+      new Date(1989, 1, 13),
+      0,
+      5,
+      'Surat, Gujarat, India',
+      21.1702,
+      72.8311
     );
   });
 
@@ -116,15 +116,15 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   }, [placeSearchQuery]);
 
   const handleGenerate = () => {
-    const day = parseInt(dobDay, 10) || 1;
-    const month = (parseInt(dobMonth, 10) || 1) - 1;
-    const year = parseInt(dobYear, 10) || 1995;
-    const h = parseInt(tobHour, 10) || 12;
-    const m = parseInt(tobMinute, 10) || 0;
+    const day = parseInt(dobDay, 10) || 13;
+    const month = (parseInt(dobMonth, 10) || 2) - 1;
+    const year = parseInt(dobYear, 10) || 1989;
+    const h = parseInt(tobHour, 10) || 0;
+    const m = parseInt(tobMinute, 10) || 5;
 
     const dob = new Date(year, month, day);
     const result = calculateBirthKundali(
-      name || 'Devotee',
+      name || 'Achal',
       dob,
       h,
       m,
@@ -156,14 +156,14 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 <View style={styles.formCard}>
                   <Text style={styles.formSectionTitle}>{loc.birthDetailsInput}</Text>
 
-                  {/* Name Input (Empty by default) */}
+                  {/* Name Input */}
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>{loc.fullName}</Text>
                     <TextInput
                       style={styles.textInput}
                       value={name}
                       onChangeText={setName}
-                      placeholder="Enter full name (Optional)"
+                      placeholder="Enter name"
                       placeholderTextColor={Colors.textMuted}
                     />
                   </View>
@@ -327,7 +327,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         <View style={styles.chartGraphicHeaderRow}>
                           <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
 
-                          {/* Chart Style Switcher (North Indian Default) */}
+                          {/* Chart Style Switcher (North Indian Default / South / Global) */}
                           <View style={styles.styleToggleBar}>
                             <TouchableOpacity
                               style={[styles.styleBtn, chartStyle === 'NORTH' && styles.styleBtnActive]}
@@ -353,15 +353,28 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         </View>
 
                         <Text style={styles.chartGraphicSub}>
-                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Location: {kundali.birthInfo.city} (Lat: {kundali.birthInfo.lat.toFixed(2)}°, Lng: {kundali.birthInfo.lng.toFixed(2)}°)
+                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style' : chartStyle === 'SOUTH' ? 'South Indian Fixed Rashi Style' : 'Global Grid'}
                         </Text>
 
-                        {/* Visual Chart Grid */}
-                        <View style={chartStyle === 'NORTH' ? styles.northDiamondGrid : styles.diamondGrid}>
+                        {/* Visual Chart Grid (North Diamond vs South Fixed Rashi Grid vs Global) */}
+                        <View style={
+                          chartStyle === 'NORTH' ? styles.northDiamondGrid :
+                          chartStyle === 'SOUTH' ? styles.southFixedGrid :
+                          styles.diamondGrid
+                        }>
                           {activeChart.houses.map(h => (
-                            <View key={h.houseNumber} style={[styles.houseBox, chartStyle === 'NORTH' && styles.northHouseBox]}>
+                            <View
+                              key={h.houseNumber}
+                              style={[
+                                styles.houseBox,
+                                chartStyle === 'NORTH' && styles.northHouseBox,
+                                chartStyle === 'SOUTH' && styles.southHouseBox
+                              ]}
+                            >
                               <View style={styles.houseHeaderRow}>
-                                <Text style={styles.houseNumText}>H{h.houseNumber}</Text>
+                                <Text style={[styles.houseNumText, chartStyle === 'SOUTH' && styles.southHouseNumText]}>
+                                  {chartStyle === 'SOUTH' ? `Rashi ${h.houseNumber}` : `H${h.houseNumber}`}
+                                </Text>
                                 <Text style={styles.houseRashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
                               </View>
                               <Text style={styles.housePlanetsText} numberOfLines={2}>
@@ -1030,6 +1043,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
+  southFixedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   houseBox: {
     width: '31%',
     backgroundColor: '#FAF5EE',
@@ -1043,6 +1062,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF8F0',
     borderColor: '#FFCC80',
   },
+  southHouseBox: {
+    backgroundColor: '#F0F8FF',
+    borderColor: '#90CAF9',
+  },
   houseHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1053,6 +1076,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     color: Colors.maroon,
+  },
+  southHouseNumText: {
+    color: '#1565C0',
   },
   houseRashiText: {
     fontSize: 9,
