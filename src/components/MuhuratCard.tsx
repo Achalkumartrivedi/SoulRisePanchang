@@ -7,6 +7,14 @@ import { ABHIJIT_GUIDE } from '../data/abhijitGuideRepository';
 import { BRAHMA_GUIDE } from '../data/brahmaGuideRepository';
 import { VIJAYA_GUIDE } from '../data/vijayaGuideRepository';
 import { RAHU_GUIDE, YAMAGANDA_GUIDE, GULIKA_GUIDE } from '../data/inauspiciousGuideRepository';
+import {
+  ABHIJIT_DESC_MAP,
+  BRAHMA_DESC_MAP,
+  VIJAYA_DESC_MAP,
+  RAHU_DESC_MAP,
+  YAMAGANDA_DESC_MAP,
+  GULIKA_DESC_MAP
+} from '../data/muhuratDescriptions';
 
 interface MuhuratCardProps {
   auspicious: MuhuratTiming[];
@@ -163,6 +171,29 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
     return item.name;
   };
 
+  const getCleanMuhuratDescription = (item: MuhuratTiming) => {
+    const nameLower = item.name.toLowerCase();
+    const hindiLower = item.hindiName || '';
+
+    const isAbhijit = nameLower.includes('abhijit') || hindiLower.includes('अभिजित') || hindiLower.includes('अभिजीत');
+    const isBrahma = nameLower.includes('brahma') || hindiLower.includes('ब्रह्म');
+    const isVijaya = nameLower.includes('vijaya') || hindiLower.includes('विजय');
+
+    const isRahu = nameLower.includes('rahu') || hindiLower.includes('राहु');
+    const isYama = nameLower.includes('yama') || hindiLower.includes('यम');
+    const isGulika = nameLower.includes('gulika') || hindiLower.includes('गुलिक');
+
+    if (isAbhijit && ABHIJIT_DESC_MAP[language]) return ABHIJIT_DESC_MAP[language];
+    if (isBrahma && BRAHMA_DESC_MAP[language]) return BRAHMA_DESC_MAP[language];
+    if (isVijaya && VIJAYA_DESC_MAP[language]) return VIJAYA_DESC_MAP[language];
+
+    if (isRahu && RAHU_DESC_MAP[language]) return RAHU_DESC_MAP[language];
+    if (isYama && YAMAGANDA_DESC_MAP[language]) return YAMAGANDA_DESC_MAP[language];
+    if (isGulika && GULIKA_DESC_MAP[language]) return GULIKA_DESC_MAP[language];
+
+    return item.description;
+  };
+
   return (
     <View style={styles.card}>
       <Text style={styles.cardHeaderTitle} numberOfLines={1} adjustsFontSizeToFit>✨ {t('auspiciousTimingsHeader')}</Text>
@@ -203,7 +234,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
               </Text>
               <Text style={styles.auspiciousTime}>{item.startTime} - {item.endTime}</Text>
             </View>
-            <Text style={styles.muhuratDesc}>{item.description}</Text>
+            <Text style={styles.muhuratDesc}>{getCleanMuhuratDescription(item)}</Text>
           </TouchableOpacity>
         );
       })}
@@ -249,7 +280,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
               </Text>
               <Text style={styles.inauspiciousTime}>{item.startTime} - {item.endTime}</Text>
             </View>
-            <Text style={styles.muhuratDesc}>{item.description}</Text>
+            <Text style={styles.muhuratDesc}>{getCleanMuhuratDescription(item)}</Text>
           </TouchableOpacity>
         );
       })}
