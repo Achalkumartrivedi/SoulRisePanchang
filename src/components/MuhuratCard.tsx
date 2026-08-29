@@ -58,16 +58,9 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
             activeOpacity={0.7}
           >
             <View style={styles.muhuratTop}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                <Text style={styles.muhuratName} numberOfLines={1}>
-                  {getCleanMuhuratName(item)}
-                </Text>
-                {isAbhijit && (
-                  <View style={styles.tapDetailPill}>
-                    <Text style={styles.tapDetailText}>ℹ️ Tap Details</Text>
-                  </View>
-                )}
-              </View>
+              <Text style={styles.muhuratName} numberOfLines={1}>
+                {getCleanMuhuratName(item)}
+              </Text>
               <Text style={styles.auspiciousTime}>{item.startTime} - {item.endTime}</Text>
             </View>
             <Text style={styles.muhuratDesc}>{item.description}</Text>
