@@ -37,8 +37,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const { language, t } = useLanguage();
 
-  // Default active section on app open is LIMBS (Panchangam 5 Sacred Limbs)
-  const [activeSection, setActiveSection] = useState<SectionKey>('LIMBS');
+  // Default active section on app open is LIMBS (Panchangam 5 Sacred Limbs), nullable so re-click collapses it!
+  const [activeSection, setActiveSection] = useState<SectionKey | null>('LIMBS');
   const [showLangModal, setShowLangModal] = useState(false);
 
   const locHeroTithi = getLocalizedTithi(panchang.tithi.number || 13, language);
@@ -46,7 +46,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const showHindiScript = language === 'hi' || language === 'hinglish';
 
   const toggleSection = (key: SectionKey) => {
-    setActiveSection(prev => (prev === key ? key : key));
+    setActiveSection(prev => (prev === key ? null : key));
   };
 
   return (
@@ -113,7 +113,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* 3. Vertical Section Cards Container */}
         <View style={styles.verticalListContainer}>
           
-          {/* Section 1: Panchangam (5 Sacred Limbs) - OPEN BY DEFAULT */}
+          {/* Section 1: Panchangam (5 Sacred Limbs) - OPEN BY DEFAULT, CLICK AGAIN TO COLLAPSE */}
           <View style={styles.featureCardContainer}>
             <TouchableOpacity
               style={[styles.featureHeader, activeSection === 'LIMBS' && styles.featureHeaderActive]}
@@ -140,7 +140,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   🪔 {t('panchangamHeader')} - {selectedCity.name}
                 </Text>
                 <PanchangLimbCard panchang={panchang} />
-                <SunMoonWidget sunMoon={panchang.sunMoon} />
               </View>
             )}
           </View>
@@ -201,7 +200,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             )}
           </View>
 
-          {/* Section 4: Planetary & Kundali Chart */}
+          {/* Section 4: Planetary & Kundali Chart - CONTAINS LAGNA KUNDALI CHART ONLY HERE */}
           <View style={styles.featureCardContainer}>
             <TouchableOpacity
               style={[styles.featureHeader, activeSection === 'PLANETS' && styles.featureHeaderActive]}
@@ -215,7 +214,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     {t('planetsTab')}
                   </Text>
                   <Text style={[styles.featureSub, activeSection === 'PLANETS' && styles.featureSubActive]}>
-                    North & South Indian Gochar Transit Charts
+                    Lagna Kundali Chart & Gochar Planetary Transits
                   </Text>
                 </View>
               </View>
@@ -224,6 +223,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             {activeSection === 'PLANETS' && (
               <View style={styles.featureBody}>
+                <SunMoonWidget sunMoon={panchang.sunMoon} />
                 <GocharKundaliCard panchang={panchang} />
               </View>
             )}
