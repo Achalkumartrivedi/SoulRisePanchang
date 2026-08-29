@@ -9,6 +9,7 @@ import { MuhuratCard } from '../components/MuhuratCard';
 import { ChoghadiyaGrid } from '../components/ChoghadiyaGrid';
 import { GocharKundaliCard } from '../components/GocharKundaliCard';
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
+import { BirthChartModal } from '../components/BirthChartModal';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
@@ -40,6 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // Default active section on app open is LIMBS (Panchangam 5 Sacred Limbs), nullable so re-click collapses it!
   const [activeSection, setActiveSection] = useState<SectionKey | null>('LIMBS');
   const [showLangModal, setShowLangModal] = useState(false);
+  const [showBirthChartModal, setShowBirthChartModal] = useState(false);
 
   const locHeroTithi = getLocalizedTithi(panchang.tithi.number || 13, language);
   const locHeroPaksha = getLocalizedPakshaName(panchang.tithi.paksha === 'KRISHNA' ? 'KRISHNA' : 'SHUKLA', language);
@@ -229,26 +231,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             )}
           </View>
 
-          {/* Section 5 (Future Expansion): Birth Chart Generator */}
+          {/* Section 5: Birth Chart Generator (Janam Kundali) */}
           <View style={styles.featureCardContainer}>
             <TouchableOpacity
-              style={styles.featureHeaderDisabled}
-              activeOpacity={0.9}
+              style={styles.featureHeader}
+              onPress={() => setShowBirthChartModal(true)}
+              activeOpacity={0.8}
             >
               <View style={styles.featureHeaderLeft}>
                 <Text style={styles.featureIcon}>🔮</Text>
                 <View>
                   <View style={styles.titleRow}>
-                    <Text style={styles.featureTitleMuted}>Birth Chart Generator (Kundali)</Text>
-                    <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonText}>{t('comingSoon')}</Text>
-                    </View>
+                    <Text style={styles.featureTitle}>Birth Chart Generator (Kundali)</Text>
                   </View>
-                  <Text style={styles.featureSubMuted}>
-                    Generate Janam Patrika, Lagna chart & Dasha predictions
+                  <Text style={styles.featureSub}>
+                    D1, Moon, Sun, D2, D9 & D10 Charts, Avakahada & Planets
                   </Text>
                 </View>
               </View>
+              <Text style={styles.expandArrow}>▶</Text>
             </TouchableOpacity>
           </View>
 
@@ -305,6 +306,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <LanguageSelectionModal
         visible={showLangModal}
         onClose={() => setShowLangModal(false)}
+      />
+
+      {/* Birth Chart Generator (Janam Kundali) Modal */}
+      <BirthChartModal
+        visible={showBirthChartModal}
+        onClose={() => setShowBirthChartModal(false)}
+        selectedCity={selectedCity}
       />
     </View>
   );
