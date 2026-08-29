@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  ActivityIndicator
 } from 'react-native';
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,6 +16,7 @@ import { calculateBirthKundali, KundaliResult, KundaliDivisionalChart } from '..
 import { GLOBAL_COUNTRIES, GlobalCountry, GlobalCity } from '../data/globalCities';
 import { CityLocation } from '../types/panchang';
 import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
+import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -48,22 +50,32 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [tobHour, setTobHour] = useState('10');
   const [tobMinute, setTobMinute] = useState('30');
 
-  // Country & City Selection State
-  const [selectedCountry, setSelectedCountry] = useState<GlobalCountry>(GLOBAL_COUNTRIES[0]); // Default India
-  const [selectedGlobalCity, setSelectedGlobalCity] = useState<GlobalCity>(GLOBAL_COUNTRIES[0].cities[0]); // Default New Delhi
+  // Active Location State (Custom Lat/Lng or Preset City)
+  const [activeLocation, setActiveLocation] = useState<{
+    cityName: string;
+    lat: number;
+    lng: number;
+  }>({
+    cityName: selectedCity.name,
+    lat: selectedCity.latitude,
+    lng: selectedCity.longitude
+  });
+
+  // Country & Preset City State
+  const [selectedCountry, setSelectedCountry] = useState<GlobalCountry>(GLOBAL_COUNTRIES[0]);
+
+  // Live Location Search State
+  const [placeSearchQuery, setPlaceSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<GeocodedLocation[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Dropdown Picker Modal States
-  const [showCountryModal, setShowCountryModal] = useState(false);
-  const [showCityModal, setShowCityModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showDayModal, setShowDayModal] = useState(false);
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
   const [showHourModal, setShowHourModal] = useState(false);
   const [showMinuteModal, setShowMinuteModal] = useState(false);
-
-  // Search Filters
-  const [countrySearchQuery, setCountrySearchQuery] = useState('');
-  const [citySearchQuery, setCitySearchQuery] = useState('');
 
   // Default Chart Style is NORTH (North Indian Diamond Style)
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH' | 'GLOBAL'>('NORTH');
@@ -79,11 +91,29 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
       new Date(1995, 7, 15),
       10,
       30,
-      GLOBAL_COUNTRIES[0].cities[0].cityName,
-      GLOBAL_COUNTRIES[0].cities[0].lat,
-      GLOBAL_COUNTRIES[0].cities[0].lng
+      selectedCity.name,
+      selectedCity.latitude,
+      selectedCity.longitude
     );
   });
+
+  // Live Free Geocoding API Search debouncer
+  useEffect(() => {
+    if (!placeSearchQuery || placeSearchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      const results = await searchGlobalLocations(placeSearchQuery);
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [placeSearchQuery]);
 
   const handleGenerate = () => {
     const day = parseInt(dobDay, 10) || 1;
@@ -98,21 +128,12 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
       dob,
       h,
       m,
-      `${selectedGlobalCity.cityName}, ${selectedCountry.countryName}`,
-      selectedGlobalCity.lat,
-      selectedGlobalCity.lng
+      activeLocation.cityName,
+      activeLocation.lat,
+      activeLocation.lng
     );
     setKundali(result);
   };
-
-  const filteredCountries = GLOBAL_COUNTRIES.filter(c =>
-    c.countryName.toLowerCase().includes(countrySearchQuery.toLowerCase())
-  );
-
-  const filteredCities = selectedCountry.cities.filter(c =>
-    c.cityName.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
-    (c.hindiName && c.hindiName.includes(citySearchQuery))
-  );
 
   const activeChart: KundaliDivisionalChart | undefined = kundali?.divisionalCharts[activeChartKey];
 
@@ -200,31 +221,21 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                     </TouchableOpacity>
                   </View>
 
-                  {/* Global Country & City Dropdowns */}
-                  <Text style={styles.inputLabel}>Global Country & City of Birth</Text>
-                  <View style={styles.dropdownRow}>
-                    {/* Country Dropdown */}
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col2]}
-                      onPress={() => setShowCountryModal(true)}
-                    >
-                      <Text style={styles.dropdownValText} numberOfLines={1}>
-                        {selectedCountry.flagEmoji} {selectedCountry.countryName}
+                  {/* Free Global Location Picker Dropdown */}
+                  <Text style={styles.inputLabel}>Global Location of Birth (Lat & Lng Search)</Text>
+                  <TouchableOpacity
+                    style={styles.dropdownBtn}
+                    onPress={() => setShowLocationModal(true)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.dropdownCityName}>📍 {activeLocation.cityName}</Text>
+                      <Text style={styles.dropdownCitySub}>
+                        Lat: {activeLocation.lat.toFixed(4)}° • Lng: {activeLocation.lng.toFixed(4)}°
                       </Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-
-                    {/* City Dropdown */}
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col2]}
-                      onPress={() => setShowCityModal(true)}
-                    >
-                      <Text style={styles.dropdownValText} numberOfLines={1}>
-                        📍 {selectedGlobalCity.cityName}
-                      </Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-                  </View>
+                    </View>
+                    <Text style={styles.dropdownArrow}>🔍 Search Place ▼</Text>
+                  </TouchableOpacity>
 
                   {/* Generate Button */}
                   <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate} activeOpacity={0.8}>
@@ -342,7 +353,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         </View>
 
                         <Text style={styles.chartGraphicSub}>
-                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style (Default)' : chartStyle === 'SOUTH' ? 'South Indian Fixed Style' : 'Global Grid'}
+                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Location: {kundali.birthInfo.city} (Lat: {kundali.birthInfo.lat.toFixed(2)}°, Lng: {kundali.birthInfo.lng.toFixed(2)}°)
                         </Text>
 
                         {/* Visual Chart Grid */}
@@ -522,88 +533,105 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
         </View>
       </TouchableWithoutFeedback>
 
-      {/* Global Country Selection Modal */}
-      <Modal visible={showCountryModal} animationType="fade" transparent>
-        <TouchableWithoutFeedback onPress={() => setShowCountryModal(false)}>
+      {/* Free Live Global Location Search Modal */}
+      <Modal visible={showLocationModal} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowLocationModal(false)}>
           <View style={styles.dropdownOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.dropdownModalCard}>
                 <View style={styles.dropdownHeaderRow}>
-                  <Text style={styles.dropdownTitle}>Select Country of Birth</Text>
-                  <TouchableOpacity onPress={() => setShowCountryModal(false)} style={styles.closeBtn}>
+                  <Text style={styles.dropdownTitle}>🔍 Search Global Birth Location</Text>
+                  <TouchableOpacity onPress={() => setShowLocationModal(false)} style={styles.closeBtn}>
                     <Text style={styles.closeBtnText}>✕</Text>
                   </TouchableOpacity>
                 </View>
 
+                {/* Live Place Search Input */}
                 <TextInput
                   style={styles.citySearchInput}
-                  value={countrySearchQuery}
-                  onChangeText={setCountrySearchQuery}
-                  placeholder="🔍 Search country..."
+                  value={placeSearchQuery}
+                  onChangeText={setPlaceSearchQuery}
+                  placeholder="Type any city, village, state or country..."
                   placeholderTextColor={Colors.textMuted}
                 />
 
-                <ScrollView style={{ maxHeight: 350 }}>
-                  {filteredCountries.map(c => (
+                {isSearching && (
+                  <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color={Colors.maroon} />
+                    <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 4 }}>Fetching exact Lat & Lng coordinates...</Text>
+                  </View>
+                )}
+
+                <ScrollView style={{ maxHeight: 300 }}>
+                  {/* Live Search Suggestions from OpenStreetMap Nominatim */}
+                  {searchResults.map((res, idx) => (
                     <TouchableOpacity
-                      key={c.countryCode}
-                      style={[styles.cityListItem, selectedCountry.countryCode === c.countryCode && styles.cityListItemActive]}
+                      key={idx}
+                      style={styles.cityListItem}
                       onPress={() => {
-                        setSelectedCountry(c);
-                        setSelectedGlobalCity(c.cities[0]); // Pick first city of selected country as default
-                        setShowCountryModal(false);
-                      }}
-                    >
-                      <Text style={styles.cityItemName}>{c.flagEmoji} {c.countryName}</Text>
-                      {selectedCountry.countryCode === c.countryCode && <Text style={styles.checkIcon}>✓</Text>}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* City Selection Modal */}
-      <Modal visible={showCityModal} animationType="fade" transparent>
-        <TouchableWithoutFeedback onPress={() => setShowCityModal(false)}>
-          <View style={styles.dropdownOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.dropdownModalCard}>
-                <View style={styles.dropdownHeaderRow}>
-                  <Text style={styles.dropdownTitle}>Select City ({selectedCountry.countryName})</Text>
-                  <TouchableOpacity onPress={() => setShowCityModal(false)} style={styles.closeBtn}>
-                    <Text style={styles.closeBtnText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <TextInput
-                  style={styles.citySearchInput}
-                  value={citySearchQuery}
-                  onChangeText={setCitySearchQuery}
-                  placeholder="🔍 Search city..."
-                  placeholderTextColor={Colors.textMuted}
-                />
-
-                <ScrollView style={{ maxHeight: 350 }}>
-                  {filteredCities.map(c => (
-                    <TouchableOpacity
-                      key={c.cityName}
-                      style={[styles.cityListItem, selectedGlobalCity.cityName === c.cityName && styles.cityListItemActive]}
-                      onPress={() => {
-                        setSelectedGlobalCity(c);
-                        setShowCityModal(false);
+                        setActiveLocation({
+                          cityName: res.cityName,
+                          lat: res.lat,
+                          lng: res.lng
+                        });
+                        setShowLocationModal(false);
                       }}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.cityItemName, selectedGlobalCity.cityName === c.cityName && styles.cityItemNameActive]}>
-                          📍 {c.cityName} {c.hindiName ? `(${c.hindiName})` : ''}
-                        </Text>
+                        <Text style={styles.cityItemName}>📍 {res.cityName}</Text>
+                        <Text style={styles.cityItemSub} numberOfLines={2}>{res.displayName}</Text>
+                        <Text style={styles.latLngTag}>Lat: {res.lat.toFixed(4)}° | Lng: {res.lng.toFixed(4)}°</Text>
                       </View>
-                      {selectedGlobalCity.cityName === c.cityName && <Text style={styles.checkIcon}>✓</Text>}
                     </TouchableOpacity>
                   ))}
+
+                  {/* Preset Country & City Quick Select Section */}
+                  {searchResults.length === 0 && (
+                    <View style={{ marginTop: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.maroon, marginBottom: 8 }}>
+                        🌐 Or Pick Popular Presets ({selectedCountry.countryName}):
+                      </Text>
+                      
+                      {/* Country Selector Pills */}
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+                        {GLOBAL_COUNTRIES.map(c => (
+                          <TouchableOpacity
+                            key={c.countryCode}
+                            style={[styles.countryPill, selectedCountry.countryCode === c.countryCode && styles.countryPillActive]}
+                            onPress={() => setSelectedCountry(c)}
+                          >
+                            <Text style={[styles.countryPillText, selectedCountry.countryCode === c.countryCode && styles.countryPillTextActive]}>
+                              {c.flagEmoji} {c.countryName}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+
+                      {/* City Items */}
+                      {selectedCountry.cities.map(c => (
+                        <TouchableOpacity
+                          key={c.cityName}
+                          style={[styles.cityListItem, activeLocation.cityName === c.cityName && styles.cityListItemActive]}
+                          onPress={() => {
+                            setActiveLocation({
+                              cityName: `${c.cityName}, ${selectedCountry.countryName}`,
+                              lat: c.lat,
+                              lng: c.lng
+                            });
+                            setShowLocationModal(false);
+                          }}
+                        >
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.cityItemName, activeLocation.cityName === c.cityName && styles.cityItemNameActive]}>
+                              📍 {c.cityName} {c.hindiName ? `(${c.hindiName})` : ''}
+                            </Text>
+                            <Text style={styles.latLngTag}>Lat: {c.lat.toFixed(4)}° | Lng: {c.lng.toFixed(4)}°</Text>
+                          </View>
+                          {activeLocation.cityName === c.cityName && <Text style={styles.checkIcon}>✓</Text>}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                 </ScrollView>
               </View>
             </TouchableWithoutFeedback>
@@ -866,6 +894,36 @@ const styles = StyleSheet.create({
   col2: {
     flex: 1,
   },
+
+  // City Dropdown Styles
+  dropdownBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.maroon,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  dropdownCityName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  dropdownCitySub: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 1,
+  },
+  dropdownArrow: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+
   generateBtn: {
     backgroundColor: Colors.maroon,
     paddingVertical: 12,
@@ -1255,6 +1313,35 @@ const styles = StyleSheet.create({
   },
   cityItemNameActive: {
     color: Colors.maroon,
+  },
+  cityItemSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  latLngTag: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.primaryDark,
+    marginTop: 2,
+  },
+  countryPill: {
+    backgroundColor: '#F0F0F0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 6,
+  },
+  countryPillActive: {
+    backgroundColor: Colors.maroon,
+  },
+  countryPillText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  countryPillTextActive: {
+    color: '#FFFFFF',
   },
   checkIcon: {
     fontSize: 14,
