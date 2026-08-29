@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { SunMoonTiming } from '../types/panchang';
+import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
 
 interface SunMoonWidgetProps {
   sunMoon: SunMoonTiming;
@@ -17,6 +18,21 @@ const GRAHAS_DETAIL = [
   { name: "Shani (Saturn)", symbol: "♄", rashi: "Pisces (Meena)", deg: "24° 50'", nakshatra: "Revati (Pada 3)" },
   { name: "Rahu", symbol: "☊", rashi: "Aquarius (Kumbha)", deg: "05° 15'", nakshatra: "Dhanishta (Pada 4)" },
   { name: "Ketu", symbol: "☋", rashi: "Leo (Simha)", deg: "05° 15'", nakshatra: "Magha (Pada 2)" }
+];
+
+const GOCHAR_HOUSES = [
+  { houseNumber: 1, rashiName: 'Leo (Simha)', planets: ['☀️ Sun', '☿ Merc', '☋ Ketu'] },
+  { houseNumber: 2, rashiName: 'Virgo (Kanya)', planets: ['♀ Venus'] },
+  { houseNumber: 3, rashiName: 'Libra (Tula)', planets: [] },
+  { houseNumber: 4, rashiName: 'Scorpio (Vrishchika)', planets: [] },
+  { houseNumber: 5, rashiName: 'Sagittarius (Dhanu)', planets: [] },
+  { houseNumber: 6, rashiName: 'Capricorn (Makara)', planets: ['🌙 Moon'] },
+  { houseNumber: 7, rashiName: 'Aquarius (Kumbha)', planets: ['☊ Rahu'] },
+  { houseNumber: 8, rashiName: 'Pisces (Meena)', planets: ['♄ Sat'] },
+  { houseNumber: 9, rashiName: 'Aries (Mesha)', planets: [] },
+  { houseNumber: 10, rashiName: 'Taurus (Vrishabha)', planets: ['♃ Jup'] },
+  { houseNumber: 11, rashiName: 'Gemini (Mithuna)', planets: ['♂️ Mars'] },
+  { houseNumber: 12, rashiName: 'Cancer (Karka)', planets: [] }
 ];
 
 export const SunMoonWidget: React.FC<SunMoonWidgetProps> = ({ sunMoon }) => {
@@ -45,13 +61,22 @@ export const SunMoonWidget: React.FC<SunMoonWidgetProps> = ({ sunMoon }) => {
         </View>
       </View>
 
-      {/* Kundali Box Display */}
-      <View style={styles.kundaliCardBox}>
-        <Text style={styles.chartTitleText}>
-          {chartStyle === 'NORTH' ? 'North Indian Diamond Chart' : 'South Indian Fixed Rashi Chart'}
-        </Text>
-        <Text style={styles.chartSubText}>Lagna (Ascendant): Leo (Simha) • 1st House</Text>
-      </View>
+      {/* Authentic North Indian Triangle Chart vs South Indian Fixed Grid */}
+      {chartStyle === 'NORTH' ? (
+        <NorthIndianTriangleChart houses={GOCHAR_HOUSES} size={290} />
+      ) : (
+        <View style={styles.southFixedGrid}>
+          {GOCHAR_HOUSES.map(h => (
+            <View key={h.houseNumber} style={styles.southHouseBox}>
+              <Text style={styles.southHouseNumText}>Rashi {h.houseNumber}</Text>
+              <Text style={styles.rashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
+              <Text style={styles.planetsText} numberOfLines={2}>
+                {h.planets.length > 0 ? h.planets.join(', ') : '—'}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={styles.divider} />
 
@@ -98,48 +123,61 @@ const styles = StyleSheet.create({
   toggleBar: {
     flexDirection: 'row',
     backgroundColor: '#F0F0F0',
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 2,
   },
   toggleBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   toggleBtnActive: {
     backgroundColor: Colors.maroon,
   },
   toggleText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: Colors.textSecondary,
   },
   toggleTextActive: {
     color: '#FFFFFF',
   },
-  kundaliCardBox: {
-    backgroundColor: Colors.creamBg,
-    borderRadius: 14,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
+  southFixedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 6,
+    marginVertical: 10,
   },
-  chartTitleText: {
-    fontSize: 16,
+  southHouseBox: {
+    width: '31%',
+    backgroundColor: '#F0F8FF',
+    borderRadius: 8,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#90CAF9',
+    minHeight: 58,
+  },
+  southHouseNumText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#1565C0',
+  },
+  rashiText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  planetsText: {
+    fontSize: 9,
     fontWeight: 'bold',
     color: Colors.primaryDark,
-  },
-  chartSubText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 4,
-    fontWeight: '600',
+    marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
-    marginVertical: 14,
+    backgroundColor: Colors.border,
+    marginVertical: 12,
   },
   sectionSubtitle: {
     fontSize: 14,
@@ -148,43 +186,38 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   grahaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 8,
   },
   grahaItemCard: {
-    width: '48%',
-    backgroundColor: Colors.creamBg,
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
   },
   grahaIcon: {
     fontSize: 22,
-    marginRight: 8,
+    marginRight: 10,
   },
   grahaInfo: {
     flex: 1,
   },
   grahaName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
   grahaRashi: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.primaryDark,
+    color: Colors.maroon,
+    fontWeight: '600',
     marginTop: 1,
   },
   grahaNakshatra: {
-    fontSize: 9,
-    color: Colors.textMuted,
-    marginTop: 2,
-    fontWeight: '600',
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 1,
   },
 });

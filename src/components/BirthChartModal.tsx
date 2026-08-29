@@ -17,6 +17,7 @@ import { GLOBAL_COUNTRIES, GlobalCountry, GlobalCity } from '../data/globalCitie
 import { CityLocation } from '../types/panchang';
 import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
+import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -356,33 +357,32 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                           Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style' : chartStyle === 'SOUTH' ? 'South Indian Fixed Rashi Style' : 'Global Grid'}
                         </Text>
 
-                        {/* Visual Chart Grid (North Diamond vs South Fixed Rashi Grid vs Global) */}
-                        <View style={
-                          chartStyle === 'NORTH' ? styles.northDiamondGrid :
-                          chartStyle === 'SOUTH' ? styles.southFixedGrid :
-                          styles.diamondGrid
-                        }>
-                          {activeChart.houses.map(h => (
-                            <View
-                              key={h.houseNumber}
-                              style={[
-                                styles.houseBox,
-                                chartStyle === 'NORTH' && styles.northHouseBox,
-                                chartStyle === 'SOUTH' && styles.southHouseBox
-                              ]}
-                            >
-                              <View style={styles.houseHeaderRow}>
-                                <Text style={[styles.houseNumText, chartStyle === 'SOUTH' && styles.southHouseNumText]}>
-                                  {chartStyle === 'SOUTH' ? `Rashi ${h.houseNumber}` : `H${h.houseNumber}`}
+                        {/* Visual Chart Graphic (North Indian Authentic Diamond-Triangle vs South Fixed Rashi Grid vs Global Grid) */}
+                        {chartStyle === 'NORTH' ? (
+                          <NorthIndianTriangleChart houses={activeChart.houses} size={300} />
+                        ) : (
+                          <View style={chartStyle === 'SOUTH' ? styles.southFixedGrid : styles.diamondGrid}>
+                            {activeChart.houses.map(h => (
+                              <View
+                                key={h.houseNumber}
+                                style={[
+                                  styles.houseBox,
+                                  chartStyle === 'SOUTH' && styles.southHouseBox
+                                ]}
+                              >
+                                <View style={styles.houseHeaderRow}>
+                                  <Text style={[styles.houseNumText, chartStyle === 'SOUTH' && styles.southHouseNumText]}>
+                                    {chartStyle === 'SOUTH' ? `Rashi ${h.houseNumber}` : `H${h.houseNumber}`}
+                                  </Text>
+                                  <Text style={styles.houseRashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
+                                </View>
+                                <Text style={styles.housePlanetsText} numberOfLines={2}>
+                                  {h.planets.length > 0 ? h.planets.join(', ') : '—'}
                                 </Text>
-                                <Text style={styles.houseRashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
                               </View>
-                              <Text style={styles.housePlanetsText} numberOfLines={2}>
-                                {h.planets.length > 0 ? h.planets.join(', ') : '—'}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
+                            ))}
+                          </View>
+                        )}
                       </View>
                     )}
 
