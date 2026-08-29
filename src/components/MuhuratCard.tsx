@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { ABHIJIT_GUIDE } from '../data/abhijitGuideRepository';
 import { BRAHMA_GUIDE } from '../data/brahmaGuideRepository';
 import { VIJAYA_GUIDE } from '../data/vijayaGuideRepository';
+import { RAHU_GUIDE, YAMAGANDA_GUIDE, GULIKA_GUIDE } from '../data/inauspiciousGuideRepository';
 
 interface MuhuratCardProps {
   auspicious: MuhuratTiming[];
@@ -60,31 +61,95 @@ const VIJAYA_LANG_MAP: Record<string, string> = {
   th: 'เวลาวิชัย'
 };
 
+const RAHU_LANG_MAP: Record<string, string> = {
+  hinglish: 'Rahu Kalam',
+  hi: 'राहु काल',
+  ta: 'ராகு காலம்',
+  te: 'రాహు కాలం',
+  bn: 'রাহু কাল',
+  mr: 'राहु काल',
+  en: 'Rahu Kalam',
+  ru: 'Раху Калам',
+  fr: 'Rahu Kalam',
+  es: 'Rahu Kalam',
+  he: 'ראחו קאלם',
+  id: 'Rahu Kalam',
+  th: 'ราหูกาล'
+};
+
+const YAMAGANDA_LANG_MAP: Record<string, string> = {
+  hinglish: 'Yamaganda Kalam',
+  hi: 'यमगण्ड काल',
+  ta: 'எமகண்டம்',
+  te: 'యమగండ కాలం',
+  bn: 'যমগণ্ড কাল',
+  mr: 'यमगंड काल',
+  en: 'Yamaganda Kalam',
+  ru: 'Ямаганда Калам',
+  fr: 'Yamaganda Kalam',
+  es: 'Yamaganda Kalam',
+  he: 'יאמאגאנדה קאלם',
+  id: 'Yamaganda Kalam',
+  th: 'ยมกาล'
+};
+
+const GULIKA_LANG_MAP: Record<string, string> = {
+  hinglish: 'Gulika Kalam',
+  hi: 'गुलिक काल',
+  ta: 'குளிகை காலம்',
+  te: 'గుళిక కాలం',
+  bn: 'গুলিক কাল',
+  mr: 'गुलिक काल',
+  en: 'Gulika Kalam',
+  ru: 'Гулика Калам',
+  fr: 'Gulika Kalam',
+  es: 'Gulika Kalam',
+  he: 'גוליקה קאלם',
+  id: 'Gulika Kalam',
+  th: 'กุลิกกาล'
+};
+
 export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicious }) => {
   const { language, t } = useLanguage();
   const [activeInfoModal, setActiveInfoModal] = useState<'AUSPICIOUS' | 'INAUSPICIOUS' | null>(null);
+  
+  // Modals for Auspicious Timings
   const [showAbhijitDetailModal, setShowAbhijitDetailModal] = useState<boolean>(false);
   const [showBrahmaDetailModal, setShowBrahmaDetailModal] = useState<boolean>(false);
   const [showVijayaDetailModal, setShowVijayaDetailModal] = useState<boolean>(false);
+
+  // Modals for Inauspicious Timings
+  const [showRahuDetailModal, setShowRahuDetailModal] = useState<boolean>(false);
+  const [showYamaDetailModal, setShowYamaDetailModal] = useState<boolean>(false);
+  const [showGulikaDetailModal, setShowGulikaDetailModal] = useState<boolean>(false);
 
   const abhijitGuide = ABHIJIT_GUIDE[language] || ABHIJIT_GUIDE.hinglish;
   const brahmaGuide = BRAHMA_GUIDE[language] || BRAHMA_GUIDE.hinglish;
   const vijayaGuide = VIJAYA_GUIDE[language] || VIJAYA_GUIDE.hinglish;
 
-  const getCleanMuhuratName = (item: MuhuratTiming) => {
-    const isAbhijit = item.name.toLowerCase().includes('abhijit') || item.hindiName.includes('अभिजित') || item.hindiName.includes('अभिजीत');
-    const isBrahma = item.name.toLowerCase().includes('brahma') || item.hindiName.includes('ब्रह्म');
-    const isVijaya = item.name.toLowerCase().includes('vijaya') || item.hindiName.includes('विजय');
+  const rahuGuide = RAHU_GUIDE[language] || RAHU_GUIDE.hinglish;
+  const yamaGuide = YAMAGANDA_GUIDE[language] || YAMAGANDA_GUIDE.hinglish;
+  const gulikaGuide = GULIKA_GUIDE[language] || GULIKA_GUIDE.hinglish;
 
-    if (isAbhijit && ABHIJIT_LANG_MAP[language]) {
-      return ABHIJIT_LANG_MAP[language];
-    }
-    if (isBrahma && BRAHMA_LANG_MAP[language]) {
-      return BRAHMA_LANG_MAP[language];
-    }
-    if (isVijaya && VIJAYA_LANG_MAP[language]) {
-      return VIJAYA_LANG_MAP[language];
-    }
+  const getCleanMuhuratName = (item: MuhuratTiming) => {
+    const nameLower = item.name.toLowerCase();
+    const hindiLower = item.hindiName || '';
+
+    const isAbhijit = nameLower.includes('abhijit') || hindiLower.includes('अभिजित') || hindiLower.includes('अभिजीत');
+    const isBrahma = nameLower.includes('brahma') || hindiLower.includes('ब्रह्म');
+    const isVijaya = nameLower.includes('vijaya') || hindiLower.includes('विजय');
+
+    const isRahu = nameLower.includes('rahu') || hindiLower.includes('राहु') || hindiLower.includes('ராகு');
+    const isYama = nameLower.includes('yama') || hindiLower.includes('यम') || hindiLower.includes('எம');
+    const isGulika = nameLower.includes('gulika') || hindiLower.includes('गुलिक') || hindiLower.includes('குளிகை');
+
+    if (isAbhijit && ABHIJIT_LANG_MAP[language]) return ABHIJIT_LANG_MAP[language];
+    if (isBrahma && BRAHMA_LANG_MAP[language]) return BRAHMA_LANG_MAP[language];
+    if (isVijaya && VIJAYA_LANG_MAP[language]) return VIJAYA_LANG_MAP[language];
+
+    if (isRahu && RAHU_LANG_MAP[language]) return RAHU_LANG_MAP[language];
+    if (isYama && YAMAGANDA_LANG_MAP[language]) return YAMAGANDA_LANG_MAP[language];
+    if (isGulika && GULIKA_LANG_MAP[language]) return GULIKA_LANG_MAP[language];
 
     if (language === 'hi') {
       return item.hindiName || item.name;
@@ -119,15 +184,10 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
             key={index}
             style={[styles.muhuratItem, styles.auspiciousBorder]}
             onPress={() => {
-              if (isAbhijit) {
-                setShowAbhijitDetailModal(true);
-              } else if (isBrahma) {
-                setShowBrahmaDetailModal(true);
-              } else if (isVijaya) {
-                setShowVijayaDetailModal(true);
-              } else {
-                setActiveInfoModal('AUSPICIOUS');
-              }
+              if (isAbhijit) setShowAbhijitDetailModal(true);
+              else if (isBrahma) setShowBrahmaDetailModal(true);
+              else if (isVijaya) setShowVijayaDetailModal(true);
+              else setActiveInfoModal('AUSPICIOUS');
             }}
             activeOpacity={0.7}
           >
@@ -157,17 +217,36 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         </TouchableOpacity>
       </View>
 
-      {inauspicious.map((item, index) => (
-        <View key={index} style={[styles.muhuratItem, styles.inauspiciousBorder]}>
-          <View style={styles.muhuratTop}>
-            <Text style={styles.muhuratNameRed} numberOfLines={1}>
-              {getCleanMuhuratName(item)}
-            </Text>
-            <Text style={styles.inauspiciousTime}>{item.startTime} - {item.endTime}</Text>
-          </View>
-          <Text style={styles.muhuratDesc}>{item.description}</Text>
-        </View>
-      ))}
+      {inauspicious.map((item, index) => {
+        const nameLower = item.name.toLowerCase();
+        const hindiLower = item.hindiName || '';
+
+        const isRahu = nameLower.includes('rahu') || hindiLower.includes('राहु');
+        const isYama = nameLower.includes('yama') || hindiLower.includes('यम');
+        const isGulika = nameLower.includes('gulika') || hindiLower.includes('गुलिक');
+
+        return (
+          <TouchableOpacity
+            key={index}
+            style={[styles.muhuratItem, styles.inauspiciousBorder]}
+            onPress={() => {
+              if (isRahu) setShowRahuDetailModal(true);
+              else if (isYama) setShowYamaDetailModal(true);
+              else if (isGulika) setShowGulikaDetailModal(true);
+              else setActiveInfoModal('INAUSPICIOUS');
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.muhuratTop}>
+              <Text style={styles.muhuratNameRed} numberOfLines={1}>
+                {getCleanMuhuratName(item)}
+              </Text>
+              <Text style={styles.inauspiciousTime}>{item.startTime} - {item.endTime}</Text>
+            </View>
+            <Text style={styles.muhuratDesc}>{item.description}</Text>
+          </TouchableOpacity>
+        );
+      })}
 
       {/* 1. General Info Modal Popup */}
       <Modal
@@ -204,7 +283,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         </TouchableOpacity>
       </Modal>
 
-      {/* 2. Detailed Abhijit Time Educational Modal (13 Languages) */}
+      {/* 2. Detailed Abhijit Time Educational Modal */}
       <Modal
         visible={showAbhijitDetailModal}
         transparent
@@ -274,7 +353,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         </View>
       </Modal>
 
-      {/* 3. Detailed Brahma Time Educational Modal (13 Languages) */}
+      {/* 3. Detailed Brahma Time Educational Modal */}
       <Modal
         visible={showBrahmaDetailModal}
         transparent
@@ -346,7 +425,7 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
         </View>
       </Modal>
 
-      {/* 4. Detailed Vijaya Time Educational Modal (13 Languages) */}
+      {/* 4. Detailed Vijaya Time Educational Modal */}
       <Modal
         visible={showVijayaDetailModal}
         transparent
@@ -412,6 +491,159 @@ export const MuhuratCard: React.FC<MuhuratCardProps> = ({ auspicious, inauspicio
             </ScrollView>
 
             <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowVijayaDetailModal(false)}>
+              <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 5. Detailed Rahu Kalam Educational Modal */}
+      <Modal
+        visible={showRahuDetailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRahuDetailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.guideModalCard}>
+            <View style={styles.guideHeader}>
+              <Text style={styles.guideHeaderTitle}>{rahuGuide.modalHeaderTitle}</Text>
+              <TouchableOpacity onPress={() => setShowRahuDetailModal(false)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.guideScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.guideSubtitle}>{rahuGuide.subtitle}</Text>
+
+              {/* Meaning */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>🔍 {rahuGuide.meaningTitle}</Text>
+                <Text style={styles.guideBodyText}>{rahuGuide.meaningText}</Text>
+              </View>
+
+              {/* Why Called */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>❓ {rahuGuide.whyCalledTitle}</Text>
+                <Text style={styles.guideBodyText}>{rahuGuide.whyCalledText}</Text>
+              </View>
+
+              {/* Why Avoided */}
+              <View style={styles.guideBoxBad}>
+                <Text style={styles.guideBoxTitleBad}>⚠️ {rahuGuide.whyAvoidedTitle}</Text>
+                <Text style={styles.guideBadText}>{rahuGuide.whyAvoidedText}</Text>
+              </View>
+
+              {/* Note */}
+              <View style={styles.guideBoxHistory}>
+                <Text style={styles.guideBoxTitleHistory}>ℹ️ Note</Text>
+                <Text style={styles.guideHistoryText}>{rahuGuide.noteText}</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowRahuDetailModal(false)}>
+              <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 6. Detailed Yamaganda Kalam Educational Modal */}
+      <Modal
+        visible={showYamaDetailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowYamaDetailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.guideModalCard}>
+            <View style={styles.guideHeader}>
+              <Text style={styles.guideHeaderTitle}>{yamaGuide.modalHeaderTitle}</Text>
+              <TouchableOpacity onPress={() => setShowYamaDetailModal(false)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.guideScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.guideSubtitle}>{yamaGuide.subtitle}</Text>
+
+              {/* Meaning */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>🔍 {yamaGuide.meaningTitle}</Text>
+                <Text style={styles.guideBodyText}>{yamaGuide.meaningText}</Text>
+              </View>
+
+              {/* Why Called */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>❓ {yamaGuide.whyCalledTitle}</Text>
+                <Text style={styles.guideBodyText}>{yamaGuide.whyCalledText}</Text>
+              </View>
+
+              {/* Why Avoided */}
+              <View style={styles.guideBoxBad}>
+                <Text style={styles.guideBoxTitleBad}>⚠️ {yamaGuide.whyAvoidedTitle}</Text>
+                <Text style={styles.guideBadText}>{yamaGuide.whyAvoidedText}</Text>
+              </View>
+
+              {/* Note */}
+              <View style={styles.guideBoxHistory}>
+                <Text style={styles.guideBoxTitleHistory}>ℹ️ Note</Text>
+                <Text style={styles.guideHistoryText}>{yamaGuide.noteText}</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowYamaDetailModal(false)}>
+              <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 7. Detailed Gulika Kalam Educational Modal */}
+      <Modal
+        visible={showGulikaDetailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowGulikaDetailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.guideModalCard}>
+            <View style={styles.guideHeader}>
+              <Text style={styles.guideHeaderTitle}>{gulikaGuide.modalHeaderTitle}</Text>
+              <TouchableOpacity onPress={() => setShowGulikaDetailModal(false)}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.guideScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.guideSubtitle}>{gulikaGuide.subtitle}</Text>
+
+              {/* Meaning */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>🔍 {gulikaGuide.meaningTitle}</Text>
+                <Text style={styles.guideBodyText}>{gulikaGuide.meaningText}</Text>
+              </View>
+
+              {/* Why Called */}
+              <View style={styles.guideBox}>
+                <Text style={styles.guideBoxTitle}>❓ {gulikaGuide.whyCalledTitle}</Text>
+                <Text style={styles.guideBodyText}>{gulikaGuide.whyCalledText}</Text>
+              </View>
+
+              {/* Why Avoided */}
+              <View style={styles.guideBoxBad}>
+                <Text style={styles.guideBoxTitleBad}>⚠️ {gulikaGuide.whyAvoidedTitle}</Text>
+                <Text style={styles.guideBadText}>{gulikaGuide.whyAvoidedText}</Text>
+              </View>
+
+              {/* Note */}
+              <View style={styles.guideBoxHistory}>
+                <Text style={styles.guideBoxTitleHistory}>ℹ️ Note</Text>
+                <Text style={styles.guideHistoryText}>{gulikaGuide.noteText}</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowGulikaDetailModal(false)}>
               <Text style={styles.gotItBtnText}>Close / Close Guide</Text>
             </TouchableOpacity>
           </View>
