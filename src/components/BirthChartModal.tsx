@@ -14,6 +14,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { calculateBirthKundali, KundaliResult, KundaliDivisionalChart } from '../engine/kundaliEngine';
 import { DEFAULT_CITIES } from '../data/cities';
 import { CityLocation } from '../types/panchang';
+import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -27,6 +28,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   selectedCity
 }) => {
   const { language } = useLanguage();
+  const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
 
   // Form State
   const [name, setName] = useState('Rahul Sharma');
@@ -37,9 +39,9 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [tobMinute, setTobMinute] = useState('30');
   const [city, setCity] = useState<CityLocation>(selectedCity);
 
-  // Active Tab for Divisional Charts
-  const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10'>('D1');
-  const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES'>('PARTICULARS');
+  // Active Tab for Divisional & Global Charts
+  const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
+  const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'GLOBAL'>('PARTICULARS');
 
   // Kundali Result State
   const [kundali, setKundali] = useState<KundaliResult | null>(() => {
@@ -68,7 +70,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
             <View style={styles.modalCard}>
               {/* Header Bar */}
               <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>🔮 Janam Kundali Generator</Text>
+                <Text style={styles.headerTitle}>{loc.birthChartTitle}</Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
                   <Text style={styles.closeBtnText}>✕</Text>
                 </TouchableOpacity>
@@ -77,11 +79,11 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
               <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* 1. Birth Details Form Card */}
                 <View style={styles.formCard}>
-                  <Text style={styles.formSectionTitle}>📝 Birth Particulars Input</Text>
+                  <Text style={styles.formSectionTitle}>{loc.birthDetailsInput}</Text>
 
                   {/* Name Input */}
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Full Name</Text>
+                    <Text style={styles.inputLabel}>{loc.fullName}</Text>
                     <TextInput
                       style={styles.textInput}
                       value={name}
@@ -92,7 +94,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </View>
 
                   {/* DOB Row */}
-                  <Text style={styles.inputLabel}>Date of Birth (DD / MM / YYYY)</Text>
+                  <Text style={styles.inputLabel}>{loc.dobLabel}</Text>
                   <View style={styles.rowInputs}>
                     <TextInput
                       style={[styles.textInput, styles.col3]}
@@ -121,7 +123,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </View>
 
                   {/* TOB Row */}
-                  <Text style={styles.inputLabel}>Time of Birth (24-Hour Format: HH : MM)</Text>
+                  <Text style={styles.inputLabel}>{loc.tobLabel}</Text>
                   <View style={styles.rowInputs}>
                     <TextInput
                       style={[styles.textInput, styles.col2]}
@@ -142,7 +144,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </View>
 
                   {/* City Selection */}
-                  <Text style={styles.inputLabel}>City of Birth</Text>
+                  <Text style={styles.inputLabel}>{loc.cityLabel}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
                     {DEFAULT_CITIES.map(c => (
                       <TouchableOpacity
@@ -159,7 +161,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 
                   {/* Generate Button */}
                   <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate} activeOpacity={0.8}>
-                    <Text style={styles.generateBtnText}>✨ Generate Vedic Birth Kundali</Text>
+                    <Text style={styles.generateBtnText}>{loc.generateBtn}</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -167,49 +169,77 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 {kundali && (
                   <View style={styles.resultsContainer}>
 
-                    {/* Divisional Chart Switcher Tabs */}
-                    <Text style={styles.sectionHeaderTitle}>🏛️ Divisional Charts Switcher</Text>
+                    {/* Divisional & Global Chart Switcher Tabs */}
+                    <Text style={styles.sectionHeaderTitle}>{loc.divisionalChartsTitle}</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartTabsScroll}>
                       <TouchableOpacity
                         style={[styles.chartTabBtn, activeChartKey === 'D1' && styles.chartTabBtnActive]}
                         onPress={() => setActiveChartKey('D1')}
                       >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D1' && styles.chartTabTextActive]}>D1 Lagna</Text>
+                        <Text style={[styles.chartTabText, activeChartKey === 'D1' && styles.chartTabTextActive]}>{loc.d1Lagna}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={[styles.chartTabBtn, activeChartKey === 'MOON' && styles.chartTabBtnActive]}
                         onPress={() => setActiveChartKey('MOON')}
                       >
-                        <Text style={[styles.chartTabText, activeChartKey === 'MOON' && styles.chartTabTextActive]}>Chandra (Moon)</Text>
+                        <Text style={[styles.chartTabText, activeChartKey === 'MOON' && styles.chartTabTextActive]}>{loc.chandraMoon}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={[styles.chartTabBtn, activeChartKey === 'SUN' && styles.chartTabBtnActive]}
                         onPress={() => setActiveChartKey('SUN')}
                       >
-                        <Text style={[styles.chartTabText, activeChartKey === 'SUN' && styles.chartTabTextActive]}>Surya (Sun)</Text>
+                        <Text style={[styles.chartTabText, activeChartKey === 'SUN' && styles.chartTabTextActive]}>{loc.suryaSun}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={[styles.chartTabBtn, activeChartKey === 'D2' && styles.chartTabBtnActive]}
                         onPress={() => setActiveChartKey('D2')}
                       >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D2' && styles.chartTabTextActive]}>D2 Hora (Wealth)</Text>
+                        <Text style={[styles.chartTabText, activeChartKey === 'D2' && styles.chartTabTextActive]}>{loc.d2Hora}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={[styles.chartTabBtn, activeChartKey === 'D9' && styles.chartTabBtnActive]}
                         onPress={() => setActiveChartKey('D9')}
                       >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D9' && styles.chartTabTextActive]}>D9 Navamsha</Text>
+                        <Text style={[styles.chartTabText, activeChartKey === 'D9' && styles.chartTabTextActive]}>{loc.d9Navamsha}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
                         style={[styles.chartTabBtn, activeChartKey === 'D10' && styles.chartTabBtnActive]}
                         onPress={() => setActiveChartKey('D10')}
                       >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D10' && styles.chartTabTextActive]}>D10 Dashamsha</Text>
+                        <Text style={[styles.chartTabText, activeChartKey === 'D10' && styles.chartTabTextActive]}>{loc.d10Dashamsha}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.chartTabBtn, activeChartKey === 'WESTERN' && styles.chartTabBtnActive]}
+                        onPress={() => setActiveChartKey('WESTERN')}
+                      >
+                        <Text style={[styles.chartTabText, activeChartKey === 'WESTERN' && styles.chartTabTextActive]}>{loc.westernNatal}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.chartTabBtn, activeChartKey === 'RUSSIAN' && styles.chartTabBtnActive]}
+                        onPress={() => setActiveChartKey('RUSSIAN')}
+                      >
+                        <Text style={[styles.chartTabText, activeChartKey === 'RUSSIAN' && styles.chartTabTextActive]}>{loc.russianCosmogram}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.chartTabBtn, activeChartKey === 'THAI' && styles.chartTabBtnActive]}
+                        onPress={() => setActiveChartKey('THAI')}
+                      >
+                        <Text style={[styles.chartTabText, activeChartKey === 'THAI' && styles.chartTabTextActive]}>{loc.thaiSuryayatra}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.chartTabBtn, activeChartKey === 'INDONESIAN' && styles.chartTabBtnActive]}
+                        onPress={() => setActiveChartKey('INDONESIAN')}
+                      >
+                        <Text style={[styles.chartTabText, activeChartKey === 'INDONESIAN' && styles.chartTabTextActive]}>{loc.indonesianPawukon}</Text>
                       </TouchableOpacity>
                     </ScrollView>
 
@@ -218,7 +248,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                       <View style={styles.chartGraphicBox}>
                         <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
                         <Text style={styles.chartGraphicSub}>
-                          Rising Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree}
+                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree}
                         </Text>
 
                         {/* Visual Diamond Chart Grid (12 Houses) */}
@@ -239,34 +269,45 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                     )}
 
                     {/* 3. Deep Analysis Section Switcher */}
-                    <View style={styles.detailSectionSwitcher}>
-                      <TouchableOpacity
-                        style={[styles.detailSwitchBtn, activeDetailSection === 'PARTICULARS' && styles.detailSwitchBtnActive]}
-                        onPress={() => setActiveDetailSection('PARTICULARS')}
-                      >
-                        <Text style={[styles.detailSwitchText, activeDetailSection === 'PARTICULARS' && styles.detailSwitchTextActive]}>
-                          📋 Birth Panchang
-                        </Text>
-                      </TouchableOpacity>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                      <View style={styles.detailSectionSwitcher}>
+                        <TouchableOpacity
+                          style={[styles.detailSwitchBtn, activeDetailSection === 'PARTICULARS' && styles.detailSwitchBtnActive]}
+                          onPress={() => setActiveDetailSection('PARTICULARS')}
+                        >
+                          <Text style={[styles.detailSwitchText, activeDetailSection === 'PARTICULARS' && styles.detailSwitchTextActive]}>
+                            {loc.birthPanchangTab}
+                          </Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.detailSwitchBtn, activeDetailSection === 'PLANETS' && styles.detailSwitchBtnActive]}
-                        onPress={() => setActiveDetailSection('PLANETS')}
-                      >
-                        <Text style={[styles.detailSwitchText, activeDetailSection === 'PLANETS' && styles.detailSwitchTextActive]}>
-                          🪐 Planetary Degrees
-                        </Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.detailSwitchBtn, activeDetailSection === 'PLANETS' && styles.detailSwitchBtnActive]}
+                          onPress={() => setActiveDetailSection('PLANETS')}
+                        >
+                          <Text style={[styles.detailSwitchText, activeDetailSection === 'PLANETS' && styles.detailSwitchTextActive]}>
+                            {loc.planetaryDegreesTab}
+                          </Text>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.detailSwitchBtn, activeDetailSection === 'HOUSES' && styles.detailSwitchBtnActive]}
-                        onPress={() => setActiveDetailSection('HOUSES')}
-                      >
-                        <Text style={[styles.detailSwitchText, activeDetailSection === 'HOUSES' && styles.detailSwitchTextActive]}>
-                          🏠 12 Houses Analysis
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                        <TouchableOpacity
+                          style={[styles.detailSwitchBtn, activeDetailSection === 'HOUSES' && styles.detailSwitchBtnActive]}
+                          onPress={() => setActiveDetailSection('HOUSES')}
+                        >
+                          <Text style={[styles.detailSwitchText, activeDetailSection === 'HOUSES' && styles.detailSwitchTextActive]}>
+                            {loc.houseAnalysisTab}
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.detailSwitchBtn, activeDetailSection === 'GLOBAL' && styles.detailSwitchBtnActive]}
+                          onPress={() => setActiveDetailSection('GLOBAL')}
+                        >
+                          <Text style={[styles.detailSwitchText, activeDetailSection === 'GLOBAL' && styles.detailSwitchTextActive]}>
+                            {loc.westernAspectsTab}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </ScrollView>
 
                     {/* Detail Section 1: Avakahada Chakra / Particulars */}
                     {activeDetailSection === 'PARTICULARS' && (
@@ -274,18 +315,18 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         <Text style={styles.detailCardTitle}>📋 Birth Panchang & Avakahada Particulars</Text>
                         
                         <View style={styles.particularsGrid}>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Born Tithi:</Text><Text style={styles.partVal}>{kundali.particulars.bornTithi}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Paksha:</Text><Text style={styles.partVal}>{kundali.particulars.bornPaksha}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Born Nakshatra:</Text><Text style={styles.partVal}>{kundali.particulars.bornNakshatra} (Pada {kundali.particulars.bornPada})</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Born Yoga:</Text><Text style={styles.partVal}>{kundali.particulars.bornYoga}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Born Karana:</Text><Text style={styles.partVal}>{kundali.particulars.bornKarana}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Day (Vaara):</Text><Text style={styles.partVal}>{kundali.particulars.bornVaara}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Varna:</Text><Text style={styles.partVal}>{kundali.particulars.varna}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Vashya:</Text><Text style={styles.partVal}>{kundali.particulars.vashya}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Yoni:</Text><Text style={styles.partVal}>{kundali.particulars.yoni}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Gana:</Text><Text style={styles.partVal}>{kundali.particulars.gana}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Nadi:</Text><Text style={styles.partVal}>{kundali.particulars.nadi}</Text></View>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>Paya (Foot):</Text><Text style={styles.partVal}>{kundali.particulars.paya}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornTithi}:</Text><Text style={styles.partVal}>{kundali.particulars.bornTithi}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornPaksha}:</Text><Text style={styles.partVal}>{kundali.particulars.bornPaksha}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornNakshatra}:</Text><Text style={styles.partVal}>{kundali.particulars.bornNakshatra} (Pada {kundali.particulars.bornPada})</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornYoga}:</Text><Text style={styles.partVal}>{kundali.particulars.bornYoga}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornKarana}:</Text><Text style={styles.partVal}>{kundali.particulars.bornKarana}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornVaara}:</Text><Text style={styles.partVal}>{kundali.particulars.bornVaara}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.varna}:</Text><Text style={styles.partVal}>{kundali.particulars.varna}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.vashya}:</Text><Text style={styles.partVal}>{kundali.particulars.vashya}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.yoni}:</Text><Text style={styles.partVal}>{kundali.particulars.yoni}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.gana}:</Text><Text style={styles.partVal}>{kundali.particulars.gana}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.nadi}:</Text><Text style={styles.partVal}>{kundali.particulars.nadi}</Text></View>
+                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.paya}:</Text><Text style={styles.partVal}>{kundali.particulars.paya}</Text></View>
                         </View>
                       </View>
                     )}
@@ -304,7 +345,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                                   <Text style={styles.planetName}>{p.name}</Text>
                                   {p.isRetrograde && (
                                     <View style={styles.retroBadge}>
-                                      <Text style={styles.retroText}>R (Retrograde)</Text>
+                                      <Text style={styles.retroText}>R ({loc.retrograde})</Text>
                                     </View>
                                   )}
                                 </View>
@@ -339,6 +380,43 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                             <Text style={styles.houseSignificationsText}>💡 Significations: {h.significations}</Text>
                           </View>
                         ))}
+                      </View>
+                    )}
+
+                    {/* Detail Section 4: Global & Western Astrology */}
+                    {activeDetailSection === 'GLOBAL' && (
+                      <View style={styles.detailCard}>
+                        <Text style={styles.detailCardTitle}>🌌 Global & Western Astrological Systems</Text>
+
+                        {/* Big 3 */}
+                        <View style={styles.globalCardBox}>
+                          <Text style={styles.globalCardTitle}>🌟 {loc.bigThree}</Text>
+                          <Text style={styles.globalItemText}>☀️ {loc.sunSign}: <Text style={styles.boldVal}>{kundali.westernNatal.sunSign}</Text> ({kundali.westernNatal.sunElement} • {kundali.westernNatal.sunModality})</Text>
+                          <Text style={styles.globalItemText}>🌙 {loc.moonSign}: <Text style={styles.boldVal}>{kundali.westernNatal.moonSign}</Text></Text>
+                          <Text style={styles.globalItemText}>🌅 {loc.risingSign}: <Text style={styles.boldVal}>{kundali.westernNatal.risingSign}</Text></Text>
+                        </View>
+
+                        {/* Russian Cosmogram */}
+                        <View style={styles.globalCardBox}>
+                          <Text style={styles.globalCardTitle}>🪆 Russian Cosmogram (Космограмма)</Text>
+                          <Text style={styles.globalItemText}>🌙 Lunar Day (Лунный день): <Text style={styles.boldVal}>Day {kundali.russianCosmogram.lunarDayNumber}</Text></Text>
+                          <Text style={styles.globalItemText}>✨ Symbol: <Text style={styles.boldVal}>{kundali.russianCosmogram.lunarDayMeaning}</Text></Text>
+                          <Text style={styles.globalItemText}>⚡ Cosmic Ruler: <Text style={styles.boldVal}>{kundali.russianCosmogram.cosmicRuler}</Text></Text>
+                        </View>
+
+                        {/* Thai Suryayatra */}
+                        <View style={styles.globalCardBox}>
+                          <Text style={styles.globalCardTitle}>🛕 Thai Suryayatra (โหราศาสตร์ไทย)</Text>
+                          <Text style={styles.globalItemText}>ลัคนา (Ascendant): <Text style={styles.boldVal}>{kundali.thaiSuryayatra.lakkhanaRashi}</Text></Text>
+                          <Text style={styles.globalItemText}>ฤกษ์ (Naksatra): <Text style={styles.boldVal}>{kundali.thaiSuryayatra.naksatraName} (Pada {kundali.thaiSuryayatra.pada})</Text></Text>
+                        </View>
+
+                        {/* Indonesian Pawukon */}
+                        <View style={styles.globalCardBox}>
+                          <Text style={styles.globalCardTitle}>🌺 Indonesian Pawukon (Wariga Bali)</Text>
+                          <Text style={styles.globalItemText}>Wuku Sign: <Text style={styles.boldVal}>{kundali.indonesianPawukon.wukuName}</Text> (Deity: {kundali.indonesianPawukon.wukuDeity})</Text>
+                          <Text style={styles.globalItemText}>Saptawara (Day): <Text style={styles.boldVal}>{kundali.indonesianPawukon.saptawara}</Text> • Triwara: <Text style={styles.boldVal}>{kundali.indonesianPawukon.triwara}</Text></Text>
+                        </View>
                       </View>
                     )}
 
@@ -377,9 +455,10 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
+    flex: 1,
   },
   closeBtn: {
     backgroundColor: '#F0F0F0',
@@ -388,6 +467,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 8,
   },
   closeBtnText: {
     fontSize: 14,
@@ -576,10 +656,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     borderRadius: 12,
     padding: 3,
-    marginBottom: 12,
+    gap: 4,
   },
   detailSwitchBtn: {
-    flex: 1,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
     alignItems: 'center',
@@ -737,5 +817,30 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: Colors.textSecondary,
     fontStyle: 'italic',
+  },
+
+  // Global Cards
+  globalCardBox: {
+    backgroundColor: '#FAF5EE',
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  globalCardTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
+  },
+  globalItemText: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+  boldVal: {
+    fontWeight: 'bold',
+    color: Colors.primaryDark,
   },
 });
