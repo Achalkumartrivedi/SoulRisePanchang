@@ -16,6 +16,7 @@ interface MuhuratCardProps {
 const ABHIJIT_LANG_MAP: Record<string, string> = {
   hinglish: 'Abhijit Muhurat',
   hi: 'अभिजित मुहूर्त',
+  gu: 'અભિજીત મુહૂર્ત',
   ta: 'அபிஜித் முகூர்த்தம்',
   te: 'అభిజిత్ ముహుర్తం',
   bn: 'অভিজিৎ মুহূর্ত',
@@ -32,6 +33,7 @@ const ABHIJIT_LANG_MAP: Record<string, string> = {
 const BRAHMA_LANG_MAP: Record<string, string> = {
   hinglish: 'Brahma Muhurat',
   hi: 'ब्रह्म मुहूर्त',
+  gu: 'બ્રહ્મ મુહૂર્ત',
   ta: 'பிரம்ம முகூர்த்தம்',
   te: 'బ్రహ్మ ముహుర్తం',
   bn: 'ব্রহ্ম মুহূর্ত',
@@ -48,6 +50,7 @@ const BRAHMA_LANG_MAP: Record<string, string> = {
 const VIJAYA_LANG_MAP: Record<string, string> = {
   hinglish: 'Vijaya Muhurat',
   hi: 'विजय मुहूर्त',
+  gu: 'વિજય મુહૂર્ત',
   ta: 'விஜய முகூர்த்தம்',
   te: 'విజయ ముహుర్తం',
   bn: 'বিজয় মুহূর্ত',
@@ -64,6 +67,7 @@ const VIJAYA_LANG_MAP: Record<string, string> = {
 const RAHU_LANG_MAP: Record<string, string> = {
   hinglish: 'Rahu Kalam',
   hi: 'राहु काल',
+  gu: 'રાહુ કાળ',
   ta: 'ராகு காலம்',
   te: 'రాహు కాలం',
   bn: 'রাহু কাল',
@@ -80,6 +84,7 @@ const RAHU_LANG_MAP: Record<string, string> = {
 const YAMAGANDA_LANG_MAP: Record<string, string> = {
   hinglish: 'Yamaganda Kalam',
   hi: 'यमगण्ड काल',
+  gu: 'યમગંડ કાળ',
   ta: 'எமகண்டம்',
   te: 'యమగండ కాలం',
   bn: 'যমগণ্ড কাল',
@@ -96,6 +101,7 @@ const YAMAGANDA_LANG_MAP: Record<string, string> = {
 const GULIKA_LANG_MAP: Record<string, string> = {
   hinglish: 'Gulika Kalam',
   hi: 'गुलिक काल',
+  gu: 'ગુલિક કાળ',
   ta: 'குளிகை காலம்',
   te: 'గుళిక కాలం',
   bn: 'গুলিক কাল',

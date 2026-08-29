@@ -36,6 +36,17 @@ export const RAHU_GUIDE: Record<LanguageCode, InauspiciousGuideContent> = {
     whyAvoidedText: 'नए काम में रुकावट, विलंब या भ्रम आने की आशंका रहती है।',
     noteText: 'नियमित दैनिक कार्य सामान्य रूप से जारी रखे जा सकते हैं।'
   },
+  gu: {
+    modalHeaderTitle: '⚠️ રાહુ કાળ',
+    subtitle: 'રાહુના સમય દરમિયાન નવા શુભ કાર્યો શરૂ કરવાનું ટાળો.',
+    meaningTitle: 'અર્થ',
+    meaningText: '"રાહુનો સમય" (રાહુ = છાયા ગ્રહ, કાળ = સમય).',
+    whyCalledTitle: 'કેમ કહેવાય છે?',
+    whyCalledText: 'આ સમય રાહુ ગ્રહના પ્રભાવ હેઠળ માનવામાં આવે છે.',
+    whyAvoidedTitle: 'કેમ ટાળવામાં આવે છે?',
+    whyAvoidedText: 'નવા કામમાં વિઘ્ન, વિલંબ કે ભ્રમ આવવાની શક્યતા રહે છે.',
+    noteText: 'દૈનિક નિયમિત કાર્યો સામાન્ય રીતે ચાલુ રાખી શકાય છે.'
+  },
   en: {
     modalHeaderTitle: '⚠️ Rahu Kalam',
     subtitle: 'Avoid starting important new work during Rahu\'s time.',
@@ -183,6 +194,17 @@ export const YAMAGANDA_GUIDE: Record<LanguageCode, InauspiciousGuideContent> = {
     whyAvoidedText: 'नए काम और यात्रा के लिए अशुभ परिणाम ला सकता है।',
     noteText: 'विशेष परिस्थितियों में ईश्वर स्मरण कर यात्रा की जा सकती है।'
   },
+  gu: {
+    modalHeaderTitle: '⚠️ યમગંડ કાળ',
+    subtitle: 'મુસાફરી અને નવા કાર્યો શરૂ કરવા માટે ટાળવામાં આવતો સમય.',
+    meaningTitle: 'અર્થ',
+    meaningText: '"યમનો સમય" (યમ = મૃત્યુના દેવ).',
+    whyCalledTitle: 'કેમ કહેવાય છે?',
+    whyCalledText: 'આ સમય પરંપરાગત રીતે યમ દેવ સાથે જોડાયેલો માનવામાં આવે છે.',
+    whyAvoidedTitle: 'કેમ ટાળવામાં આવે છે?',
+    whyAvoidedText: 'નવા કાર્યો અને યાત્રા માટે અશુભ પરિણામ લાવી શકે છે.',
+    noteText: 'સામાન્ય દૈનિક કાર્યોમાં કોઈ વાંધો આવતો નથી.'
+  },
   en: {
     modalHeaderTitle: '⚠️ Yamaganda Kalam',
     subtitle: 'Traditionally avoided for travel and new beginnings.',
@@ -329,6 +351,17 @@ export const GULIKA_GUIDE: Record<LanguageCode, InauspiciousGuideContent> = {
     whyAvoidedTitle: 'क्यों टालते हैं?',
     whyAvoidedText: 'नए काम में देरी या बार-बार प्रयास करना पड़ सकता है।',
     noteText: 'इसका प्रभाव राहु काल से धीमा और सौम्य होता है।'
+  },
+  gu: {
+    modalHeaderTitle: '⚠️ ગુલિક કાળ',
+    subtitle: 'શનિ સાથે જોડાયેલો સમય; નવા કાર્યોમાં સાવધાની રાખવી.',
+    meaningTitle: 'અર્થ',
+    meaningText: '"ગુલિકનો સમય" (ગુલિક શનિ ગ્રહ સાથે જોડાયેલ છે).',
+    whyCalledTitle: 'કેમ કહેવાય છે?',
+    whyCalledText: 'આ સમય શનિના પુત્ર ગુલિકના પ્રભાવ હેઠળ માનવામાં આવે છે.',
+    whyAvoidedTitle: 'કેમ ટાળવામાં આવે છે?',
+    whyAvoidedText: 'નવા કામમાં વિલંબ કે વારંવાર પ્રયાસો કરવા પડી શકે છે.',
+    noteText: 'આની અસર રાહુ કાળ કરતાં હળવી માનવામાં આવે છે.'
   },
   en: {
     modalHeaderTitle: '⚠️ Gulika Kalam',

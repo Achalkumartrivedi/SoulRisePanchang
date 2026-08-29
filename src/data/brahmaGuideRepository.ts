@@ -92,6 +92,42 @@ export const BRAHMA_GUIDE: Record<LanguageCode, BrahmaGuideContent> = {
     quickFactTitle: 'रोचक तथ्य',
     quickFactText: 'यदि सूर्योदय 6:00 बजे हो, तो ब्रह्म मुहूर्त लगभग 4:24–5:12 बजे होगा।'
   },
+  gu: {
+    modalHeaderTitle: '🌅 બ્રહ્મ સમય (બ્રહ્મ મુહૂર્ત)',
+    subtitle: 'સૂર્યોદય પહેલાનો પવિત્ર સમય, ધ્યાન અને યોગ માટે શ્રેષ્ઠ. આ સૂર્યોદયના આશરે ૧ કલાક ૩૬ મિનિટ પહેલા શરૂ થાય છે.',
+    whatIsTitle: 'બ્રહ્મ મુહૂર્ત શું છે?',
+    whatIsText: 'બ્રહ્મ મુહૂર્ત એ સૂર્યોદય પહેલાનો પવિત્ર સમય છે. ધ્યાન, યોગ, પ્રાર્થના અને આત્મચિંતન માટે આ શ્રેષ્ઠ માનવામાં આવે છે.',
+    meaningTitle: 'અર્થ',
+    meaningPoints: [
+      'બ્રહ્મ = સૃષ્ટિકર્તા અથવા સર્વોચ્ચ જ્ઞાન',
+      'મુહૂર્ત = ૪૮ મિનિટનો સમય'
+    ],
+    meaningSummary: 'આને "સૃષ્ટિકર્તાનો સમય" કહેવામાં આવે છે કારણ કે આ સમયે મન શાંત અને એકાગ્ર રહે છે.',
+    timingTitle: 'સમય',
+    timingPoints: [
+      'સૂર્યોદયના ૧ કલાક ૩૬ મિનિટ પહેલા શરૂ થાય છે',
+      'સૂર્યોદયના ૪૮ મિનિટ પહેલા પૂર્ણ થાય છે',
+      'દરરોજ સ્થાનિક સૂર્યોદય મુજબ બદલાય છે.'
+    ],
+    whySpecialTitle: 'શા માટે વિશેષ છે?',
+    whySpecialPoints: [
+      'શાંત વાતાવરણ',
+      'શુદ્ધ સવારની હવા',
+      'ઉત્તમ એકાગ્રતા',
+      'યોગ અને આયુર્વેદમાં અત્યંત શુભ માનવામાં આવે છે.'
+    ],
+    bestActivitiesTitle: 'આ સમયે શું કરવું?',
+    bestActivitiesItems: [
+      'ધ્યાન (Meditation)',
+      'યોગ',
+      'પ્રાણાયામ',
+      'મંત્ર જાપ',
+      'આધ્યાત્મિક ગ્રંથો વાંચવા',
+      'કૃતજ્ઞતા નોંધવી'
+    ],
+    quickFactTitle: 'રસપ્રદ તથ્ય',
+    quickFactText: 'જો સૂર્યોદય સવારે ૬:૦૦ વાગ્યે હોય, તો બ્રહ્મ મુહૂર્ત આશરે ૪:૨૪ થી ૫:૧૨ વાગ્યા સુધી રહેશે.'
+  },
   en: {
     modalHeaderTitle: '🌅 Brahma Time (Brahma Muhurat)',
     subtitle: 'The sacred time before sunrise for meditation, yoga, and prayer. Begins about 1 hour 36 minutes before sunrise.',

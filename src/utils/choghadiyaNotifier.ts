@@ -34,6 +34,15 @@ const CHOGHADIYA_LANG_MAP: Record<string, {
       Amrit: 'अमृत', Shubh: 'शुभ', Labh: 'लाभ', Char: 'चर', Rog: 'रोग', Kaal: 'काल', Udveg: 'उद्वेग'
     }
   },
+  gu: {
+    auspicious: 'શુભ સમય',
+    inauspicious: 'અશુભ સમય',
+    statusLabel: 'સ્થિતિ',
+    nextLabel: 'આગામી',
+    names: {
+      Amrit: 'અમૃત', Shubh: 'શુભ', Labh: 'લાભ', Char: 'ચલ', Rog: 'રોગ', Kaal: 'કાળ', Udveg: 'ઉદ્વેગ'
+    }
+  },
   en: {
     auspicious: 'Auspicious',
     inauspicious: 'Inauspicious',
