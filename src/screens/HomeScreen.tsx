@@ -23,7 +23,7 @@ interface HomeScreenProps {
   onNavigateToFestivals: () => void;
 }
 
-type SubTab = 'LIMBS' | 'MUHURAT' | 'CHOGHADIYA' | 'PLANETS';
+type SectionKey = 'LIMBS' | 'MUHURAT' | 'CHOGHADIYA' | 'PLANETS' | 'KUNDALI' | 'WESTERN' | 'LALKITAB';
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   panchang,
@@ -36,12 +36,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToFestivals,
 }) => {
   const { language, t } = useLanguage();
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('LIMBS');
+
+  // Default active section on app open is LIMBS (Panchangam 5 Sacred Limbs)
+  const [activeSection, setActiveSection] = useState<SectionKey>('LIMBS');
   const [showLangModal, setShowLangModal] = useState(false);
 
   const locHeroTithi = getLocalizedTithi(panchang.tithi.number || 13, language);
   const locHeroPaksha = getLocalizedPakshaName(panchang.tithi.paksha === 'KRISHNA' ? 'KRISHNA' : 'SHUKLA', language);
   const showHindiScript = language === 'hi' || language === 'hinglish';
+
+  const toggleSection = (key: SectionKey) => {
+    setActiveSection(prev => (prev === key ? key : key));
+  };
 
   return (
     <View style={styles.container}>
@@ -57,7 +63,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Hero Celestial Banner */}
+        {/* 1. Hero Celestial Banner (Sunrise, Sunset, Moonrise, Moonset) */}
         <View style={styles.heroCard}>
           <View style={styles.heroTop}>
             <View style={{ flex: 1, marginRight: 8 }}>
@@ -98,68 +104,201 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
 
-        {/* Sub-Tabs Navigation */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subTabScroll} contentContainerStyle={styles.subTabContent}>
-          <TouchableOpacity
-            style={[styles.subTabItem, activeSubTab === 'LIMBS' && styles.subTabItemActive]}
-            onPress={() => setActiveSubTab('LIMBS')}
-          >
-            <Text style={styles.subTabIcon}>🪔</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'LIMBS' && styles.subTabTextActive]} numberOfLines={1}>{t('limbsTab')}</Text>
-          </TouchableOpacity>
+        {/* 2. Popular Features Section Header */}
+        <View style={styles.popularHeaderRow}>
+          <Text style={styles.popularHeaderTitle}>⭐ {t('popularFeatures')}</Text>
+          <Text style={styles.popularHeaderSub}>Choose a feature below</Text>
+        </View>
 
-          <TouchableOpacity
-            style={[styles.subTabItem, activeSubTab === 'MUHURAT' && styles.subTabItemActive]}
-            onPress={() => setActiveSubTab('MUHURAT')}
-          >
-            <Text style={styles.subTabIcon}>✨</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'MUHURAT' && styles.subTabTextActive]} numberOfLines={1}>{t('muhuratTab')}</Text>
-          </TouchableOpacity>
+        {/* 3. Vertical Section Cards Container */}
+        <View style={styles.verticalListContainer}>
+          
+          {/* Section 1: Panchangam (5 Sacred Limbs) - OPEN BY DEFAULT */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={[styles.featureHeader, activeSection === 'LIMBS' && styles.featureHeaderActive]}
+              onPress={() => toggleSection('LIMBS')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>🪔</Text>
+                <View>
+                  <Text style={[styles.featureTitle, activeSection === 'LIMBS' && styles.featureTitleActive]}>
+                    {t('limbsTab')}
+                  </Text>
+                  <Text style={[styles.featureSub, activeSection === 'LIMBS' && styles.featureSubActive]}>
+                    Tithi, Nakshatra, Yoga, Karana & Vaara
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.expandArrow}>{activeSection === 'LIMBS' ? '▼' : '▶'}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.subTabItem, activeSubTab === 'CHOGHADIYA' && styles.subTabItemActive]}
-            onPress={() => setActiveSubTab('CHOGHADIYA')}
-          >
-            <Text style={styles.subTabIcon}>⏱️</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'CHOGHADIYA' && styles.subTabTextActive]} numberOfLines={1}>{t('choghadiyaTab')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.subTabItem, activeSubTab === 'PLANETS' && styles.subTabItemActive]}
-            onPress={() => setActiveSubTab('PLANETS')}
-          >
-            <Text style={styles.subTabIcon}>🪐</Text>
-            <Text style={[styles.subTabText, activeSubTab === 'PLANETS' && styles.subTabTextActive]} numberOfLines={1}>{t('planetsTab')}</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* Sub-Tab Views */}
-        {activeSubTab === 'LIMBS' && (
-          <View>
-            <Text style={styles.sectionHeaderTitle} numberOfLines={2} adjustsFontSizeToFit>🪔 {t('panchangamHeader')} - {selectedCity.name}</Text>
-            <PanchangLimbCard panchang={panchang} />
-            <SunMoonWidget sunMoon={panchang.sunMoon} />
+            {activeSection === 'LIMBS' && (
+              <View style={styles.featureBody}>
+                <Text style={styles.sectionHeaderTitle} numberOfLines={2} adjustsFontSizeToFit>
+                  🪔 {t('panchangamHeader')} - {selectedCity.name}
+                </Text>
+                <PanchangLimbCard panchang={panchang} />
+                <SunMoonWidget sunMoon={panchang.sunMoon} />
+              </View>
+            )}
           </View>
-        )}
 
-        {activeSubTab === 'MUHURAT' && (
-          <View>
-            <Text style={styles.sectionHeaderTitle}>✨ {t('muhuratHeader')} - {selectedCity.name}</Text>
-            <MuhuratCard auspicious={panchang.auspiciousMuhurats} inauspicious={panchang.inauspiciousMuhurats} />
-          </View>
-        )}
+          {/* Section 2: Muhurat & Timings */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={[styles.featureHeader, activeSection === 'MUHURAT' && styles.featureHeaderActive]}
+              onPress={() => toggleSection('MUHURAT')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>✨</Text>
+                <View>
+                  <Text style={[styles.featureTitle, activeSection === 'MUHURAT' && styles.featureTitleActive]}>
+                    {t('muhuratTab')}
+                  </Text>
+                  <Text style={[styles.featureSub, activeSection === 'MUHURAT' && styles.featureSubActive]}>
+                    Abhijit, Brahma, Vijaya, Rahu Kalam & Yamaganda
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.expandArrow}>{activeSection === 'MUHURAT' ? '▼' : '▶'}</Text>
+            </TouchableOpacity>
 
-        {activeSubTab === 'CHOGHADIYA' && (
-          <View>
-            <ChoghadiyaGrid dayChoghadiya={panchang.dayChoghadiya} nightChoghadiya={panchang.nightChoghadiya} />
+            {activeSection === 'MUHURAT' && (
+              <View style={styles.featureBody}>
+                <MuhuratCard auspicious={panchang.auspiciousMuhurats} inauspicious={panchang.inauspiciousMuhurats} />
+              </View>
+            )}
           </View>
-        )}
 
-        {activeSubTab === 'PLANETS' && (
-          <View>
-            <GocharKundaliCard panchang={panchang} />
+          {/* Section 3: Day & Night Choghadiya */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={[styles.featureHeader, activeSection === 'CHOGHADIYA' && styles.featureHeaderActive]}
+              onPress={() => toggleSection('CHOGHADIYA')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>⏱️</Text>
+                <View>
+                  <Text style={[styles.featureTitle, activeSection === 'CHOGHADIYA' && styles.featureTitleActive]}>
+                    {t('choghadiyaTab')}
+                  </Text>
+                  <Text style={[styles.featureSub, activeSection === 'CHOGHADIYA' && styles.featureSubActive]}>
+                    Amrit, Shubh, Labh, Char, Rog, Kaal & Udveg
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.expandArrow}>{activeSection === 'CHOGHADIYA' ? '▼' : '▶'}</Text>
+            </TouchableOpacity>
+
+            {activeSection === 'CHOGHADIYA' && (
+              <View style={styles.featureBody}>
+                <ChoghadiyaGrid dayChoghadiya={panchang.dayChoghadiya} nightChoghadiya={panchang.nightChoghadiya} />
+              </View>
+            )}
           </View>
-        )}
+
+          {/* Section 4: Planetary & Kundali Chart */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={[styles.featureHeader, activeSection === 'PLANETS' && styles.featureHeaderActive]}
+              onPress={() => toggleSection('PLANETS')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>🪐</Text>
+                <View>
+                  <Text style={[styles.featureTitle, activeSection === 'PLANETS' && styles.featureTitleActive]}>
+                    {t('planetsTab')}
+                  </Text>
+                  <Text style={[styles.featureSub, activeSection === 'PLANETS' && styles.featureSubActive]}>
+                    North & South Indian Gochar Transit Charts
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.expandArrow}>{activeSection === 'PLANETS' ? '▼' : '▶'}</Text>
+            </TouchableOpacity>
+
+            {activeSection === 'PLANETS' && (
+              <View style={styles.featureBody}>
+                <GocharKundaliCard panchang={panchang} />
+              </View>
+            )}
+          </View>
+
+          {/* Section 5 (Future Expansion): Birth Chart Generator */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={styles.featureHeaderDisabled}
+              activeOpacity={0.9}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>🔮</Text>
+                <View>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.featureTitleMuted}>Birth Chart Generator (Kundali)</Text>
+                    <View style={styles.comingSoonBadge}>
+                      <Text style={styles.comingSoonText}>{t('comingSoon')}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.featureSubMuted}>
+                    Generate Janam Patrika, Lagna chart & Dasha predictions
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Section 6 (Future Expansion): Western Astrology */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={styles.featureHeaderDisabled}
+              activeOpacity={0.9}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>🌌</Text>
+                <View>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.featureTitleMuted}>Western Astrology & Natal Chart</Text>
+                    <View style={styles.comingSoonBadge}>
+                      <Text style={styles.comingSoonText}>{t('comingSoon')}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.featureSubMuted}>
+                    Tropical zodiac placements, house cusps & synastry
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Section 7 (Future Expansion): Lal Kitab Astro */}
+          <View style={styles.featureCardContainer}>
+            <TouchableOpacity
+              style={styles.featureHeaderDisabled}
+              activeOpacity={0.9}
+            >
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>📜</Text>
+                <View>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.featureTitleMuted}>Lal Kitab Remedies & Predictions</Text>
+                    <View style={styles.comingSoonBadge}>
+                      <Text style={styles.comingSoonText}>{t('comingSoon')}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.featureSubMuted}>
+                    Unique planetary remedies, totke & Varshphal charts
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+        </View>
       </ScrollView>
 
       {/* Language Selection Modal */}
@@ -177,7 +316,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.creamBg,
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 40,
   },
   heroCard: {
     backgroundColor: Colors.maroon,
@@ -185,7 +324,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 16,
     marginTop: 14,
-    marginBottom: 10,
+    marginBottom: 14,
     elevation: 4,
   },
   heroTop: {
@@ -243,45 +382,124 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginTop: 2,
   },
-  subTabScroll: {
-    marginVertical: 10,
+
+  // Popular Features Section Styles
+  popularHeaderRow: {
+    marginHorizontal: 16,
+    marginTop: 6,
+    marginBottom: 10,
   },
-  subTabContent: {
-    paddingHorizontal: 16,
-    gap: 8,
+  popularHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
-  subTabItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.cardBg,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
+  popularHeaderSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+
+  // Vertical List Styles
+  verticalListContainer: {
+    marginHorizontal: 16,
+  },
+  featureCardContainer: {
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.border,
+    backgroundColor: Colors.cardBg,
+    elevation: 2,
   },
-  subTabItemActive: {
+  featureHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: '#FAF5EE',
+  },
+  featureHeaderActive: {
     backgroundColor: Colors.maroon,
-    borderColor: Colors.maroon,
   },
-  subTabIcon: {
-    fontSize: 16,
-    marginRight: 6,
+  featureHeaderDisabled: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: '#F7F7F7',
   },
-  subTabText: {
-    fontSize: 13,
+  featureHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  featureIcon: {
+    fontSize: 22,
+    marginRight: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featureTitle: {
+    fontSize: 15,
     fontWeight: 'bold',
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
   },
-  subTabTextActive: {
-    color: '#FFFFFF',
+  featureTitleActive: {
+    color: '#FFD700',
+  },
+  featureTitleMuted: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.textMuted,
+  },
+  featureSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  featureSubActive: {
+    color: '#FFE0B2',
+  },
+  featureSubMuted: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  expandArrow: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginLeft: 8,
+  },
+  comingSoonBadge: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  comingSoonText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#E65100',
+  },
+  featureBody: {
+    paddingTop: 8,
+    paddingBottom: 12,
+    backgroundColor: Colors.creamBg,
   },
   sectionHeaderTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: Colors.maroon,
     marginHorizontal: 16,
-    marginTop: 10,
-    marginBottom: 6,
+    marginTop: 6,
+    marginBottom: 4,
   },
 });
