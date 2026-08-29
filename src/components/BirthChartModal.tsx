@@ -39,6 +39,13 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [tobMinute, setTobMinute] = useState('30');
   const [city, setCity] = useState<CityLocation>(selectedCity);
 
+  // City Picker Dropdown Modal State
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+
+  // Default Chart Style is NORTH (North Indian Diamond Style)
+  const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH' | 'GLOBAL'>('NORTH');
+
   // Active Tab for Divisional & Global Charts
   const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
   const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'GLOBAL'>('PARTICULARS');
@@ -59,6 +66,12 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     const result = calculateBirthKundali(name, dob, h, m, city.name, city.latitude, city.longitude);
     setKundali(result);
   };
+
+  const filteredCities = DEFAULT_CITIES.filter(c => 
+    c.name.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
+    c.stateCountry.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
+    (c.hindiName && c.hindiName.includes(citySearchQuery))
+  );
 
   const activeChart: KundaliDivisionalChart | undefined = kundali?.divisionalCharts[activeChartKey];
 
@@ -143,21 +156,19 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                     />
                   </View>
 
-                  {/* City Selection */}
+                  {/* City Selection Dropdown Field */}
                   <Text style={styles.inputLabel}>{loc.cityLabel}</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
-                    {DEFAULT_CITIES.map(c => (
-                      <TouchableOpacity
-                        key={c.name}
-                        style={[styles.cityPill, city.name === c.name && styles.cityPillActive]}
-                        onPress={() => setCity(c)}
-                      >
-                        <Text style={[styles.cityPillText, city.name === c.name && styles.cityPillTextActive]}>
-                          {c.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                  <TouchableOpacity
+                    style={styles.dropdownBtn}
+                    onPress={() => setShowCityDropdown(true)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.dropdownCityName}>📍 {city.name}</Text>
+                      <Text style={styles.dropdownCitySub}>{city.stateCountry}</Text>
+                    </View>
+                    <Text style={styles.dropdownArrow}>▼ Change</Text>
+                  </TouchableOpacity>
 
                   {/* Generate Button */}
                   <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate} activeOpacity={0.8}>
@@ -246,15 +257,42 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                     {/* Chart Graphic Box */}
                     {activeChart && (
                       <View style={styles.chartGraphicBox}>
-                        <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
+                        <View style={styles.chartGraphicHeaderRow}>
+                          <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
+
+                          {/* Chart Style Switcher (North Indian Default) */}
+                          <View style={styles.styleToggleBar}>
+                            <TouchableOpacity
+                              style={[styles.styleBtn, chartStyle === 'NORTH' && styles.styleBtnActive]}
+                              onPress={() => setChartStyle('NORTH')}
+                            >
+                              <Text style={[styles.styleBtnText, chartStyle === 'NORTH' && styles.styleBtnTextActive]}>🏛️ North</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[styles.styleBtn, chartStyle === 'SOUTH' && styles.styleBtnActive]}
+                              onPress={() => setChartStyle('SOUTH')}
+                            >
+                              <Text style={[styles.styleBtnText, chartStyle === 'SOUTH' && styles.styleBtnTextActive]}>☸️ South</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[styles.styleBtn, chartStyle === 'GLOBAL' && styles.styleBtnActive]}
+                              onPress={() => setChartStyle('GLOBAL')}
+                            >
+                              <Text style={[styles.styleBtnText, chartStyle === 'GLOBAL' && styles.styleBtnTextActive]}>🌍 Global</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
                         <Text style={styles.chartGraphicSub}>
-                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree}
+                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style (Default)' : chartStyle === 'SOUTH' ? 'South Indian Fixed Style' : 'Global Grid'}
                         </Text>
 
-                        {/* Visual Diamond Chart Grid (12 Houses) */}
-                        <View style={styles.diamondGrid}>
+                        {/* Visual Chart Grid (North / South / Global) */}
+                        <View style={chartStyle === 'NORTH' ? styles.northDiamondGrid : styles.diamondGrid}>
                           {activeChart.houses.map(h => (
-                            <View key={h.houseNumber} style={styles.houseBox}>
+                            <View key={h.houseNumber} style={[styles.houseBox, chartStyle === 'NORTH' && styles.northHouseBox]}>
                               <View style={styles.houseHeaderRow}>
                                 <Text style={styles.houseNumText}>H{h.houseNumber}</Text>
                                 <Text style={styles.houseRashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
@@ -427,6 +465,54 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+
+      {/* City Dropdown Search Modal */}
+      <Modal visible={showCityDropdown} animationType="fade" transparent>
+        <TouchableWithoutFeedback onPress={() => setShowCityDropdown(false)}>
+          <View style={styles.dropdownOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownModalCard}>
+                <View style={styles.dropdownHeaderRow}>
+                  <Text style={styles.dropdownTitle}>Select City of Birth</Text>
+                  <TouchableOpacity onPress={() => setShowCityDropdown(false)} style={styles.closeBtn}>
+                    <Text style={styles.closeBtnText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* City Live Search Bar */}
+                <TextInput
+                  style={styles.citySearchInput}
+                  value={citySearchQuery}
+                  onChangeText={setCitySearchQuery}
+                  placeholder="🔍 Search city, state or country..."
+                  placeholderTextColor={Colors.textMuted}
+                />
+
+                <ScrollView style={{ maxHeight: 350 }}>
+                  {filteredCities.map(c => (
+                    <TouchableOpacity
+                      key={c.name}
+                      style={[styles.cityListItem, city.name === c.name && styles.cityListItemActive]}
+                      onPress={() => {
+                        setCity(c);
+                        setShowCityDropdown(false);
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cityItemName, city.name === c.name && styles.cityItemNameActive]}>
+                          {c.name} {c.hindiName ? `(${c.hindiName})` : ''}
+                        </Text>
+                        <Text style={styles.cityItemSub}>{c.stateCountry}</Text>
+                      </View>
+                      {city.name === c.name && <Text style={styles.checkIcon}>✓</Text>}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </Modal>
   );
 };
@@ -522,35 +608,42 @@ const styles = StyleSheet.create({
   col2: {
     flex: 1,
   },
-  cityScroll: {
+
+  // City Dropdown Styles
+  dropdownBtn: {
     flexDirection: 'row',
-    marginBottom: 12,
-    marginTop: 4,
-  },
-  cityPill: {
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.maroon,
     borderRadius: 12,
-    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
   },
-  cityPillActive: {
-    backgroundColor: Colors.maroon,
-  },
-  cityPillText: {
-    fontSize: 12,
+  dropdownCityName: {
+    fontSize: 13,
     fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  dropdownCitySub: {
+    fontSize: 10,
     color: Colors.textSecondary,
+    marginTop: 1,
   },
-  cityPillTextActive: {
-    color: '#FFFFFF',
+  dropdownArrow: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
+
   generateBtn: {
     backgroundColor: Colors.maroon,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 4,
   },
   generateBtnText: {
     color: '#FFFFFF',
@@ -600,20 +693,52 @@ const styles = StyleSheet.create({
     borderColor: Colors.accentGold,
     elevation: 3,
   },
+  chartGraphicHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   chartGraphicTitle: {
     fontSize: 15,
     fontWeight: 'bold',
     color: Colors.maroon,
-    textAlign: 'center',
+    flex: 1,
+  },
+  styleToggleBar: {
+    flexDirection: 'row',
+    backgroundColor: '#E0E0E0',
+    borderRadius: 10,
+    padding: 2,
+  },
+  styleBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  styleBtnActive: {
+    backgroundColor: Colors.maroon,
+  },
+  styleBtnText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  styleBtnTextActive: {
+    color: '#FFFFFF',
   },
   chartGraphicSub: {
     fontSize: 11,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 2,
     marginBottom: 12,
   },
   diamondGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  northDiamondGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
@@ -627,6 +752,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F0E0D0',
     minHeight: 64,
+  },
+  northHouseBox: {
+    backgroundColor: '#FFF8F0',
+    borderColor: '#FFCC80',
   },
   houseHeaderRow: {
     flexDirection: 'row',
@@ -842,5 +971,71 @@ const styles = StyleSheet.create({
   boldVal: {
     fontWeight: 'bold',
     color: Colors.primaryDark,
+  },
+
+  // Dropdown City Modal Styles
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  dropdownModalCard: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 20,
+    padding: 16,
+    elevation: 8,
+  },
+  dropdownHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dropdownTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  citySearchInput: {
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    marginBottom: 12,
+  },
+  cityListItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  cityListItemActive: {
+    backgroundColor: '#FAF5EE',
+  },
+  cityItemName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  cityItemNameActive: {
+    color: Colors.maroon,
+  },
+  cityItemSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  checkIcon: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
 });
