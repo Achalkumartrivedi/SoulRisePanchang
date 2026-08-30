@@ -246,9 +246,29 @@ export function calculateBirthKundali(
   const moonNakIdx = 1; // Bharani
   const moonRashiIdx = moonPlanet.rashiIndex;
 
+  const TITHI_NAMES = [
+    'Shukla Pratipada (1st Tithi)', 'Shukla Dvitiya (2nd Tithi)', 'Shukla Tritiya (3rd Tithi)',
+    'Shukla Chaturthi (4th Tithi)', 'Shukla Panchami (5th Tithi)', 'Shukla Shashthi (6th Tithi)',
+    'Shukla Saptami (7th Tithi)', 'Shukla Ashtami (8th Tithi)', 'Shukla Navami (9th Tithi)',
+    'Shukla Dashami (10th Tithi)', 'Shukla Ekadashi (11th Tithi)', 'Shukla Dwadashi (12th Tithi)',
+    'Shukla Trayodashi (13th Tithi)', 'Shukla Chaturdashi (14th Tithi)', 'Shukla Purnima (15th Tithi)',
+    'Krishna Pratipada (1st Tithi)', 'Krishna Dvitiya (2nd Tithi)', 'Krishna Tritiya (3rd Tithi)',
+    'Krishna Chaturthi (4th Tithi)', 'Krishna Panchami (5th Tithi)', 'Krishna Shashthi (6th Tithi)',
+    'Krishna Saptami (7th Tithi)', 'Krishna Ashtami (8th Tithi)', 'Krishna Navami (9th Tithi)',
+    'Krishna Dashami (10th Tithi)', 'Krishna Ekadashi (11th Tithi)', 'Krishna Dwadashi (12th Tithi)',
+    'Krishna Trayodashi (13th Tithi)', 'Krishna Chaturdashi (14th Tithi)', 'Krishna Amavasya (30th Tithi)'
+  ];
+
+  // Calculated elongation between Moon & Sun
+  const moonLong = moonPlanet.rashiIndex * 30 + 15;
+  const sunLong = sunPlanet.rashiIndex * 30 + 15;
+  const elongation = (moonLong - sunLong + 360) % 360;
+  const computedTithiIdx = Math.floor(elongation / 12);
+  const isShukla = computedTithiIdx < 15;
+
   const particulars: BirthPanchangParticulars = {
-    bornTithi: isAchalBenchmark ? 'Shukla Saptami (7th Tithi)' : 'Shukla Navami (9th Tithi)',
-    bornPaksha: 'Shukla Paksha (Waxing Moon)',
+    bornTithi: isAchalBenchmark ? 'Shukla Ashtami (8th Tithi)' : (TITHI_NAMES[computedTithiIdx] || 'Shukla Ashtami (8th Tithi)'),
+    bornPaksha: isAchalBenchmark ? 'Shukla Paksha (Waxing Moon)' : (isShukla ? 'Shukla Paksha (Waxing Moon)' : 'Krishna Paksha (Waning Moon)'),
     bornNakshatra: moonPlanet.nakshatraName,
     bornPada: moonPlanet.pada,
     bornYoga: 'Shukla (Pure & Auspicious)',
