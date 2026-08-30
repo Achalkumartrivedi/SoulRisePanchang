@@ -108,6 +108,14 @@ export function evaluatePersonalShoonya(
           `Lord ${lordName} is conjoined with ${maleficCo.name} in House ${lordPlanet.house}, which neutralizes the Tithi shadow into beneficial energy!`
         );
       }
+
+      // Rule D: Placed in Kendra (1, 4, 7, 10) or Trikona (5, 9) house
+      if ([1, 4, 5, 7, 9, 10].includes(lordPlanet.house)) {
+        isNullified = true;
+        nullificationReasons.push(
+          `Lord ${lordName} is positioned in Kendra/Trikona House ${lordPlanet.house}, granting it immense inherent strength to overcome the Tithi shadow!`
+        );
+      }
     }
   });
 
