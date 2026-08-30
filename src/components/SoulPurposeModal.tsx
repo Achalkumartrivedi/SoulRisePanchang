@@ -11,24 +11,29 @@ import {
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithiSoulPurpose } from '../data/tithiSoulPurposeData';
+import { KundaliResult } from '../engine/kundaliEngine';
+import { evaluatePersonalShoonya } from '../utils/shoonyaEvaluator';
 
 interface SoulPurposeModalProps {
   visible: boolean;
   onClose: () => void;
   tithiNumber: number; // 1-15 or 30
   tithiName: string;
+  kundali: KundaliResult;
 }
 
 export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
   visible,
   onClose,
   tithiNumber,
-  tithiName
+  tithiName,
+  kundali
 }) => {
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'PURPOSE' | 'SHOONYA' | 'EPIGENETICS' | 'DEITY'>('PURPOSE');
 
   const info = getLocalizedTithiSoulPurpose(tithiNumber, language);
+  const shoonyaAnalysis = evaluatePersonalShoonya(kundali, tithiNumber, language);
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -121,36 +126,79 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                   </View>
                 )}
 
-                {/* Tab 2: Tithi Shoonya (Dagdha Rashi / Burnt Signs & Nullification) */}
+                {/* Tab 2: Tithi Shoonya (Dagdha Rashi / Burnt Signs & Personal Nullification) */}
                 {activeTab === 'SHOONYA' && (
                   <View style={styles.detailCard}>
-                    <Text style={styles.sectionHeader}>🔥 Tithi Shoonya (Dagdha Rashi / Burnt Signs)</Text>
-                    <Text style={styles.traitsBody}>
-                      Because the Sun and Moon cast an astrological shadow on certain zodiac coordinates, specific signs become "burnt" (Dagdha) on your birth Tithi:
-                    </Text>
+                    
+                    {/* Upfront Reassuring Explanation of Burnt Signs */}
+                    <View style={styles.reassuranceCard}>
+                      <Text style={styles.reassuranceTitle}>🔥 What Does "Burnt Sign" (दग्ध राशि) Actually Mean?</Text>
+                      <Text style={styles.reassuranceBody}>
+                        <Text style={{ fontWeight: 'bold', color: '#C62828' }}>Does "Burnt" mean bad or ruined? ABSOLUTELY NOT! </Text>
+                        In ancient Sanskrit, <Text style={{ fontStyle: 'italic' }}>"Dagdha"</Text> means <Text style={{ fontWeight: 'bold' }}>"Purification by Fire"</Text>. Just like raw gold is melted in fire to remove impurities, a Burnt Sign is a <Text style={{ fontWeight: 'bold' }}>Hidden Superpower</Text> that requires initial effort to unlock your highest potential!
+                      </Text>
 
-                    <View style={styles.shoonyabox}>
-                      <Text style={styles.shoonyaLabel}>Burnt Zodiac Signs (Dagdha Rashis):</Text>
-                      <Text style={styles.shoonyaVal}>{info.dagdhaRashis}</Text>
-
-                      <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Primary Affected Planets:</Text>
-                      <Text style={styles.shoonyaVal}>{info.dagdhaLords}</Text>
-
-                      <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Impact on Life Placements:</Text>
-                      <Text style={styles.shoonyaSubVal}>{info.dagdhaImpact}</Text>
+                      <View style={styles.threePillarsBox}>
+                        <Text style={styles.pillarItem}>1. 🔥 <Text style={{ fontWeight: 'bold' }}>Purification by Fire:</Text> Initial effort turns into deep mastery.</Text>
+                        <Text style={styles.pillarItem}>2. 🦁 <Text style={{ fontWeight: 'bold' }}>Hidden Superpower:</Text> Acts like a sleeping giant waiting to awaken.</Text>
+                        <Text style={styles.pillarItem}>3. ✨ <Text style={{ fontWeight: 'bold' }}>Automatic Nullification:</Text> Most charts cancel the shadow into a Dhan Yoga!</Text>
+                      </View>
                     </View>
 
-                    {/* Principles of Nullification */}
-                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#2E7D32' }]}>
-                      ✨ Principles of Nullification (Dagdha Dosha Bhanga)
+                    {/* Personal Nullification Banner for this User's Kundali */}
+                    <View style={[
+                      styles.personalBanner,
+                      shoonyaAnalysis.isNullified ? styles.bannerCancelled : styles.bannerActive
+                    ]}>
+                      <Text style={[
+                        styles.bannerTitleText,
+                        shoonyaAnalysis.isNullified ? styles.bannerTitleCancelled : styles.bannerTitleActive
+                      ]}>
+                        {shoonyaAnalysis.statusBannerTitle}
+                      </Text>
+                      <Text style={styles.bannerBodyText}>{shoonyaAnalysis.statusBannerBody}</Text>
+
+                      {shoonyaAnalysis.nullificationReasons.length > 0 && (
+                        <View style={styles.reasonsBox}>
+                          <Text style={styles.reasonsHeader}>🔍 Kundali Analysis & Nullification Reasons:</Text>
+                          {shoonyaAnalysis.nullificationReasons.map((r, idx) => (
+                            <Text key={idx} style={styles.reasonItemText}>✓ {r}</Text>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                    {/* User's Specific Burnt Signs Details */}
+                    {!shoonyaAnalysis.isPurnimaOrAmavasya && (
+                      <View style={styles.shoonyabox}>
+                        <Text style={styles.shoonyaLabel}>Burnt Signs for Your Birth Tithi:</Text>
+                        <Text style={styles.shoonyaVal}>{shoonyaAnalysis.dagdhaRashiNames.join(' & ')}</Text>
+
+                        <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Ruling Planets Affected:</Text>
+                        <Text style={styles.shoonyaVal}>{shoonyaAnalysis.affectedLords.join(', ')}</Text>
+
+                        <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Planets in Your Burnt Signs:</Text>
+                        <Text style={styles.shoonyaSubVal}>
+                          {shoonyaAnalysis.planetsInDagdhaSigns.length > 0
+                            ? shoonyaAnalysis.planetsInDagdhaSigns.join(', ')
+                            : 'None (Your burnt signs are empty in your birth chart)'}
+                        </Text>
+
+                        <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Life Placement Impact:</Text>
+                        <Text style={styles.shoonyaSubVal}>{info.dagdhaImpact}</Text>
+                      </View>
+                    )}
+
+                    {/* Principles of Nullification Laws */}
+                    <Text style={[styles.sectionHeader, { marginTop: 10, color: '#2E7D32' }]}>
+                      ⚖️ Universal Nullification Laws (Dagdha Dosha Bhanga)
                     </Text>
-                    <Text style={styles.nullificationText}>{info.nullificationRule}</Text>
                     
                     <View style={styles.nullificationTipsBox}>
-                      <Text style={styles.nullificationTipTitle}>💡 How Tithi Shoonya is Cancelled:</Text>
-                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Dusthana Placement:</Text> If the lord of the burnt sign sits in the 3rd, 6th, 8th, or 12th house, harm is restricted.</Text>
-                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Retrograde Exception:</Text> A Retrograde planet in its own Dagdha Rashi shines through the shadow.</Text>
-                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Malefic Conjunction:</Text> Conjunction with Saturn, Mars, or Rahu/Ketu Nakshatras neutralizes the shadow.</Text>
+                      <Text style={styles.nullificationTipTitle}>💡 How Tithi Shoonya is Cancelled in Vedic Astrology:</Text>
+                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Dusthana Placement (3rd, 6th, 8th, 12th):</Text> If the lord of the burnt sign sits in a struggle house, harm is restricted and turned into strength.</Text>
+                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Retrograde Exception (वक्री):</Text> A Retrograde planet in its own Dagdha Rashi shines straight through the shadow.</Text>
+                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Malefic Conjunction:</Text> Conjunction with Saturn, Mars, Rahu, or Ketu neutralizes the shadow into wealth.</Text>
                     </View>
                   </View>
                 )}
@@ -443,6 +491,91 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 16,
   },
+
+  // Reassurance Upfront Explanation
+  reassuranceCard: {
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FFB300',
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  reassuranceTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
+  },
+  reassuranceBody: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    lineHeight: 17,
+    marginBottom: 8,
+  },
+  threePillarsBox: {
+    backgroundColor: '#FFFDE7',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE082',
+  },
+  pillarItem: {
+    fontSize: 10,
+    color: Colors.textPrimary,
+    marginBottom: 3,
+  },
+
+  // Personal Banner
+  personalBanner: {
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1.5,
+  },
+  bannerCancelled: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#2E7D32',
+  },
+  bannerActive: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#E65100',
+  },
+  bannerTitleText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  bannerTitleCancelled: {
+    color: '#2E7D32',
+  },
+  bannerTitleActive: {
+    color: '#E65100',
+  },
+  bannerBodyText: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    lineHeight: 16,
+  },
+  reasonsBox: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  reasonsHeader: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
+  },
+  reasonItemText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    marginTop: 2,
+  },
+
   sectionHeader: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -456,11 +589,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   shoonyabox: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#FAF5EE',
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#FFB74D',
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
     marginBottom: 12,
   },
   shoonyaLabel: {
@@ -471,7 +604,7 @@ const styles = StyleSheet.create({
   shoonyaVal: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#C62828',
+    color: Colors.maroon,
     marginTop: 2,
   },
   shoonyaSubVal: {
@@ -480,23 +613,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 16,
   },
-  nullificationText: {
-    fontSize: 12,
-    color: Colors.textPrimary,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
   nullificationTipsBox: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#FAF5EE',
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#A5D6A7',
+    borderColor: '#F0E0D0',
   },
   nullificationTipTitle: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#2E7D32',
+    color: Colors.maroon,
     marginBottom: 4,
   },
   nullificationTipItem: {

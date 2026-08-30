@@ -681,6 +681,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
           onClose={() => setShowSoulPurposeModal(false)}
           tithiNumber={getNumericTithiNumber(kundali.particulars.bornTithi)}
           tithiName={kundali.particulars.bornTithi}
+          kundali={kundali}
         />
       )}
 
