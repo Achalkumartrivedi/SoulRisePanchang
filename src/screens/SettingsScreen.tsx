@@ -13,6 +13,7 @@ import {
 
 import { useLanguage } from '../context/LanguageContext';
 import { SUPPORTED_LANGUAGES } from '../types/language';
+import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -32,6 +33,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onOpenLanguageModal,
 }) => {
   const { language, t } = useLanguage();
+  const { calendarSystem, setCalendarSystem } = useCalendarSystem();
   const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
   const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
   const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
@@ -98,26 +100,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           const longitude = loc ? loc.coords.longitude : 77.2090;
 
           let cityName = 'GPS Location';
-          let hindiName = 'वर्तमान स्थान';
-
           try {
             const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
             if (geocode && geocode.length > 0) {
               const place = geocode[0];
-              const name = place.city || place.subregion || place.region || 'GPS Location';
-              cityName = `${name} (GPS)`;
-              hindiName = name;
+              cityName = place.city || place.subregion || place.district || 'GPS Location';
             }
-          } catch (err) {}
+          } catch (err) {
+            console.log('Reverse geocode error:', err);
+          }
 
-          onSelectCity({
+          const gpsCity: CityLocation = {
             name: cityName,
-            hindiName,
+            hindiName: 'जीपीएस स्थान',
             stateCountry: 'GPS Location',
             latitude,
             longitude,
             timeZoneId: 'Asia/Kolkata'
-          });
+          };
+          onSelectCity(gpsCity);
+          await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(gpsCity));
+          await AsyncStorage.setItem('SOULRISE_USE_GPS', 'true');
         } else {
           setUseGps(false);
         }
@@ -127,6 +130,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       }
     } else {
       onSelectCity(DEFAULT_CITIES[0]);
+      await AsyncStorage.setItem('SOULRISE_USE_GPS', 'false');
     }
   };
 
@@ -155,6 +159,56 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </TouchableOpacity>
         </View>
 
+        {/* Calendar System Preference Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📅 Calendar System Preference</Text>
+          <Text style={styles.cardSubTitle}>Choose your default calendar view (persists across app restarts):</Text>
+
+          <View style={styles.calSystemList}>
+            <TouchableOpacity
+              style={[styles.calSystemItem, calendarSystem === 'HINDU' && styles.calSystemItemActive]}
+              onPress={() => setCalendarSystem('HINDU')}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.calSystemTitle, calendarSystem === 'HINDU' && styles.calSystemTitleActive]}>
+                  🕉️ Hindu Panchang (Vikram Samvat)
+                </Text>
+                <Text style={styles.calSystemDesc}>Standard Vedic Lunar/Solar Panchang with Tithis & Nakshatras</Text>
+              </View>
+              {calendarSystem === 'HINDU' && <Text style={styles.checkIcon}>✓</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.calSystemItem, calendarSystem === 'JAIN' && styles.calSystemItemActive]}
+              onPress={() => setCalendarSystem('JAIN')}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.calSystemTitle, calendarSystem === 'JAIN' && styles.calSystemTitleActive]}>
+                  🪔 Jain Calendar (Vira Nirvana Samvat)
+                </Text>
+                <Text style={styles.calSystemDesc}>Sacred Jain Parva Tithis (Aastham, Chaudas), Pachkhan & Festivals</Text>
+              </View>
+              {calendarSystem === 'JAIN' && <Text style={styles.checkIcon}>✓</Text>}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.calSystemItem, calendarSystem === 'GLOBAL' && styles.calSystemItemActive]}
+              onPress={() => setCalendarSystem('GLOBAL')}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.calSystemTitle, calendarSystem === 'GLOBAL' && styles.calSystemTitleActive]}>
+                  🌍 Global Gregorian Solar Calendar
+                </Text>
+                <Text style={styles.calSystemDesc}>Standard Western Solar Dates & International Holidays</Text>
+              </View>
+              {calendarSystem === 'GLOBAL' && <Text style={styles.checkIcon}>✓</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Active Location Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t('activeLocation')}</Text>
@@ -178,183 +232,124 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Switch
               value={useGps}
               onValueChange={handleGpsToggle}
-              trackColor={{ false: '#767577', true: Colors.primary }}
-              thumbColor={useGps ? Colors.accentGold : '#f4f3f4'}
+              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
+              thumbColor={useGps ? '#FFD700' : '#F4F3F4'}
             />
           </View>
         </View>
 
-        {/* Purnima & Amavasya Reminders Card (NEW) */}
+        {/* Live Choghadiya Notification Bar Setting */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>{t('reminderSectionTitle')}</Text>
+          <Text style={styles.cardTitle}>⏰ Live Choghadiya Status Bar Widget</Text>
 
-          {/* Purnima Reminder Switch */}
           <View style={styles.switchRow}>
             <View style={styles.switchTextContainer}>
-              <Text style={styles.switchLabel}>{t('purnimaReminderLabel')}</Text>
-              <Text style={styles.switchSub}>{t('purnimaReminderSub')}</Text>
+              <Text style={styles.switchLabel}>Pin Live Choghadiya to Status Bar</Text>
+              <Text style={styles.switchSub}>Auto-updates current auspicious muhurt every hour in notifications</Text>
+            </View>
+            <Switch
+              value={useChoghadiyaNotif}
+              onValueChange={handleChoghadiyaToggle}
+              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
+              thumbColor={useChoghadiyaNotif ? '#FFD700' : '#F4F3F4'}
+            />
+          </View>
+        </View>
+
+        {/* Purnima & Amavasya Push Notification Reminders */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🔔 Purnima & Amavasya Reminders</Text>
+
+          {/* Purnima Switch */}
+          <View style={styles.switchRow}>
+            <View style={styles.switchTextContainer}>
+              <Text style={styles.switchLabel}>🌕 Purnima (Full Moon) Reminder</Text>
+              <Text style={styles.switchSub}>Get notified for Satyanarayan Puja & Fasting</Text>
             </View>
             <Switch
               value={purnimaNotif}
               onValueChange={handlePurnimaToggle}
-              trackColor={{ false: '#767577', true: Colors.primary }}
-              thumbColor={purnimaNotif ? Colors.accentGold : '#f4f3f4'}
+              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
+              thumbColor={purnimaNotif ? '#FFD700' : '#F4F3F4'}
             />
           </View>
 
-          {/* Amavasya Reminder Switch */}
+          {/* Amavasya Switch */}
           <View style={styles.switchRow}>
             <View style={styles.switchTextContainer}>
-              <Text style={styles.switchLabel}>{t('amavasyaReminderLabel')}</Text>
-              <Text style={styles.switchSub}>{t('amavasyaReminderSub')}</Text>
+              <Text style={styles.switchLabel}>🌑 Amavasya (New Moon) Reminder</Text>
+              <Text style={styles.switchSub}>Get notified for Pitru Tarpana & Ancestral Puja</Text>
             </View>
             <Switch
               value={amavasyaNotif}
               onValueChange={handleAmavasyaToggle}
-              trackColor={{ false: '#767577', true: Colors.primary }}
-              thumbColor={amavasyaNotif ? Colors.accentGold : '#f4f3f4'}
+              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
+              thumbColor={amavasyaNotif ? '#FFD700' : '#F4F3F4'}
             />
           </View>
 
-          <View style={styles.timingPillDivider} />
-
-          {/* Reminder Timing Selector */}
-          <Text style={styles.timingHeaderLabel}>{t('reminderTimingHeader')}</Text>
-          <View style={styles.timingPillRow}>
+          {/* Timing Days Picker */}
+          <Text style={[styles.switchLabel, { marginTop: 12, marginBottom: 6 }]}>
+            ⏰ Notification Advance Timing:
+          </Text>
+          <View style={styles.timingDaysRow}>
             {[
-              { days: 0, label: t('reminderSameDay') },
-              { days: 1, label: t('reminder1DayBefore') },
-              { days: 2, label: t('reminder2DaysBefore') },
-              { days: 5, label: t('reminder5DaysBefore') }
+              { label: 'Same Day', days: 0 },
+              { label: '1 Day Before', days: 1 },
+              { label: '2 Days Before', days: 2 },
+              { label: '5 Days Before', days: 5 },
             ].map(item => (
               <TouchableOpacity
-                key={`pill-${item.days}`}
-                style={[
-                  styles.timingPill,
-                  reminderDays === item.days && styles.timingPillActive
-                ]}
+                key={item.days}
+                style={[styles.dayPill, reminderDays === item.days && styles.dayPillActive]}
                 onPress={() => handleSelectTimingDays(item.days)}
-                activeOpacity={0.7}
               >
-                <Text
-                  style={[
-                    styles.timingPillText,
-                    reminderDays === item.days && styles.timingPillTextActive
-                  ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
+                <Text style={[styles.dayPillText, reminderDays === item.days && styles.dayPillTextActive]}>
                   {item.label}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-
-          <Text style={styles.infoHint}>
-            Status: {purnimaNotif || amavasyaNotif ? `🟢 Notification configured (${reminderDays === 0 ? 'On same day' : `${reminderDays} day(s) before`})` : '⚪ Reminders Disabled'}
-          </Text>
-        </View>
-
-        {/* Timings & Persistent Notifications */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>⏰ Timings & Persistent Notifications</Text>
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchTextContainer}>
-              <Text style={styles.switchLabel}>Choghadiya Status Bar Notification</Text>
-              <Text style={styles.switchSub}>Show pinned ongoing notification with current & next 3 Choghadiyas (Auspicious 🟩 / Inauspicious 🟥)</Text>
-            </View>
-            <Switch
-              value={useChoghadiyaNotif}
-              onValueChange={handleChoghadiyaToggle}
-              trackColor={{ false: '#767577', true: Colors.primary }}
-              thumbColor={useChoghadiyaNotif ? Colors.accentGold : '#f4f3f4'}
-            />
-          </View>
-          <Text style={styles.infoHint}>
-            Status: {useChoghadiyaNotif ? '🟢 Pinned Live Status Active in Android Notification Bar' : '⚪ Notification Disabled'}
-          </Text>
-        </View>
-
-        {/* Calculation System */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🌙 Lunar Month System (मास पद्धति)</Text>
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchTextContainer}>
-              <Text style={styles.switchLabel}>Amanta System (अमान्त)</Text>
-              <Text style={styles.switchSub}>Month ends on Amavasya (South & West India standard)</Text>
-            </View>
-            <Switch
-              value={useAmanta}
-              onValueChange={setUseAmanta}
-              trackColor={{ false: '#767577', true: Colors.primary }}
-              thumbColor={useAmanta ? Colors.accentGold : '#f4f3f4'}
-            />
-          </View>
-          <Text style={styles.infoHint}>
-            Current System: {useAmanta ? 'Amanta (New Moon to New Moon)' : 'Purnimanta (Full Moon to Full Moon - North India)'}
-          </Text>
-        </View>
-
-        {/* About App */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🕉️ About SoulRise Panchang</Text>
-          <Text style={styles.aboutText}>
-            SoulRise Panchang provides highly accurate, offline astronomical Hindu calendar calculations including Tithi, Nakshatra, Yoga, Karana, Vaara, Abhijit Muhurat, Rahu Kalam, Choghadiya, and Hindu Festivals.
-          </Text>
-
-          <View style={styles.versionRow}>
-            <Text style={styles.versionLabel}>Version</Text>
-            <Text style={styles.versionValue}>1.0.0 (Expo React Native)</Text>
-          </View>
-          <View style={styles.versionRow}>
-            <Text style={styles.versionLabel}>Calculation Engine</Text>
-            <Text style={styles.versionValue}>Offline Meeus Solar/Lunar Precision Math</Text>
-          </View>
         </View>
       </ScrollView>
 
-      {/* City Picker Modal */}
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={onCloseCityModal}
-      >
+      {/* City Modal */}
+      <Modal visible={isModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select City / Location</Text>
-              <TouchableOpacity onPress={onCloseCityModal}>
-                <Text style={styles.closeBtn}>✕</Text>
+              <Text style={styles.modalTitle}>{t('activeLocation')}</Text>
+              <TouchableOpacity onPress={onCloseCityModal} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
               </TouchableOpacity>
             </View>
 
             <FlatList
               data={DEFAULT_CITIES}
-              keyExtractor={(item) => item.name}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.cityItem,
-                    selectedCity.name === item.name && styles.selectedCityItem
-                  ]}
-                  onPress={() => {
-                    setUseGps(false);
-                    onSelectCity(item);
-                    onCloseCityModal();
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.itemCityName}>{item.name} ({item.hindiName})</Text>
-                    <Text style={styles.itemStateText}>{item.stateCountry}</Text>
-                  </View>
-                  {selectedCity.name === item.name && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              )}
+              keyExtractor={item => item.name}
+              renderItem={({ item }) => {
+                const isSelected = item.name === selectedCity.name;
+                return (
+                  <TouchableOpacity
+                    style={[styles.cityItem, isSelected && styles.cityItemActive]}
+                    onPress={async () => {
+                      onSelectCity(item);
+                      setUseGps(false);
+                      await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(item));
+                      await AsyncStorage.setItem('SOULRISE_USE_GPS', 'false');
+                      onCloseCityModal();
+                    }}
+                  >
+                    <View>
+                      <Text style={[styles.cityItemName, isSelected && styles.cityItemNameActive]}>
+                        {item.name} ({item.hindiName})
+                      </Text>
+                      <Text style={styles.cityItemSub}>{item.stateCountry}</Text>
+                    </View>
+                    {isSelected && <Text style={styles.checkIcon}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              }}
             />
           </View>
         </View>
@@ -364,47 +359,88 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.creamBg },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.creamBg,
+  },
   header: {
     backgroundColor: Colors.maroon,
-    paddingTop: 16,
-    paddingBottom: 14,
-    paddingHorizontal: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#FFD700',
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: Colors.accentGold,
+    fontSize: 11,
+    color: Colors.creamBg,
     marginTop: 2,
+    opacity: 0.9,
   },
-  content: { padding: 16 },
+  content: {
+    padding: 16,
+  },
   card: {
     backgroundColor: Colors.cardBg,
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    padding: 14,
+    marginBottom: 14,
+    elevation: 3,
     borderWidth: 1,
     borderColor: Colors.border,
-    elevation: 2,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: Colors.maroon,
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  cardSubTitle: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginBottom: 10,
+  },
+  calSystemList: {
+    gap: 8,
+  },
+  calSystemItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 10,
+  },
+  calSystemItemActive: {
+    backgroundColor: '#FFF3E0',
+    borderColor: Colors.maroon,
+    borderWidth: 1.5,
+  },
+  calSystemTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  calSystemTitleActive: {
+    color: Colors.maroon,
+  },
+  calSystemDesc: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   citySelectorBox: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: '#FAF5EE',
-    padding: 12,
+    padding: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -419,131 +455,87 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   cityNameText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
   citySubText: {
-    fontSize: 11,
+    fontSize: 10,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   changeBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: Colors.maroon,
     marginLeft: 8,
   },
   switchRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 12,
+    alignItems: 'center',
+    marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F0E0D0',
+    borderTopColor: '#F0F0F0',
   },
   switchTextContainer: {
     flex: 1,
-    marginRight: 12,
+    paddingRight: 10,
   },
   switchLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
   switchSub: {
-    fontSize: 11,
+    fontSize: 10,
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  infoHint: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-    marginTop: 10,
-  },
-  timingPillDivider: {
-    height: 1,
-    backgroundColor: '#F0E0D0',
-    marginVertical: 12,
-  },
-  timingHeaderLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    marginBottom: 8,
-  },
-  timingPillRow: {
+  timingDaysRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+    marginTop: 4,
   },
-  timingPill: {
-    flex: 1,
-    minWidth: '22%',
+  dayPill: {
     backgroundColor: '#FAF5EE',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderRadius: 10,
     borderWidth: 1,
     borderColor: Colors.border,
-    alignItems: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  timingPillActive: {
+  dayPillActive: {
     backgroundColor: Colors.maroon,
     borderColor: Colors.maroon,
   },
-  timingPillText: {
+  dayPillText: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  timingPillTextActive: {
-    color: '#FFFFFF',
-  },
-  aboutText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  versionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#F0E0D0',
-  },
-  versionLabel: {
-    fontSize: 12,
     color: Colors.textSecondary,
   },
-  versionValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+  dayPillTextActive: {
+    color: '#FFD700',
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
-  modalContent: {
-    backgroundColor: Colors.cardBg,
+  modalCard: {
+    backgroundColor: Colors.creamBg,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    maxHeight: '70%',
     padding: 16,
-    maxHeight: '75%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 16,
@@ -551,35 +543,44 @@ const styles = StyleSheet.create({
     color: Colors.maroon,
   },
   closeBtn: {
-    fontSize: 20,
+    backgroundColor: '#E0E0E0',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtnText: {
+    fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
   },
   cityItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0E0D0',
+    borderBottomColor: '#F0F0F0',
   },
-  selectedCityItem: {
-    backgroundColor: '#FFF3E0',
-    borderRadius: 8,
+  cityItemActive: {
+    backgroundColor: '#FAF5EE',
   },
-  itemCityName: {
-    fontSize: 14,
+  cityItemName: {
+    fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
-  itemStateText: {
-    fontSize: 11,
+  cityItemNameActive: {
+    color: Colors.maroon,
+  },
+  cityItemSub: {
+    fontSize: 10,
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  checkmark: {
-    fontSize: 16,
+  checkIcon: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: Colors.maroon,
   },

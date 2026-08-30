@@ -7,6 +7,8 @@ import { DEFAULT_CITIES } from '../data/cities';
 import { calculatePanchang } from '../engine/panchangEngine';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
+import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
+import { getJainDayData } from '../engine/jainCalendarEngine';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -103,6 +105,7 @@ const getRahuKalamForDate = (d: Date): string => {
 
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = DEFAULT_CITIES[0], onSelectDate }) => {
   const { language, t } = useLanguage();
+  const { calendarSystem, setCalendarSystem } = useCalendarSystem();
   const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); 
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
   const [showPopupInfoModal, setShowPopupInfoModal] = useState(false);
@@ -148,6 +151,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   let mRitual: string | null = null;
   let festMatchModal = null;
   let mPanchang = calculatePanchang(new Date(), selectedCity);
+  let mJainData = getJainDayData(new Date(), 0);
 
   if (selectedModalDateIso) {
     const parts = selectedModalDateIso.split('-');
@@ -159,6 +163,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
     mRitual = getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName);
     festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso);
     mPanchang = calculatePanchang(mDate, selectedCity);
+    mJainData = getJainDayData(mDate, mTithiIdx);
   }
 
   const locPurnima = getLocalizedTithi(15, language).name;
@@ -169,6 +174,40 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Monthly Calendar Card */}
       <View style={styles.card}>
+
+        {/* Multi-Calendar System Switcher Bar */}
+        <View style={styles.calendarToggleContainer}>
+          <TouchableOpacity
+            style={[styles.calToggleBtn, calendarSystem === 'HINDU' && styles.calToggleBtnActive]}
+            onPress={() => setCalendarSystem('HINDU')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.calToggleText, calendarSystem === 'HINDU' && styles.calToggleTextActive]}>
+              🕉️ Hindu Panchang
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.calToggleBtn, calendarSystem === 'JAIN' && styles.calToggleBtnActive]}
+            onPress={() => setCalendarSystem('JAIN')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.calToggleText, calendarSystem === 'JAIN' && styles.calToggleTextActive]}>
+              🪔 Jain Calendar
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.calToggleBtn, calendarSystem === 'GLOBAL' && styles.calToggleBtnActive]}
+            onPress={() => setCalendarSystem('GLOBAL')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.calToggleText, calendarSystem === 'GLOBAL' && styles.calToggleTextActive]}>
+              🌍 Gregorian
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Month Header Navigation */}
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.navBtn} onPress={handlePrevMonth}>
@@ -177,7 +216,13 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
           <View style={styles.titleContainer}>
             <Text style={styles.monthTitle}>{MONTH_NAMES[month]} {year}</Text>
-            <Text style={styles.samvatTitle}>Vikram Samvat 2083 • Shravana / Bhadrapada</Text>
+            {calendarSystem === 'JAIN' ? (
+              <Text style={styles.samvatTitle}>
+                Vira Nirvana Samvat {year + 527} • {getJainDayData(new Date(year, month, 15), 0).jainMonthName}
+              </Text>
+            ) : (
+              <Text style={styles.samvatTitle}>Vikram Samvat 2083 • Shravana / Bhadrapada</Text>
+            )}
           </View>
 
           <TouchableOpacity style={styles.navBtn} onPress={handleNextMonth}>
@@ -213,6 +258,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             const monthPakshaDisplay = `${hinduMonthName} - ${pakshaShort}`;
 
             const miniRitual = getPerpetualMiniRitual(dateObj, tithiIdx, hinduMonthName);
+            const jainData = getJainDayData(dateObj, tithiIdx);
 
             let moonIcon = '🌒';
             if (tithiIdx === 14) moonIcon = '🌕';
@@ -228,7 +274,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 style={[
                   styles.dayCell,
                   isHoliday && styles.holidayCell,
-                  isTodayCell && styles.todayCell
+                  isTodayCell && styles.todayCell,
+                  calendarSystem === 'JAIN' && jainData.isParvaTithi && styles.jainParvaCell
                 ]}
                 onPress={() => setSelectedModalDateIso(dateIso)}
                 activeOpacity={0.7}
@@ -238,33 +285,53 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   <Text style={styles.moonIconText}>{moonIcon}</Text>
                 </View>
 
-                <Text style={styles.monthPakshaText} numberOfLines={1}>{monthPakshaDisplay}</Text>
+                {calendarSystem === 'JAIN' ? (
+                  <>
+                    <Text style={styles.jainMonthText} numberOfLines={1}>{jainData.jainTithiName}</Text>
 
-                {tithiIdx === 14 ? (
-                  <View style={styles.purnimaBadge}>
-                    <Text style={styles.purnimaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌕 {locPurnima}</Text>
-                  </View>
-                ) : tithiIdx === 29 ? (
-                  <View style={styles.amavasyaBadge}>
-                    <Text style={styles.amavasyaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌑 {locAmavasya}</Text>
-                  </View>
-                ) : tithiIdx === 10 || tithiIdx === 25 ? (
-                  <View style={styles.ekadashiBadge}>
-                    <Text style={styles.ekadashiBadgeText} numberOfLines={1}>🌿 Ekadashi</Text>
-                  </View>
-                ) : festMatch ? (
-                  <View style={styles.festBadge}>
-                    <Text style={styles.festBadgeText} numberOfLines={1}>🚩 {festMatch.name.split(' ')[0]}</Text>
-                  </View>
+                    {jainData.jainFestivalName ? (
+                      <View style={styles.jainFestBadge}>
+                        <Text style={styles.jainFestText} numberOfLines={1}>🪔 {jainData.jainFestivalName.split(' ')[1] || 'Parva'}</Text>
+                      </View>
+                    ) : jainData.isParvaTithi ? (
+                      <View style={styles.jainParvaBadge}>
+                        <Text style={styles.jainParvaBadgeText} numberOfLines={1}>🪔 {jainData.parvaType?.split(' ')[1] || 'Parva'}</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.tithiText} numberOfLines={1}>{jainData.jainMonthName.split(' ')[0]}</Text>
+                    )}
+                  </>
                 ) : (
-                  <Text style={styles.tithiText} numberOfLines={1}>{tithiName}</Text>
-                )}
+                  <>
+                    <Text style={styles.monthPakshaText} numberOfLines={1}>{monthPakshaDisplay}</Text>
 
-                {miniRitual ? (
-                  <View style={styles.ritualBadge}>
-                    <Text style={styles.ritualBadgeText} numberOfLines={1}>{miniRitual}</Text>
-                  </View>
-                ) : null}
+                    {tithiIdx === 14 ? (
+                      <View style={styles.purnimaBadge}>
+                        <Text style={styles.purnimaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌕 {locPurnima}</Text>
+                      </View>
+                    ) : tithiIdx === 29 ? (
+                      <View style={styles.amavasyaBadge}>
+                        <Text style={styles.amavasyaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌑 {locAmavasya}</Text>
+                      </View>
+                    ) : tithiIdx === 10 || tithiIdx === 25 ? (
+                      <View style={styles.ekadashiBadge}>
+                        <Text style={styles.ekadashiBadgeText} numberOfLines={1}>🌿 Ekadashi</Text>
+                      </View>
+                    ) : festMatch ? (
+                      <View style={styles.festBadge}>
+                        <Text style={styles.festBadgeText} numberOfLines={1}>🚩 {festMatch.name.split(' ')[0]}</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.tithiText} numberOfLines={1}>{tithiName}</Text>
+                    )}
+
+                    {miniRitual ? (
+                      <View style={styles.ritualBadge}>
+                        <Text style={styles.ritualBadgeText} numberOfLines={1}>{miniRitual}</Text>
+                      </View>
+                    ) : null}
+                  </>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -279,267 +346,247 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
         {/* Purnima Section */}
         <View style={styles.summarySection}>
-          <Text style={styles.summarySectionTitle} numberOfLines={1} adjustsFontSizeToFit>
-            {t('purnimaTitle')}
-          </Text>
-          {purnimaList.length > 0 ? (
-            purnimaList.map((item, idx) => (
-              <TouchableOpacity
-                key={`purnima-${idx}`}
-                style={styles.summaryItemBoxGood}
-                onPress={() => setSelectedModalDateIso(item.dateIso)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.summaryItemTop}>
-                  <Text style={styles.summaryMoonIcon}>🌕</Text>
-                  <View style={{ flex: 1, marginRight: 6 }}>
-                    <Text style={styles.summaryDateText}>
-                      {getLocalizedDateString(item.dateObj, language)}
-                    </Text>
-                    <Text style={styles.summaryTimingText}>
-                      {t('tithiStarts')}: {item.panchang.tithi.startTimeFormatted} • {t('tithiEnds')}: {item.panchang.tithi.endTimeFormatted}
-                    </Text>
-                    <Text style={styles.summaryRitualText}>✨ {t('purnimaRitual')}</Text>
-                  </View>
-                  <Text style={styles.summaryArrow}>➔</Text>
-                </View>
-              </TouchableOpacity>
-            ))
+          <Text style={styles.summarySectionTitle}>🌕 {locPurnima} (Full Moon)</Text>
+          {purnimaList.length === 0 ? (
+            <Text style={styles.emptySummaryText}>No Purnima in this calendar month view.</Text>
           ) : (
-            <Text style={styles.noDataText}>No Purnima in this date range</Text>
+            purnimaList.map((item, idx) => (
+              <View key={idx} style={styles.summaryItemBox}>
+                <View style={styles.summaryItemHeader}>
+                  <Text style={styles.summaryDateText}>📅 {getLocalizedDateString(item.dateObj, language)}</Text>
+                  <TouchableOpacity
+                    style={styles.detailsMiniBtn}
+                    onPress={() => setSelectedModalDateIso(item.dateIso)}
+                  >
+                    <Text style={styles.detailsMiniBtnText}>Full Panchang ➔</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.summaryGrid}>
+                  <Text style={styles.summarySubText}>🌅 Sunrise: {item.panchang.sunMoon.sunrise}</Text>
+                  <Text style={styles.summarySubText}>🌇 Sunset: {item.panchang.sunMoon.sunset}</Text>
+                  <Text style={styles.summarySubText}>⭐ Nakshatra: {item.panchang.nakshatra.name}</Text>
+                  <Text style={styles.summarySubText}>✨ Yoga: {item.panchang.yoga.name}</Text>
+                  <Text style={styles.summarySubText}>🕒 Rahu Kalam: {getRahuKalamForDate(item.dateObj)}</Text>
+                </View>
+
+                <View style={styles.ritualAdviceBox}>
+                  <Text style={styles.ritualAdviceText}>🌸 Ritual Advice: Fasting, Satyanarayan Puja & Moon Arghya at night.</Text>
+                </View>
+              </View>
+            ))
           )}
         </View>
 
-        <View style={styles.summaryDivider} />
-
         {/* Amavasya Section */}
         <View style={styles.summarySection}>
-          <Text style={styles.summarySectionTitleDark} numberOfLines={1} adjustsFontSizeToFit>
-            {t('amavasyaTitle')}
-          </Text>
-          {amavasyaList.length > 0 ? (
-            amavasyaList.map((item, idx) => (
-              <TouchableOpacity
-                key={`amavasya-${idx}`}
-                style={styles.summaryItemBoxDark}
-                onPress={() => setSelectedModalDateIso(item.dateIso)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.summaryItemTop}>
-                  <Text style={styles.summaryMoonIcon}>🌑</Text>
-                  <View style={{ flex: 1, marginRight: 6 }}>
-                    <Text style={styles.summaryDateText}>
-                      {getLocalizedDateString(item.dateObj, language)}
-                    </Text>
-                    <Text style={styles.summaryTimingText}>
-                      {t('tithiStarts')}: {item.panchang.tithi.startTimeFormatted} • {t('tithiEnds')}: {item.panchang.tithi.endTimeFormatted}
-                    </Text>
-                    <Text style={styles.summaryRitualText}>✨ {t('amavasyaRitual')}</Text>
-                  </View>
-                  <Text style={styles.summaryArrow}>➔</Text>
-                </View>
-              </TouchableOpacity>
-            ))
+          <Text style={styles.summarySectionTitle}>🌑 {locAmavasya} (New Moon)</Text>
+          {amavasyaList.length === 0 ? (
+            <Text style={styles.emptySummaryText}>No Amavasya in this calendar month view.</Text>
           ) : (
-            <Text style={styles.noDataText}>No Amavasya in this date range</Text>
+            amavasyaList.map((item, idx) => (
+              <View key={idx} style={styles.summaryItemBox}>
+                <View style={styles.summaryItemHeader}>
+                  <Text style={styles.summaryDateText}>📅 {getLocalizedDateString(item.dateObj, language)}</Text>
+                  <TouchableOpacity
+                    style={styles.detailsMiniBtn}
+                    onPress={() => setSelectedModalDateIso(item.dateIso)}
+                  >
+                    <Text style={styles.detailsMiniBtnText}>Full Panchang ➔</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.summaryGrid}>
+                  <Text style={styles.summarySubText}>🌅 Sunrise: {item.panchang.sunMoon.sunrise}</Text>
+                  <Text style={styles.summarySubText}>🌇 Sunset: {item.panchang.sunMoon.sunset}</Text>
+                  <Text style={styles.summarySubText}>⭐ Nakshatra: {item.panchang.nakshatra.name}</Text>
+                  <Text style={styles.summarySubText}>✨ Yoga: {item.panchang.yoga.name}</Text>
+                  <Text style={styles.summarySubText}>🕒 Rahu Kalam: {getRahuKalamForDate(item.dateObj)}</Text>
+                </View>
+
+                <View style={styles.ritualAdviceBox}>
+                  <Text style={styles.ritualAdviceText}>🙏 Ritual Advice: Pitru Tarpana, Ancestral Puja & Lamp offering at riverbank.</Text>
+                </View>
+              </View>
+            ))
           )}
         </View>
       </View>
 
-      {/* Date Details Modal Popup */}
-      <Modal
-        visible={selectedModalDateIso !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedModalDateIso(null)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setSelectedModalDateIso(null)}
-        >
-          <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.modalDateTitle} numberOfLines={1} adjustsFontSizeToFit>
-                  🕉️ {getLocalizedDateString(mDate, language)}
-                </Text>
-                <Text style={styles.modalSubtitle} numberOfLines={1} adjustsFontSizeToFit>
-                  {mMonthName} • {mPakshaFull} • Samvat 2083
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setSelectedModalDateIso(null)}>
-                <Text style={styles.modalCloseBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Date Detail Popup Modal */}
+      {selectedModalDateIso && (
+        <Modal visible={!!selectedModalDateIso} animationType="fade" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTitleDate}>{getLocalizedDateString(mDate, language)}</Text>
+                  <Text style={styles.modalSubLocation}>📍 {selectedCity.name} ({selectedCity.hindiName})</Text>
+                </View>
 
-            {(mRitual || festMatchModal) && (
-              <View style={styles.ritualAlertBox}>
-                <Text style={styles.ritualAlertText}>✨ {mRitual || festMatchModal?.name}</Text>
-              </View>
-            )}
-
-            {/* Tithi Details */}
-            <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>🌑 Tithi {showHindiScript ? '(तिथि)' : ''} Timings ({mPanchang.city.name})</Text>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Active Tithi:</Text>
-                <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
-                  {getLocalizedTithi(mPanchang.tithi.number || 13, language).name} {showHindiScript && mPanchang.tithi.hindiName ? `(${mPanchang.tithi.hindiName})` : ''}
-                </Text>
-              </View>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Tithi Starts:</Text>
-                <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>
-                  {mPanchang.tithi.startTimeFormatted}
-                </Text>
-              </View>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Tithi Ends:</Text>
-                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>
-                  {mPanchang.tithi.endTimeFormatted}
-                </Text>
-              </View>
-            </View>
-
-            {/* Nakshatra Details */}
-            <View style={styles.timingBox}>
-              <Text style={styles.timingBoxTitle}>⭐ Nakshatra {showHindiScript ? '(नक्षत्र)' : ''} Timings ({mPanchang.city.name})</Text>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Nakshatra Name:</Text>
-                <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
-                  {mPanchang.nakshatra.name} {showHindiScript && mPanchang.nakshatra.hindiName ? `(${mPanchang.nakshatra.hindiName})` : ''}
-                </Text>
-              </View>
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>Ruler & Deity:</Text>
-                <Text style={styles.timingVal}>
-                  Ruler: {mPanchang.nakshatra.ruler} • Deity: {mPanchang.nakshatra.deity}
-                </Text>
-              </View>
-            </View>
-
-            {/* Muhurat & Rahu Kalam Details with SINGLE info icon */}
-            <View style={styles.timingBox}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={styles.timingBoxTitle}>✨ Muhurat & Rahu Kalam</Text>
-                <TouchableOpacity
-                  onPress={() => setShowPopupInfoModal(true)}
-                  style={{ padding: 2 }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Text style={{ fontSize: 16 }}>ℹ️</Text>
+                <TouchableOpacity style={styles.closeBtn} onPress={() => setSelectedModalDateIso(null)}>
+                  <Text style={styles.closeBtnText}>✕</Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>🌟 Abhijit Muhurat:</Text>
-                <Text style={[styles.timingVal, { color: Colors.auspiciousGreen, backgroundColor: '#E8F5E9' }]}>
-                  {mPanchang.auspiciousMuhurats?.[0] ? `${mPanchang.auspiciousMuhurats[0].startTime} - ${mPanchang.auspiciousMuhurats[0].endTime}` : '12:05 PM - 12:55 PM'}
-                </Text>
-              </View>
+              <ScrollView style={{ maxHeight: 420 }}>
+                {/* Active Calendar System Indicator */}
+                {calendarSystem === 'JAIN' ? (
+                  <View style={styles.jainModalCard}>
+                    <Text style={styles.jainModalTitle}>🪔 Jain Vira Nirvana Samvat {mJainData.viraSamvatYear}</Text>
+                    <Text style={styles.jainModalTithi}>Month: {mJainData.jainMonthName} • Tithi: {mJainData.jainTithiName}</Text>
+                    
+                    {mJainData.isParvaTithi && (
+                      <View style={styles.jainParvaBox}>
+                        <Text style={styles.jainParvaBoxTitle}>{mJainData.parvaType}</Text>
+                        <Text style={styles.jainParvaBoxSub}>{mJainData.pachkhanInfo}</Text>
+                      </View>
+                    )}
 
-              <View style={styles.timingRow}>
-                <Text style={styles.timingLabel}>⚠️ Rahu Kalam:</Text>
-                <Text style={[styles.timingVal, { color: Colors.inauspiciousRed, backgroundColor: '#FFEBEE' }]}>
-                  {mPanchang.inauspiciousMuhurats?.[0] ? `${mPanchang.inauspiciousMuhurats[0].startTime} - ${mPanchang.inauspiciousMuhurats[0].endTime}` : getRahuKalamForDate(mDate)}
-                </Text>
-              </View>
-            </View>
+                    {mJainData.jainFestivalName && (
+                      <View style={styles.jainFestBox}>
+                        <Text style={styles.jainFestBoxTitle}>{mJainData.jainFestivalName}</Text>
+                      </View>
+                    )}
+                  </View>
+                ) : null}
 
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={styles.fullPanchangBtn}
-                onPress={() => {
-                  const targetIso = selectedModalDateIso!;
-                  setSelectedModalDateIso(null);
-                  onSelectDate(targetIso);
-                }}
-              >
-                <Text style={styles.fullPanchangBtnText}>View Full Today Panchang ➔</Text>
-              </TouchableOpacity>
+                {/* Festival / Event Banner if exists */}
+                {festMatchModal && (
+                  <View style={styles.modalFestBanner}>
+                    <Text style={styles.modalFestTitle}>🚩 {festMatchModal.name}</Text>
+                    {festMatchModal.description ? (
+                      <Text style={styles.modalFestDesc}>{festMatchModal.description}</Text>
+                    ) : null}
+                  </View>
+                )}
+
+                {/* Mini Ritual Badge if exists */}
+                {mRitual && (
+                  <View style={styles.modalRitualBox}>
+                    <Text style={styles.modalRitualText}>{mRitual}</Text>
+                  </View>
+                )}
+
+                {/* Main 5 Panchang Limbs Grid */}
+                <Text style={styles.limbsSectionTitle}>📜 5 Limbs of Panchang (पंचांग अंग)</Text>
+
+                <View style={styles.limbsGrid}>
+                  <View style={styles.limbBox}>
+                    <Text style={styles.limbLabel}>🌙 Tithi (तिथि)</Text>
+                    <Text style={styles.limbVal}>{mTithiName} ({mPakshaFull})</Text>
+                  </View>
+
+                  <View style={styles.limbBox}>
+                    <Text style={styles.limbLabel}>⭐ Nakshatra (नक्षत्र)</Text>
+                    <Text style={styles.limbVal}>{mPanchang.nakshatra.name}</Text>
+                  </View>
+
+                  <View style={styles.limbBox}>
+                    <Text style={styles.limbLabel}>✨ Yoga (योग)</Text>
+                    <Text style={styles.limbVal}>{mPanchang.yoga.name}</Text>
+                  </View>
+
+                  <View style={styles.limbBox}>
+                    <Text style={styles.limbLabel}>🦁 Karana (करण)</Text>
+                    <Text style={styles.limbVal}>{mPanchang.karana.name}</Text>
+                  </View>
+
+                  <View style={styles.limbBox}>
+                    <Text style={styles.limbLabel}>📅 Month & Paksha</Text>
+                    <Text style={styles.limbVal}>{mMonthName} ({mPakshaFull})</Text>
+                  </View>
+
+                  <View style={styles.limbBox}>
+                    <Text style={styles.limbLabel}>🕒 Rahu Kalam (राहु काल)</Text>
+                    <Text style={styles.limbVal}>{getRahuKalamForDate(mDate)}</Text>
+                  </View>
+                </View>
+
+                {/* Sun & Moon Times */}
+                <View style={styles.sunMoonBox}>
+                  <Text style={styles.sunMoonItem}>🌅 Sunrise: <Text style={{ fontWeight: 'bold' }}>{mPanchang.sunMoon.sunrise}</Text></Text>
+                  <Text style={styles.sunMoonItem}>🌇 Sunset: <Text style={{ fontWeight: 'bold' }}>{mPanchang.sunMoon.sunset}</Text></Text>
+                </View>
+
+                {/* Action Button: Navigate to Daily Panchang */}
+                <TouchableOpacity
+                  style={styles.openDailyPanchangBtn}
+                  onPress={() => {
+                    onSelectDate(selectedModalDateIso);
+                    setSelectedModalDateIso(null);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.openDailyPanchangText}>View Complete Daily Panchang ➔</Text>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
           </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* Calendar Popup ℹ️ Info Modal displaying TWO lines */}
-      <Modal
-        visible={showPopupInfoModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowPopupInfoModal(false)}
-      >
-        <TouchableOpacity
-          style={styles.infoModalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowPopupInfoModal(false)}
-        >
-          <View style={styles.infoModalContent} onStartShouldSetResponder={() => true}>
-            <View style={styles.infoModalHeader}>
-              <Text style={styles.infoModalHeaderTitle}>✨ Muhurat & Rahu Kalam Guidance</Text>
-              <TouchableOpacity onPress={() => setShowPopupInfoModal(false)}>
-                <Text style={styles.infoModalClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Line 1: Auspicious Abhijit Muhurat */}
-            <View style={styles.infoBoxGood}>
-              <Text style={styles.infoBoxText}>{t('calendarPopupAbhijitInfo')}</Text>
-            </View>
-
-            {/* Line 2: Inauspicious Rahu Kalam */}
-            <View style={styles.infoBoxBad}>
-              <Text style={styles.infoBoxText}>{t('calendarPopupRahuInfo')}</Text>
-            </View>
-
-            <TouchableOpacity style={styles.gotItBtn} onPress={() => setShowPopupInfoModal(false)}>
-              <Text style={styles.gotItBtnText}>Understand / Got It</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        </Modal>
+      )}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.creamBg },
-  content: { paddingVertical: 12 },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.creamBg,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
   card: {
     backgroundColor: Colors.cardBg,
-    borderRadius: 18,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 16,
+    elevation: 4,
     borderWidth: 1,
     borderColor: Colors.border,
-    elevation: 3,
   },
+
+  // Multi-Calendar Switcher Toggle Bar
+  calendarToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E0E0E0',
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 12,
+    gap: 4,
+  },
+  calToggleBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  calToggleBtnActive: {
+    backgroundColor: Colors.maroon,
+  },
+  calToggleText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  calToggleTextActive: {
+    color: '#FFD700',
+  },
+
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  navBtn: {
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
-  },
-  navBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   titleContainer: {
     alignItems: 'center',
   },
   monthTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
   },
@@ -548,22 +595,36 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
+  navBtn: {
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  navBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
   weekdayRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0E0D0',
-    paddingBottom: 8,
+    justifyContent: 'space-around',
     marginBottom: 8,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
   weekdayText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: Colors.textSecondary,
+    width: '14%',
+    textAlign: 'center',
   },
   sunText: {
-    color: Colors.inauspiciousRed,
+    color: '#C62828',
   },
   grid: {
     flexDirection: 'row',
@@ -571,25 +632,27 @@ const styles = StyleSheet.create({
   },
   emptyDayCell: {
     width: '14.28%',
-    height: 70,
+    height: 76,
   },
   dayCell: {
     width: '14.28%',
-    height: 72,
-    padding: 4,
+    height: 76,
     borderWidth: 0.5,
     borderColor: '#F0E0D0',
-    borderRadius: 8,
+    padding: 3,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'space-between',
+  },
+  jainParvaCell: {
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FFC107',
   },
   holidayCell: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#FFF5F5',
   },
   todayCell: {
     borderColor: Colors.maroon,
     borderWidth: 2,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#FAF5EE',
   },
   dayTopRow: {
     flexDirection: 'row',
@@ -597,346 +660,375 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayNumText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: 'bold',
     color: Colors.textPrimary,
   },
   holidayDayNum: {
-    color: Colors.inauspiciousRed,
+    color: '#C62828',
   },
   moonIconText: {
-    fontSize: 10,
+    fontSize: 9,
   },
   monthPakshaText: {
     fontSize: 8,
     color: Colors.textMuted,
+    marginTop: 1,
+  },
+  jainMonthText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginTop: 1,
+  },
+  tithiText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.primaryDark,
+    marginTop: 2,
   },
   purnimaBadge: {
     backgroundColor: '#FFF8E1',
+    borderRadius: 4,
     paddingHorizontal: 2,
     paddingVertical: 1,
-    borderRadius: 4,
-    borderWidth: 0.5,
-    borderColor: '#FFE082',
+    marginTop: 2,
   },
   purnimaBadgeText: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#F57F17',
-    textAlign: 'center',
+    color: '#B78103',
   },
   amavasyaBadge: {
-    backgroundColor: '#ECEFF1',
+    backgroundColor: '#EDE7F6',
+    borderRadius: 4,
     paddingHorizontal: 2,
     paddingVertical: 1,
-    borderRadius: 4,
-    borderWidth: 0.5,
-    borderColor: '#CFD8DC',
+    marginTop: 2,
   },
   amavasyaBadgeText: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#37474F',
-    textAlign: 'center',
+    color: '#4A148C',
   },
   ekadashiBadge: {
     backgroundColor: '#E8F5E9',
+    borderRadius: 4,
     paddingHorizontal: 2,
     paddingVertical: 1,
-    borderRadius: 4,
+    marginTop: 2,
   },
   ekadashiBadgeText: {
     fontSize: 8,
     fontWeight: 'bold',
     color: '#2E7D32',
-    textAlign: 'center',
   },
-  festBadge: {
+  jainParvaBadge: {
     backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderWidth: 0.5,
+    borderRadius: 4,
     paddingHorizontal: 2,
     paddingVertical: 1,
+    marginTop: 2,
+  },
+  jainParvaBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#E65100',
+  },
+  jainFestBadge: {
+    backgroundColor: '#F3E5F5',
+    borderColor: '#CE93D8',
+    borderWidth: 0.5,
     borderRadius: 4,
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    marginTop: 2,
+  },
+  jainFestText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#6A1B9A',
+  },
+  festBadge: {
+    backgroundColor: '#FFEBEE',
+    borderRadius: 4,
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    marginTop: 2,
   },
   festBadgeText: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: Colors.maroon,
-    textAlign: 'center',
-  },
-  tithiText: {
-    fontSize: 9,
-    color: Colors.textSecondary,
-    fontWeight: '500',
+    color: '#C62828',
   },
   ritualBadge: {
-    backgroundColor: '#F3E5F5',
+    backgroundColor: '#FFF3E0',
+    borderRadius: 4,
     paddingHorizontal: 2,
     paddingVertical: 1,
-    borderRadius: 4,
+    marginTop: 2,
   },
   ritualBadgeText: {
     fontSize: 7,
-    color: '#7B1FA2',
+    color: Colors.maroon,
     fontWeight: 'bold',
   },
 
-  // Monthly Purnima & Amavasya Summary Card Styles
   summaryCard: {
     backgroundColor: Colors.cardBg,
-    borderRadius: 18,
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 14,
+    borderRadius: 20,
+    padding: 14,
     borderWidth: 1,
     borderColor: Colors.border,
     elevation: 3,
   },
   summaryCardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
     color: Colors.maroon,
     marginBottom: 12,
   },
   summarySection: {
-    marginVertical: 4,
+    marginBottom: 14,
   },
   summarySectionTitle: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#E65100',
+    color: Colors.primaryDark,
     marginBottom: 8,
   },
-  summarySectionTitleDark: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#37474F',
-    marginBottom: 8,
-  },
-  summaryItemBoxGood: {
-    backgroundColor: '#FFF8E1',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F57F17',
-    borderWidth: 1,
-    borderColor: '#FFE082',
-  },
-  summaryItemBoxDark: {
-    backgroundColor: '#ECEFF1',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#37474F',
-    borderWidth: 1,
-    borderColor: '#CFD8DC',
-  },
-  summaryItemTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  summaryMoonIcon: {
-    fontSize: 22,
-    marginRight: 10,
-  },
-  summaryDateText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  summaryTimingText: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  summaryRitualText: {
-    fontSize: 11,
-    color: Colors.maroon,
-    marginTop: 4,
-    fontWeight: 'bold',
-  },
-  summaryArrow: {
-    fontSize: 16,
-    color: Colors.maroon,
-    fontWeight: 'bold',
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: '#F0E0D0',
-    marginVertical: 10,
-  },
-  noDataText: {
+  emptySummaryText: {
     fontSize: 11,
     color: Colors.textMuted,
     fontStyle: 'italic',
   },
+  summaryItemBox: {
+    backgroundColor: '#FAF5EE',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  summaryItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  summaryDateText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  detailsMiniBtn: {
+    backgroundColor: Colors.maroon,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  detailsMiniBtnText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 6,
+  },
+  summarySubText: {
+    fontSize: 10,
+    color: Colors.textPrimary,
+    width: '48%',
+  },
+  ritualAdviceBox: {
+    backgroundColor: '#FFF3E0',
+    padding: 6,
+    borderRadius: 6,
+  },
+  ritualAdviceText: {
+    fontSize: 10,
+    color: Colors.maroon,
+    fontWeight: 'bold',
+  },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 16,
   },
   modalCard: {
-    width: '100%',
-    backgroundColor: Colors.cardBg,
-    borderRadius: 18,
+    backgroundColor: Colors.creamBg,
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.accentGold,
-    elevation: 8,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  modalDateTitle: {
+  modalTitleDate: {
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.maroon,
   },
-  modalSubtitle: {
+  modalSubLocation: {
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  modalCloseBtn: {
-    padding: 4,
+  closeBtn: {
+    backgroundColor: '#E0E0E0',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  modalCloseBtnText: {
-    fontSize: 18,
+  closeBtnText: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: Colors.textMuted,
-    fontWeight: 'bold',
   },
-  ritualAlertBox: {
-    backgroundColor: '#FFF3E0',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 12,
+  jainModalCard: {
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FFC107',
     borderWidth: 1,
-    borderColor: '#FFE0B2',
-  },
-  ritualAlertText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-  },
-  timingBox: {
-    backgroundColor: '#FAF5EE',
     borderRadius: 12,
     padding: 10,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#F0E0D0',
   },
-  timingBoxTitle: {
-    fontSize: 12,
+  jainModalTitle: {
+    fontSize: 13,
     fontWeight: 'bold',
     color: Colors.maroon,
-    marginBottom: 6,
   },
-  timingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 2,
-  },
-  timingLabel: {
+  jainModalTithi: {
     fontSize: 11,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  timingVal: {
-    fontSize: 11,
-    fontWeight: 'bold',
     color: Colors.textPrimary,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    marginTop: 2,
   },
-  modalActionRow: {
+  jainParvaBox: {
+    backgroundColor: '#FFF3E0',
+    padding: 8,
+    borderRadius: 8,
     marginTop: 6,
   },
-  fullPanchangBtn: {
-    backgroundColor: Colors.maroon,
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  fullPanchangBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+  jainParvaBoxTitle: {
+    fontSize: 11,
     fontWeight: 'bold',
+    color: '#E65100',
   },
-  infoModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  jainParvaBoxSub: {
+    fontSize: 10,
+    color: Colors.textPrimary,
+    marginTop: 2,
   },
-  infoModalContent: {
-    width: '100%',
-    backgroundColor: Colors.cardBg,
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: Colors.accentGold,
-    elevation: 10,
+  jainFestBox: {
+    backgroundColor: '#F3E5F5',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 6,
   },
-  infoModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  infoModalHeaderTitle: {
-    fontSize: 15,
+  jainFestBoxTitle: {
+    fontSize: 11,
     fontWeight: 'bold',
-    color: Colors.maroon,
-    flex: 1,
+    color: '#6A1B9A',
   },
-  infoModalClose: {
-    fontSize: 18,
-    color: Colors.textMuted,
-    fontWeight: 'bold',
-  },
-  infoBoxGood: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#A5D6A7',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-  },
-  infoBoxBad: {
+  modalFestBanner: {
     backgroundColor: '#FFEBEE',
     borderColor: '#EF9A9A',
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  infoBoxText: {
-    fontSize: 12,
-    color: Colors.textPrimary,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  gotItBtn: {
-    backgroundColor: Colors.maroon,
     borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
+    padding: 10,
+    marginBottom: 10,
   },
-  gotItBtnText: {
-    color: '#FFFFFF',
+  modalFestTitle: {
     fontSize: 13,
     fontWeight: 'bold',
+    color: '#C62828',
+  },
+  modalFestDesc: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginTop: 4,
+  },
+  modalRitualBox: {
+    backgroundColor: '#FFF3E0',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  modalRitualText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  limbsSectionTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 8,
+  },
+  limbsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 10,
+  },
+  limbBox: {
+    width: '48%',
+    backgroundColor: '#FAF5EE',
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  limbLabel: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  limbVal: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+  sunMoonBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#FAF5EE',
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  sunMoonItem: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+  },
+  openDailyPanchangBtn: {
+    backgroundColor: Colors.maroon,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  openDailyPanchangText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
 });
