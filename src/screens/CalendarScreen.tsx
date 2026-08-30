@@ -121,7 +121,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
   const monthFestivals = FESTIVALS.filter(f => {
     const parts = f.dateIso.split('-');
-    return parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month + 1;
+    const matchesMonth = parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month + 1;
+    if (!matchesMonth) return false;
+    if (calendarSystem === 'HINDU') return f.category !== 'JAIN_FESTIVAL';
+    if (calendarSystem === 'JAIN') return f.category === 'JAIN_FESTIVAL';
+    return true;
   });
 
   // Calculate Monthly Purnima & Amavasya occurrences
@@ -149,7 +153,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   let mMonthName = "";
   let mPakshaFull = "";
   let mRitual: string | null = null;
-  let festMatchModal = null;
+  let festMatchModal: typeof FESTIVALS[0] | null = null;
   let mPanchang = calculatePanchang(new Date(), selectedCity);
   let mJainData = getJainDayData(new Date(), 0);
 
@@ -160,8 +164,18 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
     mTithiName = getLocalizedTithi((mTithiIdx % 15) + 1, language).name;
     mMonthName = getHinduMonthName(mDate);
     mPakshaFull = getLocalizedPakshaName(mTithiIdx <= 14 ? 'SHUKLA' : 'KRISHNA', language);
-    mRitual = getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName);
-    festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso);
+    
+    // Strict Segregation: Hindu Rituals & Festivals only for HINDU mode!
+    mRitual = calendarSystem === 'HINDU' ? getPerpetualMiniRitual(mDate, mTithiIdx, mMonthName) : null;
+    
+    if (calendarSystem === 'JAIN') {
+      festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso && f.category === 'JAIN_FESTIVAL') || null;
+    } else if (calendarSystem === 'HINDU') {
+      festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso && f.category !== 'JAIN_FESTIVAL') || null;
+    } else {
+      festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso) || null;
+    }
+
     mPanchang = calculatePanchang(mDate, selectedCity);
     mJainData = getJainDayData(mDate, mTithiIdx);
   }
