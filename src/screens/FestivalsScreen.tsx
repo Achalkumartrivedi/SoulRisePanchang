@@ -69,10 +69,10 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'WORLD_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('WORLD_FESTIVAL')}
+          style={[styles.filterChip, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('MAJOR_FESTIVAL')}
         >
-          <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World Festivals</Text>
+          <Text style={[styles.filterText, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterTextActive]}>Festivals</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -83,17 +83,10 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('MAJOR_FESTIVAL')}
+          style={[styles.filterChip, selectedCategory === 'WORLD_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('WORLD_FESTIVAL')}
         >
-          <Text style={[styles.filterText, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterTextActive]}>Festivals</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'VRAT' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('VRAT')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'VRAT' && styles.filterTextActive]}>Vrat & Fasting</Text>
+          <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World Festivals</Text>
         </TouchableOpacity>
       </View>
 
