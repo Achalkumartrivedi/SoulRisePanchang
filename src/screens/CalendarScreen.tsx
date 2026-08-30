@@ -183,7 +183,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             activeOpacity={0.8}
           >
             <Text style={[styles.calToggleText, calendarSystem === 'HINDU' && styles.calToggleTextActive]}>
-              🕉️ Hindu Panchang
+              🕉️ Hindu Calendar
             </Text>
           </TouchableOpacity>
 
