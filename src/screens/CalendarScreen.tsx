@@ -437,6 +437,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                     <Text style={styles.jainModalTitle}>🪔 Jain Vira Nirvana Samvat {mJainData.viraSamvatYear}</Text>
                     <Text style={styles.jainModalTithi}>Month: {mJainData.jainMonthName} • Tithi: {mJainData.jainTithiName}</Text>
                     
+                    {mJainData.isInChaturmas && (
+                      <View style={styles.chaturmasModalBadge}>
+                        <Text style={styles.chaturmasModalBadgeText}>{mJainData.chaturmasStatus}</Text>
+                      </View>
+                    )}
+
                     {mJainData.isParvaTithi && (
                       <View style={styles.jainParvaBox}>
                         <Text style={styles.jainParvaBoxTitle}>{mJainData.parvaType}</Text>
@@ -449,6 +455,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                         <Text style={styles.jainFestBoxTitle}>{mJainData.jainFestivalName}</Text>
                       </View>
                     )}
+
+                    {/* Religious Activities for the Date */}
+                    <Text style={styles.jainActHeader}>🪔 Tithi Guidelines & Spiritual Activities:</Text>
+                    {mJainData.religiousActivities.map((act, idx) => (
+                      <Text key={idx} style={styles.jainActItem}>• {act}</Text>
+                    ))}
                   </View>
                 ) : null}
 
@@ -944,6 +956,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     color: '#6A1B9A',
+  },
+  chaturmasModalBadge: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 6,
+    marginTop: 6,
+  },
+  chaturmasModalBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#E65100',
+  },
+  jainActHeader: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  jainActItem: {
+    fontSize: 10,
+    color: Colors.textPrimary,
+    marginBottom: 3,
+    lineHeight: 15,
   },
   modalFestBanner: {
     backgroundColor: '#FFEBEE',

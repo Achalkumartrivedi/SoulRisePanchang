@@ -61,6 +61,13 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.filterChip, selectedCategory === 'JAIN_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('JAIN_FESTIVAL')}
+        >
+          <Text style={[styles.filterText, selectedCategory === 'JAIN_FESTIVAL' && styles.filterTextActive]}>🪔 Jain Parva</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.filterChip, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterChipActive]}
           onPress={() => setSelectedCategory('MAJOR_FESTIVAL')}
         >
@@ -74,6 +81,19 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           <Text style={[styles.filterText, selectedCategory === 'VRAT' && styles.filterTextActive]}>Vrat & Fasting</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Hero Jain Chaturmas & Paryushan Banner */}
+      {(selectedCategory === 'JAIN_FESTIVAL' || selectedCategory === 'ALL') && (
+        <View style={styles.jainChaturmasBanner}>
+          <Text style={styles.chaturmasTitle}>🪔 JAIN CHATURMAS 2026 (4-MONTH HOLY MAHAVRAT)</Text>
+          <Text style={styles.chaturmasDates}>
+            📅 July 29, 2026 (Ashadh Purnima) ➔ November 24, 2026 (Kartiki Purnima)
+          </Text>
+          <Text style={styles.chaturmasHighlight}>
+            ✨ <Text style={{ fontWeight: 'bold', color: '#FFD700' }}>Holiest Event:</Text> Paryushan Parva & Samvatsari (Sept 12, 2026 - Michhami Dukkadam Universal Forgiveness)
+          </Text>
+        </View>
+      )}
 
       {/* Festival List */}
       <FlatList
@@ -90,83 +110,85 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
 
           return (
             <TouchableOpacity
-              style={styles.card}
+              style={styles.festivalCard}
               onPress={() => setActiveModalFestival(item)}
               activeOpacity={0.8}
             >
-              <View style={styles.cardLeft}>
+              <View style={styles.cardHeaderRow}>
                 <View style={styles.dateBadge}>
-                  <Text style={styles.dateBadgeDay}>{dateObj.getDate()}</Text>
-                  <Text style={styles.dateBadgeMonth}>
-                    {dateObj.toLocaleDateString('en-US', { month: 'short' })}
-                  </Text>
+                  <Text style={styles.dateBadgeText}>{formattedDate}</Text>
                 </View>
 
-                <View style={styles.infoContainer}>
-                  <Text style={styles.festName}>{item.name}</Text>
-                  <Text style={styles.festHindi}>{item.hindiName}</Text>
-                  <Text style={styles.festSub}>Deity: {item.deity} • {item.tithiDescription}</Text>
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryBadgeText}>
+                    {item.category === 'JAIN_FESTIVAL'
+                      ? '🪔 Jain Parva'
+                      : item.category === 'MAJOR_FESTIVAL'
+                      ? 'Festival'
+                      : item.category === 'VRAT'
+                      ? 'Vrat'
+                      : 'Jayanti'}
+                  </Text>
                 </View>
               </View>
 
-              <Text style={styles.chevron}>➔</Text>
+              <Text style={styles.festName}>{item.name}</Text>
+              <Text style={styles.festHindiName}>{item.hindiName}</Text>
+
+              <View style={styles.deityRow}>
+                <Text style={styles.deityLabel}>Deity / Aradhana:</Text>
+                <Text style={styles.deityText}>{item.deity}</Text>
+              </View>
+
+              <Text style={styles.shortDesc} numberOfLines={2}>{item.description}</Text>
+
+              <View style={styles.cardFooterRow}>
+                <Text style={styles.tithiDesc}>📜 {item.tithiDescription}</Text>
+                <Text style={styles.viewDetailsText}>Tap for Details ➔</Text>
+              </View>
             </TouchableOpacity>
           );
         }}
       />
 
-      {/* Festival Details Modal */}
+      {/* Festival Detail Modal */}
       {activeModalFestival && (
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={!!activeModalFestival}
-          onRequestClose={() => setActiveModalFestival(null)}
-        >
+        <Modal visible={!!activeModalFestival} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{activeModalFestival.name}</Text>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle} numberOfLines={1}>{activeModalFestival.name}</Text>
+                <TouchableOpacity onPress={() => setActiveModalFestival(null)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
               <Text style={styles.modalHindi}>{activeModalFestival.hindiName}</Text>
 
-              <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>📅 Date & Tithi</Text>
-                <Text style={styles.modalValue}>{activeModalFestival.dateIso} ({activeModalFestival.tithiDescription})</Text>
+              <View style={styles.modalMetaRow}>
+                <Text style={styles.modalMetaTag}>📅 Date: {activeModalFestival.dateIso}</Text>
+                <Text style={styles.modalMetaTag}>📜 Tithi: {activeModalFestival.tithiDescription}</Text>
               </View>
 
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>🪔 Worshiped Deity</Text>
-                <Text style={styles.modalValue}>{activeModalFestival.deity}</Text>
+                <Text style={styles.modalSectionTitle}>📖 Significance & Story</Text>
+                <Text style={styles.modalSectionBody}>{activeModalFestival.description}</Text>
               </View>
 
               <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>📖 Significance</Text>
-                <Text style={styles.modalValue}>{activeModalFestival.description}</Text>
+                <Text style={styles.modalSectionTitle}>🙏 Rituals & Aradhana</Text>
+                <Text style={styles.modalSectionBody}>{activeModalFestival.rituals}</Text>
               </View>
 
-              <View style={styles.modalSection}>
-                <Text style={styles.modalLabel}>✨ Sacred Rituals & Observance</Text>
-                <Text style={styles.modalValue}>{activeModalFestival.rituals}</Text>
-              </View>
-
-              <View style={styles.modalBtnRow}>
-                <TouchableOpacity
-                  style={styles.modalJumpBtn}
-                  onPress={() => {
-                    const dIso = activeModalFestival.dateIso;
-                    setActiveModalFestival(null);
-                    onSelectFestivalDate(dIso);
-                  }}
-                >
-                  <Text style={styles.modalJumpText}>View Panchang for this Date</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.modalCloseBtn}
-                  onPress={() => setActiveModalFestival(null)}
-                >
-                  <Text style={styles.modalCloseText}>Close</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.viewPanchangBtn}
+                onPress={() => {
+                  onSelectFestivalDate(activeModalFestival.dateIso);
+                  setActiveModalFestival(null);
+                }}
+              >
+                <Text style={styles.viewPanchangBtnText}>View Panchang for this Date ➔</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>
@@ -181,23 +203,23 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.creamBg,
   },
   header: {
-    backgroundColor: Colors.primary,
-    paddingTop: 16,
-    paddingBottom: 14,
+    backgroundColor: Colors.maroon,
+    paddingTop: 12,
+    paddingBottom: 16,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#FFD700',
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: Colors.primaryLight,
+    fontSize: 11,
+    color: Colors.creamBg,
     marginTop: 2,
-    marginBottom: 10,
+    opacity: 0.9,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -206,31 +228,34 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    marginTop: 12,
   },
   searchIcon: {
     fontSize: 14,
-    marginRight: 6,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textPrimary,
+    paddingVertical: 2,
   },
   clearIcon: {
     fontSize: 12,
     color: Colors.textMuted,
+    marginLeft: 6,
   },
   filterBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 10,
+    gap: 8,
   },
   filterChip: {
-    backgroundColor: Colors.cardBg,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
+    borderRadius: 12,
+    backgroundColor: '#FAF5EE',
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -239,148 +264,217 @@ const styles = StyleSheet.create({
     borderColor: Colors.maroon,
   },
   filterText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: 'bold',
     color: Colors.textSecondary,
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: '#FFD700',
   },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.cardBg,
+
+  // Hero Jain Chaturmas Banner
+  jainChaturmasBanner: {
+    backgroundColor: '#4A0E17',
+    marginHorizontal: 16,
+    marginBottom: 8,
     borderRadius: 14,
     padding: 12,
-    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    elevation: 3,
+  },
+  chaturmasTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    letterSpacing: 0.5,
+  },
+  chaturmasDates: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    marginTop: 3,
+    fontWeight: 'bold',
+  },
+  chaturmasHighlight: {
+    fontSize: 10,
+    color: '#FFE0B2',
+    marginTop: 4,
+    lineHeight: 14,
+  },
+
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+  },
+  festivalCard: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    elevation: 1,
+    elevation: 3,
   },
-  cardLeft: {
+  cardHeaderRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    flex: 1,
+    marginBottom: 8,
   },
   dateBadge: {
-    backgroundColor: Colors.primaryDark,
-    borderRadius: 10,
-    width: 44,
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+    backgroundColor: Colors.maroon,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  dateBadgeDay: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  dateBadgeText: {
+    fontSize: 11,
     fontWeight: 'bold',
+    color: '#FFD700',
   },
-  dateBadgeMonth: {
-    color: Colors.accentGold,
+  categoryBadge: {
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  categoryBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  infoContainer: {
-    flex: 1,
+    color: Colors.textSecondary,
   },
   festName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  festHindi: {
-    fontSize: 12,
-    color: Colors.primaryDark,
-    fontWeight: '600',
-    marginTop: 1,
-  },
-  festSub: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    marginTop: 3,
-  },
-  chevron: {
-    fontSize: 14,
-    color: Colors.accentGold,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 20,
-    padding: 20,
-    width: '100%',
-    maxHeight: '85%',
-  },
-  modalTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: 'bold',
     color: Colors.maroon,
   },
-  modalHindi: {
-    fontSize: 14,
+  festHindiName: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  deityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  deityLabel: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginRight: 4,
+  },
+  deityText: {
+    fontSize: 11,
+    fontWeight: 'bold',
     color: Colors.primaryDark,
-    fontWeight: '600',
-    marginBottom: 14,
   },
-  modalSection: {
-    marginBottom: 10,
+  shortDesc: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    lineHeight: 16,
+    marginBottom: 8,
   },
-  modalLabel: {
+  cardFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  tithiDesc: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
+  viewDetailsText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: Colors.creamBg,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 16,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    flex: 1,
+    marginRight: 10,
+  },
+  closeBtn: {
+    backgroundColor: '#E0E0E0',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
     color: Colors.textMuted,
-    textTransform: 'uppercase',
   },
-  modalValue: {
+  modalHindi: {
     fontSize: 13,
-    color: Colors.textPrimary,
+    color: Colors.textSecondary,
     marginTop: 2,
-    lineHeight: 18,
+    marginBottom: 10,
   },
-  modalBtnRow: {
-    marginTop: 14,
+  modalMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: '#FAF5EE',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  modalJumpBtn: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    flex: 1,
-    marginRight: 8,
-    alignItems: 'center',
-  },
-  modalJumpText: {
-    color: '#FFFFFF',
+  modalMetaTag: {
+    fontSize: 11,
     fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  modalSection: {
+    marginBottom: 12,
+  },
+  modalSectionTitle: {
     fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
   },
-  modalCloseBtn: {
-    backgroundColor: '#E0E0E0',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalCloseText: {
+  modalSectionBody: {
+    fontSize: 11,
     color: Colors.textPrimary,
-    fontWeight: 'bold',
+    lineHeight: 17,
+  },
+  viewPanchangBtn: {
+    backgroundColor: Colors.maroon,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  viewPanchangBtnText: {
     fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFD700',
   },
 });

@@ -136,7 +136,7 @@ export interface PanchangDayData {
   lagnaInfo?: LagnaInfo;
 }
 
-export type FestivalCategory = 'MAJOR_FESTIVAL' | 'VRAT' | 'JAYANTI' | 'ECLIPSE';
+export type FestivalCategory = 'MAJOR_FESTIVAL' | 'VRAT' | 'JAYANTI' | 'ECLIPSE' | 'JAIN_FESTIVAL';
 
 export interface Festival {
   id: string;
