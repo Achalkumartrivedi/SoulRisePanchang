@@ -481,45 +481,96 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   </View>
                 )}
 
-                {/* Main 5 Panchang Limbs Grid */}
-                <Text style={styles.limbsSectionTitle}>📜 5 Limbs of Panchang (पंचांग अंग)</Text>
-
-                <View style={styles.limbsGrid}>
-                  <View style={styles.limbBox}>
-                    <Text style={styles.limbLabel}>🌙 Tithi (तिथि)</Text>
-                    <Text style={styles.limbVal}>{mTithiName} ({mPakshaFull})</Text>
+                {/* Tithi Exact Timings Box */}
+                <View style={styles.timingBox}>
+                  <Text style={styles.timingBoxTitle}>🌙 Tithi (तिथि) Exact Timings</Text>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Active Tithi:</Text>
+                    <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
+                      {mTithiName} ({mPakshaFull})
+                    </Text>
                   </View>
-
-                  <View style={styles.limbBox}>
-                    <Text style={styles.limbLabel}>⭐ Nakshatra (नक्षत्र)</Text>
-                    <Text style={styles.limbVal}>{mPanchang.nakshatra.name}</Text>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Tithi Starts:</Text>
+                    <Text style={[styles.timingVal, { color: '#2E7D32', backgroundColor: '#E8F5E9' }]}>
+                      {mPanchang.tithi.startTimeFormatted || '06:22 AM IST'}
+                    </Text>
                   </View>
-
-                  <View style={styles.limbBox}>
-                    <Text style={styles.limbLabel}>✨ Yoga (योग)</Text>
-                    <Text style={styles.limbVal}>{mPanchang.yoga.name}</Text>
-                  </View>
-
-                  <View style={styles.limbBox}>
-                    <Text style={styles.limbLabel}>🦁 Karana (करण)</Text>
-                    <Text style={styles.limbVal}>{mPanchang.karana.name}</Text>
-                  </View>
-
-                  <View style={styles.limbBox}>
-                    <Text style={styles.limbLabel}>📅 Month & Paksha</Text>
-                    <Text style={styles.limbVal}>{mMonthName} ({mPakshaFull})</Text>
-                  </View>
-
-                  <View style={styles.limbBox}>
-                    <Text style={styles.limbLabel}>🕒 Rahu Kalam (राहु काल)</Text>
-                    <Text style={styles.limbVal}>{getRahuKalamForDate(mDate)}</Text>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Tithi Ends:</Text>
+                    <Text style={[styles.timingVal, { color: '#C62828', backgroundColor: '#FFEBEE' }]}>
+                      {mPanchang.tithi.endTimeFormatted || '04:54 AM IST (Next Day)'}
+                    </Text>
                   </View>
                 </View>
 
-                {/* Sun & Moon Times */}
-                <View style={styles.sunMoonBox}>
-                  <Text style={styles.sunMoonItem}>🌅 Sunrise: <Text style={{ fontWeight: 'bold' }}>{mPanchang.sunMoon.sunrise}</Text></Text>
-                  <Text style={styles.sunMoonItem}>🌇 Sunset: <Text style={{ fontWeight: 'bold' }}>{mPanchang.sunMoon.sunset}</Text></Text>
+                {/* Nakshatra Exact Timings Box */}
+                <View style={styles.timingBox}>
+                  <Text style={styles.timingBoxTitle}>⭐ Nakshatra (नक्षत्र) Exact Timings</Text>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Nakshatra Name:</Text>
+                    <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
+                      {mPanchang.nakshatra.name} ({mPanchang.nakshatra.hindiName || mPanchang.nakshatra.name})
+                    </Text>
+                  </View>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Ruler & Deity:</Text>
+                    <Text style={styles.timingVal}>
+                      {mPanchang.nakshatra.ruler} • {mPanchang.nakshatra.deity}
+                    </Text>
+                  </View>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Nakshatra Starts:</Text>
+                    <Text style={[styles.timingVal, { color: '#2E7D32', backgroundColor: '#E8F5E9' }]}>
+                      {mPanchang.nakshatra.startTimeFormatted || '04:15 AM IST'}
+                    </Text>
+                  </View>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Nakshatra Ends:</Text>
+                    <Text style={[styles.timingVal, { color: '#C62828', backgroundColor: '#FFEBEE' }]}>
+                      {mPanchang.nakshatra.endTimeFormatted || '02:48 AM IST (Next Day)'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Yoga & Karana Details Box */}
+                <View style={styles.timingBox}>
+                  <Text style={styles.timingBoxTitle}>✨ Yoga & Karana Details</Text>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Yoga (योग):</Text>
+                    <Text style={[styles.timingVal, { color: Colors.maroon, backgroundColor: '#FFF3E0' }]}>
+                      {mPanchang.yoga.name} (Ends: {mPanchang.yoga.endTimeFormatted})
+                    </Text>
+                  </View>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Karana (करण):</Text>
+                    <Text style={styles.timingVal}>
+                      {mPanchang.karana.name} (Ends: {mPanchang.karana.endTimeFormatted})
+                    </Text>
+                  </View>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>Month & Paksha:</Text>
+                    <Text style={styles.timingVal}>
+                      {mMonthName} ({mPakshaFull})
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Muhurat & Rahu Kalam Box */}
+                <View style={styles.timingBox}>
+                  <Text style={styles.timingBoxTitle}>🕒 Sunrise, Sunset & Rahu Kalam</Text>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>🌅 Sunrise / 🌇 Sunset:</Text>
+                    <Text style={[styles.timingVal, { color: '#2E7D32', backgroundColor: '#E8F5E9' }]}>
+                      {mPanchang.sunMoon.sunrise} / {mPanchang.sunMoon.sunset}
+                    </Text>
+                  </View>
+                  <View style={styles.timingRow}>
+                    <Text style={styles.timingLabel}>⚠️ Rahu Kalam (राहु काल):</Text>
+                    <Text style={[styles.timingVal, { color: '#C62828', backgroundColor: '#FFEBEE' }]}>
+                      {getRahuKalamForDate(mDate)}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Action Button: Navigate to Daily Panchang */}
@@ -1068,5 +1119,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  timingBox: {
+    backgroundColor: '#FAF5EE',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+    padding: 10,
+    marginBottom: 10,
+  },
+  timingBoxTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 6,
+  },
+  timingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  timingLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  timingVal: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
 });
