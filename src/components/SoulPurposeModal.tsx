@@ -26,7 +26,7 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
   tithiName
 }) => {
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'PURPOSE' | 'PERSONALITY' | 'DEITY' | 'HARMONY'>('PURPOSE');
+  const [activeTab, setActiveTab] = useState<'PURPOSE' | 'SHOONYA' | 'EPIGENETICS' | 'DEITY'>('PURPOSE');
 
   const info = getLocalizedTithiSoulPurpose(tithiNumber, language);
 
@@ -41,7 +41,7 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
               <View style={styles.headerRow}>
                 <View style={styles.titleBadge}>
                   <Text style={styles.headerIcon}>✨</Text>
-                  <Text style={styles.headerTitle}>Soul Purpose on Earth</Text>
+                  <Text style={styles.headerTitle}>Soul Purpose & Tithi Secrets</Text>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
                   <Text style={styles.closeBtnText}>✕</Text>
@@ -57,11 +57,11 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
 
                   <View style={styles.groupPillRow}>
                     <View style={styles.groupBadge}>
-                      <Text style={styles.groupBadgeText}>Group: {info.groupType}</Text>
+                      <Text style={styles.groupBadgeText}>{info.groupType} Division ({info.element})</Text>
                     </View>
 
                     <View style={styles.deityBadge}>
-                      <Text style={styles.deityBadgeText}>Deity: {info.rulingDeity}</Text>
+                      <Text style={styles.deityBadgeText}>Planet: {info.rulingPlanet}</Text>
                     </View>
                   </View>
 
@@ -74,53 +74,101 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                     style={[styles.tabBtn, activeTab === 'PURPOSE' && styles.tabBtnActive]}
                     onPress={() => setActiveTab('PURPOSE')}
                   >
-                    <Text style={[styles.tabText, activeTab === 'PURPOSE' && styles.tabTextActive]}>🌟 Mission</Text>
+                    <Text style={[styles.tabText, activeTab === 'PURPOSE' && styles.tabTextActive]}>🌟 Purpose</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'PERSONALITY' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('PERSONALITY')}
+                    style={[styles.tabBtn, activeTab === 'SHOONYA' && styles.tabBtnActive]}
+                    onPress={() => setActiveTab('SHOONYA')}
                   >
-                    <Text style={[styles.tabText, activeTab === 'PERSONALITY' && styles.tabTextActive]}>👤 Traits</Text>
+                    <Text style={[styles.tabText, activeTab === 'SHOONYA' && styles.tabTextActive]}>🔥 Shoonya</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.tabBtn, activeTab === 'EPIGENETICS' && styles.tabBtnActive]}
+                    onPress={() => setActiveTab('EPIGENETICS')}
+                  >
+                    <Text style={[styles.tabText, activeTab === 'EPIGENETICS' && styles.tabTextActive]}>🧬 Epigenetics</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[styles.tabBtn, activeTab === 'DEITY' && styles.tabBtnActive]}
                     onPress={() => setActiveTab('DEITY')}
                   >
-                    <Text style={[styles.tabText, activeTab === 'DEITY' && styles.tabTextActive]}>🕉️ Deity</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'HARMONY' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('HARMONY')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'HARMONY' && styles.tabTextActive]}>🔮 Wisdom</Text>
+                    <Text style={[styles.tabText, activeTab === 'DEITY' && styles.tabTextActive]}>🕉️ Deities</Text>
                   </TouchableOpacity>
                 </View>
 
-                {/* Tab 1: Soul Purpose & Mission */}
+                {/* Tab 1: Soul Purpose & Western Lunation Phase */}
                 {activeTab === 'PURPOSE' && (
                   <View style={styles.detailCard}>
                     <Text style={styles.purposeTitle}>{info.soulPurposeTitle}</Text>
                     <Text style={styles.purposeBody}>{info.soulPurposeSummary}</Text>
 
+                    {/* Rudhyar Soli-Lunar Western Lunation Phase Synthesis */}
+                    <View style={styles.lunationCardBox}>
+                      <Text style={styles.lunationCardTitle}>🌙 Western Soli-Lunar Phase (Dane Rudhyar Synthesis)</Text>
+                      <Text style={styles.lunationPhaseName}>Phase: {info.westernLunationPhase}</Text>
+                      <Text style={styles.lunationPhaseDesc}>{info.westernPhaseDescription}</Text>
+                    </View>
+
                     <View style={styles.quoteBox}>
                       <Text style={styles.quoteIcon}>📜</Text>
                       <Text style={styles.quoteText}>
-                        "Vedic astrology holds that your Janma Tithi leaves a profound energetic imprint on your mind and emotions, directing your soul towards its chosen evolution on Earth."
+                        "Vedic & Western lunation synthesis reveals that your Janma Tithi establishes the foundational baseline of your emotional body, mind, and soul mission on Earth."
                       </Text>
                     </View>
                   </View>
                 )}
 
-                {/* Tab 2: Personality Traits & Strengths */}
-                {activeTab === 'PERSONALITY' && (
+                {/* Tab 2: Tithi Shoonya (Dagdha Rashi / Burnt Signs & Nullification) */}
+                {activeTab === 'SHOONYA' && (
                   <View style={styles.detailCard}>
-                    <Text style={styles.sectionHeader}>🎭 Character & Behavioral Tendencies</Text>
-                    <Text style={styles.traitsBody}>{info.personalityTraits}</Text>
+                    <Text style={styles.sectionHeader}>🔥 Tithi Shoonya (Dagdha Rashi / Burnt Signs)</Text>
+                    <Text style={styles.traitsBody}>
+                      Because the Sun and Moon cast an astrological shadow on certain zodiac coordinates, specific signs become "burnt" (Dagdha) on your birth Tithi:
+                    </Text>
 
-                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#2E7D32' }]}>⭐ Core Strengths</Text>
+                    <View style={styles.shoonyabox}>
+                      <Text style={styles.shoonyaLabel}>Burnt Zodiac Signs (Dagdha Rashis):</Text>
+                      <Text style={styles.shoonyaVal}>{info.dagdhaRashis}</Text>
+
+                      <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Primary Affected Planets:</Text>
+                      <Text style={styles.shoonyaVal}>{info.dagdhaLords}</Text>
+
+                      <Text style={[styles.shoonyaLabel, { marginTop: 6 }]}>Impact on Life Placements:</Text>
+                      <Text style={styles.shoonyaSubVal}>{info.dagdhaImpact}</Text>
+                    </View>
+
+                    {/* Principles of Nullification */}
+                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#2E7D32' }]}>
+                      ✨ Principles of Nullification (Dagdha Dosha Bhanga)
+                    </Text>
+                    <Text style={styles.nullificationText}>{info.nullificationRule}</Text>
+                    
+                    <View style={styles.nullificationTipsBox}>
+                      <Text style={styles.nullificationTipTitle}>💡 How Tithi Shoonya is Cancelled:</Text>
+                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Dusthana Placement:</Text> If the lord of the burnt sign sits in the 3rd, 6th, 8th, or 12th house, harm is restricted.</Text>
+                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Retrograde Exception:</Text> A Retrograde planet in its own Dagdha Rashi shines through the shadow.</Text>
+                      <Text style={styles.nullificationTipItem}>• <Text style={{ fontWeight: 'bold' }}>Malefic Conjunction:</Text> Conjunction with Saturn, Mars, or Rahu/Ketu Nakshatras neutralizes the shadow.</Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Tab 3: Epigenetic DNA & Dietary Remedies */}
+                {activeTab === 'EPIGENETICS' && (
+                  <View style={styles.detailCard}>
+                    <Text style={styles.sectionHeader}>🧬 Epigenetic Jyotish & Ancestral Karma (Pitru Karma)</Text>
+                    <Text style={styles.traitsBody}>
+                      Planetary placements act as dynamic epigenetic switches encoded in physical DNA. Dietary choices directly activate or balance these cosmic energies:
+                    </Text>
+
+                    <View style={styles.epigeneticBox}>
+                      <Text style={styles.epigeneticTitle}>🥗 Epigenetic Dietary Guidance:</Text>
+                      <Text style={styles.epigeneticBody}>{info.epigeneticDiet}</Text>
+                    </View>
+
+                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#2E7D32' }]}>⭐ Character Strengths</Text>
                     {info.strengths.map((s, idx) => (
                       <View key={idx} style={styles.bulletRow}>
                         <Text style={styles.greenCheck}>✓</Text>
@@ -128,7 +176,7 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                       </View>
                     ))}
 
-                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#C62828' }]}>⚠️ Life Challenges & Growth Points</Text>
+                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#C62828' }]}>⚠️ Potential Life Challenges</Text>
                     {info.challenges.map((c, idx) => (
                       <View key={idx} style={styles.bulletRow}>
                         <Text style={styles.redAlert}>!</Text>
@@ -138,49 +186,46 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                   </View>
                 )}
 
-                {/* Tab 3: Deity & Rituals */}
+                {/* Tab 4: Narada Purana Deities & Birthday Sadhana */}
                 {activeTab === 'DEITY' && (
                   <View style={styles.detailCard}>
-                    <Text style={styles.sectionHeader}>🕉️ Presiding Deity & Celestial Attributes</Text>
+                    <Text style={styles.sectionHeader}>🕉️ Narada Purana Presiding Deities</Text>
                     
                     <View style={styles.deityGrid}>
                       <View style={styles.deityItem}>
-                        <Text style={styles.deityLabel}>Presiding Deity:</Text>
-                        <Text style={styles.deityVal}>{info.rulingDeity}</Text>
+                        <Text style={styles.deityLabel}>Shukla Paksha Deity:</Text>
+                        <Text style={styles.deityVal}>{info.shuklaDeity}</Text>
+                      </View>
+
+                      <View style={styles.deityItem}>
+                        <Text style={styles.deityLabel}>Krishna Paksha Deity:</Text>
+                        <Text style={styles.deityVal}>{info.krishnaDeity}</Text>
+                      </View>
+
+                      <View style={styles.deityItem}>
+                        <Text style={styles.deityLabel}>Panchamahabhuta:</Text>
+                        <Text style={styles.deityVal}>{info.element}</Text>
                       </View>
 
                       <View style={styles.deityItem}>
                         <Text style={styles.deityLabel}>Ruling Planet:</Text>
                         <Text style={styles.deityVal}>{info.rulingPlanet}</Text>
                       </View>
-
-                      <View style={styles.deityItem}>
-                        <Text style={styles.deityLabel}>Tattva Element:</Text>
-                        <Text style={styles.deityVal}>{info.element}</Text>
-                      </View>
-
-                      <View style={styles.deityItem}>
-                        <Text style={styles.deityLabel}>Tithi Classification:</Text>
-                        <Text style={styles.deityVal}>{info.groupType} Tithi</Text>
-                      </View>
                     </View>
 
-                    <Text style={[styles.sectionHeader, { marginTop: 14 }]}>🌸 Recommended Remedies & Tithi Puja</Text>
+                    {/* Day-Based Color Remedy */}
+                    <View style={styles.colorRemedyBox}>
+                      <Text style={styles.colorRemedyTitle}>🎨 Day Color & Rahu Kaal Remedy:</Text>
+                      <Text style={styles.colorRemedyText}>{info.dayColorRemedy}</Text>
+                    </View>
+
+                    <Text style={[styles.sectionHeader, { marginTop: 14 }]}>🌸 Annual Birthday Sadhana & Rituals</Text>
                     <Text style={styles.ritualText}>{info.recommendedRituals}</Text>
-                  </View>
-                )}
 
-                {/* Tab 4: Cosmic Wisdom & Favorable Pairings */}
-                {activeTab === 'HARMONY' && (
-                  <View style={styles.detailCard}>
-                    <Text style={styles.sectionHeader}>🔮 Spiritual Guidance & Harmony</Text>
-                    <Text style={styles.guidanceText}>{info.spiritualGuidance}</Text>
-
-                    <View style={styles.harmonyBox}>
-                      <Text style={styles.harmonyTitle}>🌌 Tithi Harmony Principle:</Text>
-                      <Text style={styles.harmonyBody}>
-                        Days belonging to the same Guna classification ({info.groupType}) harmonize naturally with your mind. Worshiping the presiding deity ({info.rulingDeity}) on your birth Tithi each month brings immense clarity and peace.
-                      </Text>
+                    <View style={styles.sadhanaList}>
+                      <Text style={styles.sadhanaItem}>🛁 <Text style={{ fontWeight: 'bold' }}>Purification Bath:</Text> Bath with turmeric & sandalwood water on your birth Tithi.</Text>
+                      <Text style={styles.sadhanaItem}>🪔 <Text style={{ fontWeight: 'bold' }}>Sunrise Ghee Lamp:</Text> Light a ghee lamp at sunrise to align inner awareness.</Text>
+                      <Text style={styles.sadhanaItem}>🎁 <Text style={{ fontWeight: 'bold' }}>Acts of Charity (Dana):</Text> Feed the needy or donate to clear past karmic debts.</Text>
                     </View>
                   </View>
                 )}
@@ -253,7 +298,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   heroCard: {
-    backgroundColor: '#4A0E17', // Deep Maroon Gold Card
+    backgroundColor: '#4A0E17',
     borderRadius: 18,
     padding: 16,
     marginBottom: 14,
@@ -352,6 +397,31 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 14,
   },
+  lunationCardBox: {
+    backgroundColor: '#FAF5EE',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.accentGold,
+    marginBottom: 12,
+  },
+  lunationCardTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
+  },
+  lunationPhaseName: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.primaryDark,
+  },
+  lunationPhaseDesc: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 16,
+  },
   quoteBox: {
     flexDirection: 'row',
     backgroundColor: '#FAF5EE',
@@ -380,9 +450,79 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   traitsBody: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textPrimary,
-    lineHeight: 19,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  shoonyabox: {
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFB74D',
+    marginBottom: 12,
+  },
+  shoonyaLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  shoonyaVal: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#C62828',
+    marginTop: 2,
+  },
+  shoonyaSubVal: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  nullificationText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  nullificationTipsBox: {
+    backgroundColor: '#E8F5E9',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#A5D6A7',
+  },
+  nullificationTipTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    marginBottom: 4,
+  },
+  nullificationTipItem: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  epigeneticBox: {
+    backgroundColor: '#FAF5EE',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+    marginBottom: 12,
+  },
+  epigeneticTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
+  },
+  epigeneticBody: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    lineHeight: 16,
   },
   bulletRow: {
     flexDirection: 'row',
@@ -434,38 +574,43 @@ const styles = StyleSheet.create({
     color: Colors.maroon,
     marginTop: 2,
   },
-  ritualText: {
-    fontSize: 12,
-    color: Colors.textPrimary,
-    lineHeight: 18,
+  colorRemedyBox: {
     backgroundColor: '#FFF8F0',
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#FFCC80',
-  },
-  guidanceText: {
-    fontSize: 13,
-    color: Colors.textPrimary,
-    lineHeight: 19,
     marginBottom: 12,
   },
-  harmonyBox: {
-    backgroundColor: '#FAF5EE',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F0E0D0',
-  },
-  harmonyTitle: {
-    fontSize: 12,
+  colorRemedyTitle: {
+    fontSize: 11,
     fontWeight: 'bold',
     color: Colors.maroon,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  harmonyBody: {
+  colorRemedyText: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: Colors.textPrimary,
+    lineHeight: 16,
+  },
+  ritualText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+    lineHeight: 18,
+    backgroundColor: '#FAF5EE',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+    marginBottom: 10,
+  },
+  sadhanaList: {
+    marginTop: 4,
+  },
+  sadhanaItem: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginBottom: 6,
     lineHeight: 16,
   },
 });
