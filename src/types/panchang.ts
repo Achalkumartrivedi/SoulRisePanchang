@@ -160,7 +160,15 @@ export interface RashiDetail {
   rulingPlanet: string;
   dailyPrediction: string;
   predictionHindi: string;
+  careerPrediction: string;
+  financePrediction: string;
+  lovePrediction: string;
+  healthPrediction: string;
   luckyNumber: number;
-  luckyColor: string;
+  luckyColorName: string;
+  luckyColorHex: string;
+  luckyDirection: string;
+  auspiciousTimeWindow: string;
+  dailyRemedy: string;
   compatibility: string;
 }
