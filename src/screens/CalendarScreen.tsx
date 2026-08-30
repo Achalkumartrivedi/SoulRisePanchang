@@ -9,6 +9,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 import { getJainDayData } from '../engine/jainCalendarEngine';
+import { getWorldFestivalForDate } from '../engine/worldFestivalRepository';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -156,6 +157,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   let festMatchModal: typeof FESTIVALS[0] | null = null;
   let mPanchang = calculatePanchang(new Date(), selectedCity);
   let mJainData = getJainDayData(new Date(), 0);
+
+  let mWorldFest = selectedModalDateIso ? getWorldFestivalForDate(selectedModalDateIso) : null;
 
   if (selectedModalDateIso) {
     const parts = selectedModalDateIso.split('-');
@@ -475,6 +478,20 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                     {mJainData.religiousActivities.map((act, idx) => (
                       <Text key={idx} style={styles.jainActItem}>• {act}</Text>
                     ))}
+                  </View>
+                ) : calendarSystem === 'GLOBAL' && mWorldFest ? (
+                  <View style={styles.worldModalCard}>
+                    <Text style={styles.worldModalTitle}>
+                      {mWorldFest.countryFlag} {mWorldFest.country}: {mWorldFest.name}
+                    </Text>
+                    {mWorldFest.localName && mWorldFest.localName !== mWorldFest.name ? (
+                      <Text style={styles.worldModalSub}>{mWorldFest.localName}</Text>
+                    ) : null}
+                    <Text style={styles.worldModalDesc}>{mWorldFest.description}</Text>
+                    <View style={styles.worldSigBox}>
+                      <Text style={styles.worldSigTitle}>🌟 Significance & Traditions:</Text>
+                      <Text style={styles.worldSigText}>{mWorldFest.significance}</Text>
+                    </View>
                   </View>
                 ) : null}
 
@@ -1167,5 +1184,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+  },
+  worldModalCard: {
+    backgroundColor: '#E8EAF6',
+    borderColor: '#C5CAE9',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 12,
+  },
+  worldModalTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1A237E',
+  },
+  worldModalSub: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#3949AB',
+    marginTop: 2,
+  },
+  worldModalDesc: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  worldSigBox: {
+    backgroundColor: '#FFFFFF',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  worldSigTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#283593',
+  },
+  worldSigText: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 14,
   },
 });

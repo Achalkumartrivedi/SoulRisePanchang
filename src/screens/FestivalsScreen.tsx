@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../theme/colors';
 import { Festival, FestivalCategory } from '../types/panchang';
 import { FESTIVALS } from '../engine/festivalRepository';
 import { useLanguage } from '../context/LanguageContext';
+import { getWorldFestivalsByCountry, WorldFestivalItem } from '../engine/worldFestivalRepository';
 
 interface FestivalsScreenProps {
   onSelectFestivalDate: (dateIso: string) => void;
@@ -11,8 +12,9 @@ interface FestivalsScreenProps {
 
 export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestivalDate }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<FestivalCategory | 'ALL'>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<FestivalCategory | 'ALL' | 'WORLD_FESTIVAL'>('ALL');
   const [activeModalFestival, setActiveModalFestival] = useState<Festival | null>(null);
+  const [activeWorldFestival, setActiveWorldFestival] = useState<WorldFestivalItem | null>(null);
 
   const filteredFestivals = FESTIVALS.filter(f => {
     const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -22,6 +24,12 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
     const matchesCategory = selectedCategory === 'ALL' || f.category === selectedCategory;
 
     return matchesSearch && matchesCategory;
+  });
+
+  const worldCountryGroups = getWorldFestivalsByCountry().filter(g => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return g.country.toLowerCase().includes(q) || g.festivals.some(f => f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q));
   });
 
   const { t } = useLanguage();
@@ -61,6 +69,13 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={[styles.filterChip, selectedCategory === 'WORLD_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('WORLD_FESTIVAL')}
+        >
+          <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World Festivals</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.filterChip, selectedCategory === 'JAIN_FESTIVAL' && styles.filterChipActive]}
           onPress={() => setSelectedCategory('JAIN_FESTIVAL')}
         >
@@ -96,60 +111,140 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
       )}
 
       {/* Festival List */}
-      <FlatList
-        data={filteredFestivals}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => {
-          const dateObj = new Date(item.dateIso + 'T00:00:00');
-          const formattedDate = dateObj.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          });
+      {selectedCategory === 'WORLD_FESTIVAL' ? (
+        <FlatList
+          data={worldCountryGroups}
+          keyExtractor={item => item.country}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item: group }) => (
+            <View style={styles.countryGroupCard}>
+              <View style={styles.countryHeaderBox}>
+                <Text style={styles.countryHeaderText}>{group.countryFlag} {group.country}</Text>
+              </View>
+              {group.festivals.map(wf => (
+                <TouchableOpacity
+                  key={wf.id}
+                  style={styles.worldFestItemCard}
+                  onPress={() => setActiveWorldFestival(wf)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.worldItemHeader}>
+                    <Text style={styles.worldItemTitle}>{wf.name}</Text>
+                    <Text style={styles.worldItemDate}>{wf.dateIso}</Text>
+                  </View>
+                  {wf.localName && wf.localName !== wf.name ? (
+                    <Text style={styles.worldItemLocal}>{wf.localName}</Text>
+                  ) : null}
+                  <Text style={styles.worldItemDesc} numberOfLines={2}>{wf.description}</Text>
+                  <Text style={styles.viewDetailsText}>Tap for Country & Celebration Details ➔</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        />
+      ) : (
+        <FlatList
+          data={filteredFestivals}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => {
+            const dateObj = new Date(item.dateIso + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
 
-          return (
-            <TouchableOpacity
-              style={styles.festivalCard}
-              onPress={() => setActiveModalFestival(item)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.dateBadge}>
-                  <Text style={styles.dateBadgeText}>{formattedDate}</Text>
+            return (
+              <TouchableOpacity
+                style={styles.festivalCard}
+                onPress={() => setActiveModalFestival(item)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.cardHeaderRow}>
+                  <View style={styles.dateBadge}>
+                    <Text style={styles.dateBadgeText}>{formattedDate}</Text>
+                  </View>
+
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryBadgeText}>
+                      {item.category === 'JAIN_FESTIVAL'
+                        ? '🪔 Jain Parva'
+                        : item.category === 'MAJOR_FESTIVAL'
+                        ? 'Festival'
+                        : item.category === 'VRAT'
+                        ? 'Vrat'
+                        : 'Jayanti'}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>
-                    {item.category === 'JAIN_FESTIVAL'
-                      ? '🪔 Jain Parva'
-                      : item.category === 'MAJOR_FESTIVAL'
-                      ? 'Festival'
-                      : item.category === 'VRAT'
-                      ? 'Vrat'
-                      : 'Jayanti'}
+                <Text style={styles.festName}>{item.name}</Text>
+                <Text style={styles.festHindiName}>{item.hindiName}</Text>
+
+                <View style={styles.deityRow}>
+                  <Text style={styles.deityLabel}>Deity / Aradhana:</Text>
+                  <Text style={styles.deityText}>{item.deity}</Text>
+                </View>
+
+                <Text style={styles.shortDesc} numberOfLines={2}>{item.description}</Text>
+
+                <View style={styles.cardFooterRow}>
+                  <Text style={styles.tithiDesc}>📜 {item.tithiDescription}</Text>
+                  <Text style={styles.viewDetailsText}>Tap for Details ➔</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
+
+      {/* World Festival Detail Modal */}
+      {activeWorldFestival && (
+        <Modal visible={!!activeWorldFestival} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  {activeWorldFestival.countryFlag} {activeWorldFestival.country}: {activeWorldFestival.name}
+                </Text>
+                <TouchableOpacity onPress={() => setActiveWorldFestival(null)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 380 }}>
+                {activeWorldFestival.localName && activeWorldFestival.localName !== activeWorldFestival.name ? (
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: Colors.maroon, marginBottom: 6 }}>
+                    Native Name: {activeWorldFestival.localName}
                   </Text>
-                </View>
-              </View>
+                ) : null}
+                
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.textSecondary, marginBottom: 8 }}>
+                  📅 Date: {activeWorldFestival.dateIso}
+                </Text>
 
-              <Text style={styles.festName}>{item.name}</Text>
-              <Text style={styles.festHindiName}>{item.hindiName}</Text>
+                <Text style={styles.modalSectionTitle}>📖 Celebration & Overview</Text>
+                <Text style={styles.modalText}>{activeWorldFestival.description}</Text>
 
-              <View style={styles.deityRow}>
-                <Text style={styles.deityLabel}>Deity / Aradhana:</Text>
-                <Text style={styles.deityText}>{item.deity}</Text>
-              </View>
+                <Text style={[styles.modalSectionTitle, { marginTop: 12 }]}>🌟 Cultural & Historical Significance</Text>
+                <Text style={styles.modalText}>{activeWorldFestival.significance}</Text>
 
-              <Text style={styles.shortDesc} numberOfLines={2}>{item.description}</Text>
-
-              <View style={styles.cardFooterRow}>
-                <Text style={styles.tithiDesc}>📜 {item.tithiDescription}</Text>
-                <Text style={styles.viewDetailsText}>Tap for Details ➔</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
+                <TouchableOpacity
+                  style={styles.selectDateBtn}
+                  onPress={() => {
+                    const iso = activeWorldFestival.dateIso;
+                    setActiveWorldFestival(null);
+                    onSelectFestivalDate(iso);
+                  }}
+                >
+                  <Text style={styles.selectDateBtnText}>View in Calendar ➔</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       {/* Festival Detail Modal */}
       {activeModalFestival && (
@@ -473,6 +568,87 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   viewPanchangBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  countryGroupCard: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    elevation: 2,
+  },
+  countryHeaderBox: {
+    backgroundColor: '#E8EAF6',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3F51B5',
+  },
+  countryHeaderText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#1A237E',
+  },
+  worldFestItemCard: {
+    backgroundColor: '#FAF5EE',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F0E0D0',
+  },
+  worldItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  worldItemTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    flex: 1,
+    marginRight: 6,
+  },
+  worldItemDate: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1A237E',
+    backgroundColor: '#E8EAF6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  worldItemLocal: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginTop: 1,
+  },
+  worldItemDesc: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  modalText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+    lineHeight: 18,
+  },
+  selectDateBtn: {
+    backgroundColor: Colors.maroon,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  selectDateBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#FFD700',
