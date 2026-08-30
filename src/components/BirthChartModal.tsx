@@ -19,6 +19,7 @@ import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
 import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
 import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, SavedKundaliProfile } from '../utils/profileStorage';
+import { SoulPurposeModal } from './SoulPurposeModal';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -35,6 +36,32 @@ const DAYS_LIST = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padSta
 const YEARS_LIST = Array.from({ length: 87 }, (_, i) => (2026 - i).toString());
 const HOURS_LIST = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 const MINUTES_LIST = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+const getNumericTithiNumber = (tithiStr: string): number => {
+  if (!tithiStr) return 1;
+  const match = tithiStr.match(/(\d+)/);
+  if (match && match[1]) {
+    return parseInt(match[1], 10);
+  }
+  const lower = tithiStr.toLowerCase();
+  if (lower.includes('pratipada')) return 1;
+  if (lower.includes('dvitiya') || lower.includes('dwitiya')) return 2;
+  if (lower.includes('tritiya')) return 3;
+  if (lower.includes('chaturthi')) return 4;
+  if (lower.includes('panchami')) return 5;
+  if (lower.includes('shashthi')) return 6;
+  if (lower.includes('saptami')) return 7;
+  if (lower.includes('ashtami')) return 8;
+  if (lower.includes('navami')) return 9;
+  if (lower.includes('dashami')) return 10;
+  if (lower.includes('ekadashi')) return 11;
+  if (lower.includes('dwadashi')) return 12;
+  if (lower.includes('trayodashi')) return 13;
+  if (lower.includes('chaturdashi')) return 14;
+  if (lower.includes('purnima')) return 15;
+  if (lower.includes('amavasya')) return 30;
+  return 1;
+};
 
 export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   visible,
@@ -75,9 +102,10 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [searchResults, setSearchResults] = useState<GeocodedLocation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Dropdown Picker Modal States
+  // Dropdown Picker & Sub-Modal States
   const [showSavedProfilesModal, setShowSavedProfilesModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showSoulPurposeModal, setShowSoulPurposeModal] = useState(false);
   const [showDayModal, setShowDayModal] = useState(false);
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
@@ -508,7 +536,16 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         <Text style={styles.detailCardTitle}>📋 Birth Panchang & Avakahada Particulars</Text>
                         
                         <View style={styles.particularsGrid}>
-                          <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornTithi}:</Text><Text style={styles.partVal}>{kundali.particulars.bornTithi}</Text></View>
+                          {/* Clickable Born Tithi Item for Soul Purpose */}
+                          <TouchableOpacity
+                            style={[styles.partItem, styles.tithiPartItem]}
+                            onPress={() => setShowSoulPurposeModal(true)}
+                          >
+                            <Text style={styles.partLabel}>{loc.bornTithi}:</Text>
+                            <Text style={styles.partVal}>{kundali.particulars.bornTithi}</Text>
+                            <Text style={styles.tithiTapHint}>✨ Tap for Soul Purpose</Text>
+                          </TouchableOpacity>
+
                           <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornPaksha}:</Text><Text style={styles.partVal}>{kundali.particulars.bornPaksha}</Text></View>
                           <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornNakshatra}:</Text><Text style={styles.partVal}>{kundali.particulars.bornNakshatra} (Pada {kundali.particulars.bornPada})</Text></View>
                           <View style={styles.partItem}><Text style={styles.partLabel}>{loc.bornYoga}:</Text><Text style={styles.partVal}>{kundali.particulars.bornYoga}</Text></View>
@@ -613,6 +650,22 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                       </View>
                     )}
 
+                    {/* Prominent Magical Soul Purpose Button at the Bottom */}
+                    <TouchableOpacity
+                      style={styles.soulPurposeMagicBtn}
+                      onPress={() => setShowSoulPurposeModal(true)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.magicBtnRow}>
+                        <Text style={styles.magicBtnIcon}>✨</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.soulPurposeMagicBtnText}>Soul Purpose on Earth</Text>
+                          <Text style={styles.soulPurposeMagicBtnSub}>Discover your birth Tithi personality, deity & cosmic mission</Text>
+                        </View>
+                        <Text style={styles.magicBtnArrow}>➔</Text>
+                      </View>
+                    </TouchableOpacity>
+
                   </View>
                 )}
               </ScrollView>
@@ -620,6 +673,16 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
+
+      {/* Soul Purpose Modal */}
+      {kundali && (
+        <SoulPurposeModal
+          visible={showSoulPurposeModal}
+          onClose={() => setShowSoulPurposeModal(false)}
+          tithiNumber={getNumericTithiNumber(kundali.particulars.bornTithi)}
+          tithiName={kundali.particulars.bornTithi}
+        />
+      )}
 
       {/* Saved Profiles Dropdown Modal */}
       <Modal visible={showSavedProfilesModal} animationType="fade" transparent>
@@ -1290,6 +1353,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F0E0D0',
   },
+  tithiPartItem: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderWidth: 1.5,
+  },
+  tithiTapHint: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginTop: 3,
+  },
   partLabel: {
     fontSize: 10,
     color: Colors.textSecondary,
@@ -1300,6 +1374,42 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.textPrimary,
     marginTop: 2,
+  },
+
+  // Magical Soul Purpose Button
+  soulPurposeMagicBtn: {
+    backgroundColor: '#4A0E17',
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 10,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: '#FFD700',
+    elevation: 5,
+  },
+  magicBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  magicBtnIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  soulPurposeMagicBtnText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  soulPurposeMagicBtnSub: {
+    fontSize: 11,
+    color: '#FFE0B2',
+    marginTop: 2,
+  },
+  magicBtnArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginLeft: 8,
   },
 
   // Planet Rows
