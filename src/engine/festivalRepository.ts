@@ -566,7 +566,7 @@ export const FESTIVALS: Festival[] = [
     name: '🪈 Krishna Janmashtami',
     hindiName: '🪈 श्री कृष्ण जन्माष्टमी',
     gujaratiName: '🪈 શ્રીકૃષ્ણ જન્માષ્ટમી',
-    dateIso: '2026-09-04',
+    dateIso: '2026-09-05',
     category: 'MAJOR_FESTIVAL',
     deity: 'Lord Sri Krishna',
     description: 'Celebrates the birth of Lord Krishna at midnight in Mathura.',
