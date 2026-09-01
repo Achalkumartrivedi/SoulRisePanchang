@@ -8,20 +8,23 @@ import {
   ScrollView
 } from 'react-native';
 import { Colors } from '../theme/colors';
+import { isToday, isTimeInPastOnDate, getNextUpcomingTimeSlot } from '../engine/dateTimeValidator';
 
 interface TimePickerModalProps {
   visible: boolean;
   initialTimeStr?: string; // e.g. "08:30 AM" or "18:30"
+  targetDate?: Date;       // Date for past time checking
   onClose: () => void;
   onConfirm: (formattedTime: string) => void;
 }
 
 const VEDIC_QUICK_PRESETS = [
-  { label: '🌅 06:00 AM', time: '06:00 AM', desc: 'Brahma Muhurat & Morning Chant' },
-  { label: '☀️ 08:30 AM', time: '08:30 AM', desc: 'Morning Puja & Arghya' },
-  { label: '🕛 12:00 PM', time: '12:00 PM', desc: 'Madhyahna / Abhijit Muhurat' },
-  { label: '🌇 05:30 PM', time: '05:30 PM', desc: 'Sandhya Aarti & Diya' },
-  { label: '🌙 08:00 PM', time: '08:00 PM', desc: 'Ratri Mantra & Jaap' }
+  { label: '🌅 06:00 AM', time: '06:00 AM' },
+  { label: '☀️ 08:30 AM', time: '08:30 AM' },
+  { label: '🕛 12:00 PM', time: '12:00 PM' },
+  { label: '🌇 05:30 PM', time: '05:30 PM' },
+  { label: '🌙 08:00 PM', time: '08:00 PM' },
+  { label: '🌙 09:30 PM', time: '09:30 PM' }
 ];
 
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1); // 1..12
@@ -30,6 +33,7 @@ const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50
 export const TimePickerModal: React.FC<TimePickerModalProps> = ({
   visible,
   initialTimeStr = '08:00 AM',
+  targetDate = new Date(),
   onClose,
   onConfirm
 }) => {
@@ -47,7 +51,6 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
     try {
       const clean = timeStr.trim().toUpperCase();
       const isPM = clean.includes('PM');
-      const isAM = clean.includes('AM');
       const period: 'AM' | 'PM' = isPM ? 'PM' : 'AM';
       
       const numOnly = clean.replace(/(AM|PM)/g, '').trim();
@@ -68,15 +71,29 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
     }
   };
 
-  const handleConfirm = () => {
+  const getFormattedCurrentSelection = () => {
     const formattedHour = selectedHour < 10 ? `0${selectedHour}` : `${selectedHour}`;
-    const formatted = `${formattedHour}:${selectedMin} ${selectedPeriod}`;
-    onConfirm(formatted);
+    return `${formattedHour}:${selectedMin} ${selectedPeriod}`;
+  };
+
+  const currentSelectionTimeStr = getFormattedCurrentSelection();
+  const isSelectionInPast = isToday(targetDate) && isTimeInPastOnDate(targetDate, currentSelectionTimeStr);
+
+  const handleConfirm = () => {
+    if (isSelectionInPast) {
+      // Auto adjust to next upcoming slot if user taps confirm on a past time for today
+      const upcoming = getNextUpcomingTimeSlot(targetDate);
+      parseAndSetInitialTime(upcoming);
+      onConfirm(upcoming);
+    } else {
+      onConfirm(currentSelectionTimeStr);
+    }
     onClose();
   };
 
-  const handleApplyPreset = (presetTime: string) => {
-    parseAndSetInitialTime(presetTime);
+  const handleJumpNextUpcoming = () => {
+    const upcoming = getNextUpcomingTimeSlot(targetDate);
+    parseAndSetInitialTime(upcoming);
   };
 
   return (
@@ -85,33 +102,54 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>🕒 Select Time (समय चुनें)</Text>
+            <Text style={styles.modalTitle}>🕒 Select Time Slot (समय चुनें)</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Current Formatted Time Preview */}
-          <View style={styles.previewBox}>
+          {/* Current Formatted Time Preview Banner */}
+          <View style={[styles.previewBox, isSelectionInPast && styles.previewBoxPast]}>
             <Text style={styles.previewTimeText}>
               {selectedHour < 10 ? `0${selectedHour}` : selectedHour}:{selectedMin} {selectedPeriod}
             </Text>
+            {isSelectionInPast && (
+              <Text style={styles.pastWarningText}>
+                ⚠️ Time has passed today! Tap "Next Upcoming Time"
+              </Text>
+            )}
           </View>
 
-          <ScrollView style={{ maxHeight: 380 }} nestedScrollEnabled>
+          {/* Next Upcoming Jump Button */}
+          {isToday(targetDate) && (
+            <TouchableOpacity
+              style={styles.jumpUpcomingBtn}
+              onPress={handleJumpNextUpcoming}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.jumpUpcomingText}>⚡ Next Upcoming Time: {getNextUpcomingTimeSlot(targetDate)}</Text>
+            </TouchableOpacity>
+          )}
+
+          <ScrollView style={{ maxHeight: 340 }} nestedScrollEnabled>
             {/* Vedic Quick Presets */}
-            <Text style={styles.sectionLabel}>⚡ Quick Vedic Time Presets:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
-              {VEDIC_QUICK_PRESETS.map((p, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.presetChip}
-                  onPress={() => handleApplyPreset(p.time)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.presetChipText}>{p.label}</Text>
-                </TouchableOpacity>
-              ))}
+            <Text style={styles.sectionLabel}>⚡ Quick Time Presets:</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+              {VEDIC_QUICK_PRESETS.map((p, idx) => {
+                const isPresetPast = isToday(targetDate) && isTimeInPastOnDate(targetDate, p.time);
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[styles.presetChip, isPresetPast && styles.presetChipPast]}
+                    onPress={() => parseAndSetInitialTime(p.time)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.presetChipText, isPresetPast && styles.presetChipTextPast]}>
+                      {p.label} {isPresetPast ? '(Passed)' : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             {/* AM / PM Toggle Pill */}
@@ -170,8 +208,16 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
           </ScrollView>
 
           {/* Confirm Button */}
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm} activeOpacity={0.8}>
-            <Text style={styles.confirmBtnText}>✓ Set Time Slot ({selectedHour}:{selectedMin} {selectedPeriod})</Text>
+          <TouchableOpacity
+            style={[styles.confirmBtn, isSelectionInPast && { backgroundColor: '#E65100' }]}
+            onPress={handleConfirm}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.confirmBtnText}>
+              {isSelectionInPast
+                ? `⚡ Auto-Set Next Upcoming Time (${getNextUpcomingTimeSlot(targetDate)})`
+                : `✓ Set Time Slot (${selectedHour}:${selectedMin} ${selectedPeriod})`}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -196,10 +242,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     borderBottomWidth: 1,
     borderColor: '#E8D8C8',
-    paddingBottom: 8
+    paddingBottom: 6
   },
   modalTitle: {
     fontSize: 15,
@@ -217,9 +263,12 @@ const styles = StyleSheet.create({
   previewBox: {
     backgroundColor: Colors.maroon,
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     alignItems: 'center',
-    marginBottom: 12
+    marginBottom: 8
+  },
+  previewBoxPast: {
+    backgroundColor: '#C62828'
   },
   previewTimeText: {
     fontSize: 22,
@@ -227,12 +276,33 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     letterSpacing: 1
   },
+  pastWarningText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 2
+  },
+  jumpUpcomingBtn: {
+    backgroundColor: '#E8F5E9',
+    borderWidth: 1,
+    borderColor: '#A5D6A7',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  jumpUpcomingText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#2E7D32'
+  },
   sectionLabel: {
     fontSize: 11,
     fontWeight: 'bold',
     color: Colors.maroon,
-    marginTop: 8,
-    marginBottom: 6
+    marginTop: 6,
+    marginBottom: 4
   },
   presetChip: {
     backgroundColor: '#FFF3E0',
@@ -243,10 +313,17 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0B2',
     marginRight: 6
   },
+  presetChipPast: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#E0E0E0'
+  },
   presetChipText: {
     fontSize: 11,
     fontWeight: 'bold',
     color: Colors.maroon
+  },
+  presetChipTextPast: {
+    color: '#9E9E9E'
   },
   periodRow: {
     flexDirection: 'row',
@@ -306,11 +383,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 10,
     elevation: 2
   },
   confirmBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#FFD700'
   }

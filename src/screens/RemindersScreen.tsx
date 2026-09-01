@@ -888,6 +888,7 @@ export const RemindersScreen: React.FC = () => {
       <TimePickerModal
         visible={timePickerVisible}
         initialTimeStr={activeTimeForPicker}
+        targetDate={new Date()}
         onClose={() => setTimePickerVisible(false)}
         onConfirm={handleConfirmTimePicker}
       />

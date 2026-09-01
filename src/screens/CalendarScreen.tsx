@@ -14,6 +14,7 @@ import { getDharmaCalendarDayData, DharmaDayData } from '../engine/dharmaCalenda
 import { saveReminder } from '../engine/reminderStorage';
 import { analyzeMuhuratSafety } from '../engine/muhuratSafetyChecker';
 import { TimePickerModal } from '../components/TimePickerModal';
+import { isDateInPast, isTimeInPastOnDate, getNextUpcomingTimeSlot } from '../engine/dateTimeValidator';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -603,11 +604,19 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 <TouchableOpacity
                   style={[styles.openDailyPanchangBtn, { backgroundColor: '#FF6F00', marginBottom: 8 }]}
                   onPress={() => {
+                    if (isDateInPast(mDate)) {
+                      Alert.alert(
+                        '⚠️ Past Date Blocked',
+                        `Reminders cannot be scheduled for past dates (${mDate.toDateString()}). Please select today or a future date.`
+                      );
+                      return;
+                    }
                     const dData = getDharmaCalendarDayData(mDate, calendarSystem, language);
                     const defaultRemTitle = festMatchModal ? festMatchModal.name : `${dData.dayLabel} Reminder`;
+                    const defaultUpcomingTime = getNextUpcomingTimeSlot(mDate);
                     setDateRemTitle(defaultRemTitle);
                     setDateRemNotes(`Reminder for ${dData.monthName} (${dData.dayLabel})`);
-                    setDateRemTimeStr('10:30 AM');
+                    setDateRemTimeStr(defaultUpcomingTime);
                     setDateRemModalVisible(true);
                   }}
                   activeOpacity={0.8}
@@ -728,6 +737,13 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 <TouchableOpacity
                   style={[styles.openDailyPanchangBtn, { backgroundColor: Colors.maroon, marginTop: 6 }]}
                   onPress={async () => {
+                    if (isTimeInPastOnDate(mDate, dateRemTimeStr)) {
+                      Alert.alert(
+                        '⚠️ Past Time Blocked',
+                        `Selected time slot (${dateRemTimeStr}) has already passed today. Please pick an upcoming time slot.`
+                      );
+                      return;
+                    }
                     const safety = analyzeMuhuratSafety(mDate, dateRemTimeStr, selectedCity);
                     await saveReminder({
                       id: `rem-date-${Date.now()}`,
