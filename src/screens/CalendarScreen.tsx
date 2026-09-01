@@ -351,10 +351,9 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   <Text style={styles.moonIconText}>{moonIcon}</Text>
                 </View>
 
-                {/* Clean Paksha & Tithi Number Watermark Row */}
-                <Text style={styles.monthPakshaText} numberOfLines={1} adjustsFontSizeToFit>
-                  <Text style={styles.pakshaLabelText}>{pakshaTitle} </Text>
-                  <Text style={styles.tithiNumWatermark}>{tithiNum}</Text>
+                {/* Clean Paksha & Tithi Number Row */}
+                <Text style={styles.monthPakshaText} numberOfLines={1}>
+                  {pakshaTitle} {tithiNum}
                 </Text>
 
                 {/* Specific Tradition Badge */}
@@ -375,7 +374,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                       cellDharma.calendarSystem === 'CHRISTIAN' && { color: '#0277BD' },
                       cellDharma.calendarSystem === 'PARSI' && { color: '#D84315' },
                       cellDharma.calendarSystem === 'GLOBAL' && { color: '#00695C' },
-                    ]} numberOfLines={1} adjustsFontSizeToFit>
+                    ]} numberOfLines={1}>
                       {cellDharma.badgeText}
                     </Text>
                   </View>
@@ -1086,22 +1085,10 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   monthPakshaText: {
-    marginTop: 1,
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  pakshaLabelText: {
-    fontSize: 9.5,
+    fontSize: 10.5,
     fontWeight: '700',
-    color: '#616161',
-  },
-  tithiNumWatermark: {
-    fontSize: 11.5,
-    fontWeight: '800',
     color: '#424242',
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    marginTop: 2,
   },
   jainMonthText: {
     fontSize: 8,
