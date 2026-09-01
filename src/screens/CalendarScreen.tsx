@@ -463,6 +463,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
               {/* Modal Header */}
               <View style={styles.modalHeader}>
                 <View style={{ flex: 1 }}>
+                  <Text style={[styles.modalSubLocation, { fontWeight: 'bold', color: Colors.maroon, fontSize: 13, marginBottom: 2 }]}>🕉️ Hindu Date Details (હિન્દુ તિથિ અને પંચાંગ)</Text>
                   <Text style={styles.modalTitleDate}>{getLocalizedDateString(mDate, language)}</Text>
                   <Text style={styles.modalSubLocation}>📍 {selectedCity.name} ({selectedCity.hindiName})</Text>
                 </View>

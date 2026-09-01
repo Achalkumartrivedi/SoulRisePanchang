@@ -1,4 +1,4 @@
-import { CalendarSystem } from '../context/CalendarContext';
+import type { CalendarSystem } from '../context/CalendarContext';
 import { Festival } from '../types/panchang';
 import { FESTIVALS } from './festivalRepository';
 import { getJainDayData, JainDayData } from './jainCalendarEngine';
@@ -259,14 +259,14 @@ export function getDharmaCalendarDayData(
       const hinduFest = FESTIVALS.find(f => f.dateIso === dateIso && f.category !== 'JAIN_FESTIVAL' && f.category !== 'WORLD_FESTIVAL');
 
       let badgeText = undefined;
-      if (tithiIdx === 14) badgeText = '🌕 Purnima';
-      else if (tithiIdx === 29) badgeText = '🌑 Amavasya';
-      else if (tithiIdx === 10 || tithiIdx === 25) badgeText = '🌿 Ekadashi';
-      else if (hinduFest) badgeText = `🕉️ ${hinduFest.name.split(' ')[0]}`;
+      if (tithiIdx === 14) badgeText = '🌕 Purnima (પૂનમ)';
+      else if (tithiIdx === 29) badgeText = '🌑 Amavasya (અમાસ)';
+      else if (tithiIdx === 10 || tithiIdx === 25) badgeText = '🌿 Ekadashi (અગિયારસ)';
+      else if (hinduFest) badgeText = hinduFest.name;
 
       return {
         calendarSystem: 'HINDU',
-        eraTitle: `🕉️ Vikram Samvat 2083`,
+        eraTitle: `🕉️ Hindu Date Details (હિન્દુ તિથિ અને પંચાંગ વિગત)`,
         monthName: `${hinduMonthName} (${pakshaFull})`,
         dayLabel: `${pakshaFull} ${tithiName}`,
         badgeText,
