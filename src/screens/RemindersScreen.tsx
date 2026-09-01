@@ -14,6 +14,7 @@ import { Colors } from '../theme/colors';
 import { ReminderItem, ReminderCategory, UpcomingTithiDateInfo } from '../types/reminder';
 import { FESTIVALS } from '../engine/festivalRepository';
 import { findUpcoming5DatesForTithi } from '../engine/tithiDateFinder';
+import { TimePickerModal } from '../components/TimePickerModal';
 import {
   getStoredReminders,
   saveReminder,
@@ -90,6 +91,11 @@ export const RemindersScreen: React.FC = () => {
   // Custom Delete Confirmation Modal State
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState<ReminderItem | null>(null);
+
+  // Time Picker Modal State
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [targetSlotIndex, setTargetSlotIndex] = useState<number | null>(null); // null = main timeStr, number = timeSlots[idx]
+  const [activeTimeForPicker, setActiveTimeForPicker] = useState<string>('08:00 AM');
 
   useEffect(() => {
     loadReminders();
@@ -272,20 +278,45 @@ export const RemindersScreen: React.FC = () => {
     setReminders(updated);
   };
 
+  const handleOpenTimePicker = (currentVal: string, slotIdx: number | null = null) => {
+    setActiveTimeForPicker(currentVal || '08:00 AM');
+    setTargetSlotIndex(slotIdx);
+    setTimePickerVisible(true);
+  };
+
+  const handleConfirmTimePicker = (newTime: string) => {
+    if (targetSlotIndex === null) {
+      // Main single time string
+      setTimeStr(newTime);
+    } else {
+      // Multi-slot index check for duplicate conflicts
+      const isDuplicate = timeSlots.some((ts, idx) => idx !== targetSlotIndex && ts.toUpperCase().trim() === newTime.toUpperCase().trim());
+      if (isDuplicate) {
+        Alert.alert(
+          '⚠️ Duplicate Time Slot',
+          `Time slot "${newTime}" is already added. Please select a different time slot.`
+        );
+        return;
+      }
+      const updated = [...timeSlots];
+      updated[targetSlotIndex] = newTime;
+      setTimeSlots(updated);
+    }
+  };
+
   const handleAddChantSlot = () => {
-    setTimeSlots([...timeSlots, '07:00 PM']);
+    const candidates = ['07:00 PM', '08:00 PM', '06:00 AM', '12:00 PM', '05:30 PM'];
+    let nextAvailable = candidates.find(t => !timeSlots.includes(t)) || `${timeSlots.length + 6}:00 PM`;
+    if (timeSlots.includes(nextAvailable)) {
+      nextAvailable = '09:00 PM';
+    }
+    setTimeSlots([...timeSlots, nextAvailable]);
   };
 
   const handleRemoveChantSlot = (index: number) => {
     if (timeSlots.length <= 1) return;
     const updated = [...timeSlots];
     updated.splice(index, 1);
-    setTimeSlots(updated);
-  };
-
-  const handleSlotTimeChange = (text: string, index: number) => {
-    const updated = [...timeSlots];
-    updated[index] = text;
     setTimeSlots(updated);
   };
 
@@ -722,12 +753,15 @@ export const RemindersScreen: React.FC = () => {
                       <Text style={{ fontSize: 11, fontWeight: 'bold', color: Colors.textSecondary }}>
                         Slot {idx + 1}:
                       </Text>
-                      <TextInput
-                        style={[styles.input, { flex: 1 }]}
-                        value={ts}
-                        onChangeText={(tStr) => handleSlotTimeChange(tStr, idx)}
-                        placeholder="e.g. 06:00 AM"
-                      />
+                      <TouchableOpacity
+                        style={[styles.input, { flex: 1, justifyContent: 'center' }]}
+                        onPress={() => handleOpenTimePicker(ts, idx)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.maroon }}>
+                          🕒 {ts} (Tap to change)
+                        </Text>
+                      </TouchableOpacity>
                       {timeSlots.length > 1 && (
                         <TouchableOpacity onPress={() => handleRemoveChantSlot(idx)}>
                           <Text style={{ fontSize: 14, color: '#C62828' }}>✖</Text>
@@ -738,16 +772,19 @@ export const RemindersScreen: React.FC = () => {
                 </View>
               )}
 
-              {/* Single Time Input for Non-Chant Categories */}
+              {/* Single Time Picker Selector for Non-Chant Categories */}
               {category !== 'DAILY_CHANT' && (
                 <>
-                  <Text style={styles.label}>Notification Time (e.g. 08:00 AM, 06:30 PM):</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 08:00 AM"
-                    value={timeStr}
-                    onChangeText={setTimeStr}
-                  />
+                  <Text style={styles.label}>Notification Time (Tap to Select):</Text>
+                  <TouchableOpacity
+                    style={[styles.input, { justifyContent: 'center', height: 42 }]}
+                    onPress={() => handleOpenTimePicker(timeStr, null)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: Colors.maroon }}>
+                      🕒 {timeStr} (Tap to Select Time)
+                    </Text>
+                  </TouchableOpacity>
                 </>
               )}
 
@@ -846,6 +883,14 @@ export const RemindersScreen: React.FC = () => {
           </View>
         </Modal>
       )}
+
+      {/* Interactive Time Picker Modal Component */}
+      <TimePickerModal
+        visible={timePickerVisible}
+        initialTimeStr={activeTimeForPicker}
+        onClose={() => setTimePickerVisible(false)}
+        onConfirm={handleConfirmTimePicker}
+      />
     </View>
   );
 };

@@ -13,6 +13,7 @@ import { getWorldFestivalForDate } from '../engine/worldFestivalRepository';
 import { getDharmaCalendarDayData, DharmaDayData } from '../engine/dharmaCalendarEngine';
 import { saveReminder } from '../engine/reminderStorage';
 import { analyzeMuhuratSafety } from '../engine/muhuratSafetyChecker';
+import { TimePickerModal } from '../components/TimePickerModal';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -119,6 +120,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   const [dateRemTitle, setDateRemTitle] = useState('');
   const [dateRemTimeStr, setDateRemTimeStr] = useState('10:30 AM');
   const [dateRemNotes, setDateRemNotes] = useState('');
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
@@ -660,14 +662,17 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
                 {/* Time Input */}
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 4 }}>
-                  Select Time Slot (e.g. 10:30 AM, 03:30 PM):
+                  Select Time Slot (Tap to Change):
                 </Text>
-                <TextInput
-                  style={[styles.input, { marginBottom: 10 }]}
-                  value={dateRemTimeStr}
-                  onChangeText={setDateRemTimeStr}
-                  placeholder="e.g. 10:30 AM"
-                />
+                <TouchableOpacity
+                  style={[styles.input, { marginBottom: 10, justifyContent: 'center', height: 42 }]}
+                  onPress={() => setTimePickerVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: Colors.maroon }}>
+                    🕒 {dateRemTimeStr} (Tap to Select Time)
+                  </Text>
+                </TouchableOpacity>
 
                 {/* LIVE MUHURAT SAFETY CHECKER CARD */}
                 {(() => {
@@ -798,6 +803,14 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
           </View>
         </Modal>
       )}
+
+      {/* Interactive Time Picker Modal Component */}
+      <TimePickerModal
+        visible={timePickerVisible}
+        initialTimeStr={dateRemTimeStr}
+        onClose={() => setTimePickerVisible(false)}
+        onConfirm={(newTime) => setDateRemTimeStr(newTime)}
+      />
     </ScrollView>
   );
 };
