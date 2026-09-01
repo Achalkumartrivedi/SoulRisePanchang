@@ -13,6 +13,7 @@ import { getWorldFestivalForDate } from '../engine/worldFestivalRepository';
 import { getDharmaCalendarDayData, DharmaDayData } from '../engine/dharmaCalendarEngine';
 import { saveReminder } from '../engine/reminderStorage';
 import { analyzeMuhuratSafety } from '../engine/muhuratSafetyChecker';
+import { AnimatedFestivalIcon } from '../components/AnimatedFestivalIcon';
 import { TimePickerModal } from '../components/TimePickerModal';
 import { isDateInPast, isTimeInPastOnDate, getNextUpcomingTimeSlot } from '../engine/dateTimeValidator';
 
@@ -360,28 +361,28 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   {pakshaTitle}
                 </Text>
 
-                {/* Specific Tradition Badge */}
+                {/* Animated Tradition & Festival Micro-Badge */}
                 {cellDharma.badgeText ? (
-                  <View style={[
-                    styles.festBadge,
-                    cellDharma.calendarSystem === 'JAIN' && styles.jainFestBadge,
-                    cellDharma.calendarSystem === 'SIKH' && { backgroundColor: '#FFF3E0', borderColor: '#FFB74D' },
-                    cellDharma.calendarSystem === 'BUDDHIST' && { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
-                    cellDharma.calendarSystem === 'CHRISTIAN' && { backgroundColor: '#E1F5FE', borderColor: '#4FC3F7' },
-                    cellDharma.calendarSystem === 'PARSI' && { backgroundColor: '#FBE9E7', borderColor: '#FF8A65' },
-                    cellDharma.calendarSystem === 'GLOBAL' && { backgroundColor: '#E0F2F1', borderColor: '#4DB6AC' },
-                  ]}>
-                    <Text style={[
+                  <AnimatedFestivalIcon
+                    text={cellDharma.badgeText}
+                    style={[
                       styles.festBadgeText,
                       cellDharma.calendarSystem === 'SIKH' && { color: '#E65100' },
                       cellDharma.calendarSystem === 'BUDDHIST' && { color: '#2E7D32' },
                       cellDharma.calendarSystem === 'CHRISTIAN' && { color: '#0277BD' },
                       cellDharma.calendarSystem === 'PARSI' && { color: '#D84315' },
                       cellDharma.calendarSystem === 'GLOBAL' && { color: '#00695C' },
-                    ]} numberOfLines={1}>
-                      {cellDharma.badgeText}
-                    </Text>
-                  </View>
+                    ]}
+                    badgeStyle={[
+                      styles.festBadge,
+                      cellDharma.calendarSystem === 'JAIN' && styles.jainFestBadge,
+                      cellDharma.calendarSystem === 'SIKH' && { backgroundColor: '#FFF3E0', borderColor: '#FFB74D' },
+                      cellDharma.calendarSystem === 'BUDDHIST' && { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
+                      cellDharma.calendarSystem === 'CHRISTIAN' && { backgroundColor: '#E1F5FE', borderColor: '#4FC3F7' },
+                      cellDharma.calendarSystem === 'PARSI' && { backgroundColor: '#FBE9E7', borderColor: '#FF8A65' },
+                      cellDharma.calendarSystem === 'GLOBAL' && { backgroundColor: '#E0F2F1', borderColor: '#4DB6AC' },
+                    ]}
+                  />
                 ) : null}
               </TouchableOpacity>
             );
