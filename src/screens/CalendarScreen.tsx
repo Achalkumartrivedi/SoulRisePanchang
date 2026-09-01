@@ -108,7 +108,7 @@ const getRahuKalamForDate = (d: Date): string => {
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = DEFAULT_CITIES[0], onSelectDate }) => {
   const { language, t } = useLanguage();
   const { calendarSystem, setCalendarSystem } = useCalendarSystem();
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24)); 
+  const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
   const [showPopupInfoModal, setShowPopupInfoModal] = useState(false);
 
@@ -120,6 +120,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
   const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const handleToday = () => setCurrentDate(new Date());
 
   const monthFestivals = FESTIVALS.filter(f => {
     const parts = f.dateIso.split('-');
@@ -219,6 +220,14 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
           </Text>
           <Text style={styles.calendarDropdownArrow}>▼</Text>
         </TouchableOpacity>
+
+        {/* Location & Today Quick Jump Sub-Header */}
+        <View style={styles.locationSubBar}>
+          <Text style={styles.locationSubText}>📍 Location: {selectedCity.name} ({selectedCity.hindiName})</Text>
+          <TouchableOpacity style={styles.todayQuickBtn} onPress={handleToday} activeOpacity={0.8}>
+            <Text style={styles.todayQuickBtnText}>📅 Today (आज)</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Month Header Navigation */}
         <View style={styles.headerRow}>
@@ -673,8 +682,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 8,
     elevation: 2,
+  },
+  locationSubBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  locationSubText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+    flex: 1,
+  },
+  todayQuickBtn: {
+    backgroundColor: Colors.maroon,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  todayQuickBtnText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFD700',
   },
   calendarDropdownPillText: {
     fontSize: 13,
