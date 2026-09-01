@@ -20,10 +20,11 @@ export const getJulianDay = (d: Date): number => {
 };
 
 export const calculateTithiForDate = (d: Date): number => {
-  const diff = ((d.getTime() - new Date(2026, 7, 25).getTime()) / (1000 * 60 * 60 * 24)) * 12.2;
-  let idx = Math.floor((12 + diff) % 30);
-  if (idx < 0) idx += 30;
-  return idx;
+  const sunriseDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 6, 0, 0);
+  const diffDaysSunrise = (sunriseDate.getTime() - new Date(2026, 7, 25, 0, 0, 0).getTime()) / (1000 * 60 * 60 * 24);
+  const totalTithiAngle = normalizeAngle(133.55 + diffDaysSunrise * 12.2);
+  const tithiIndex = Math.min(29, Math.max(0, Math.floor(totalTithiAngle / 12.0)));
+  return tithiIndex;
 };
 
 export const getHinduMonthName = (d: Date): string => {
@@ -179,9 +180,11 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   const { sunrise, sunset } = calculateSunriseSunset(date, city.latitude, city.longitude, city.timeZoneId || 'Asia/Kolkata');
   const { tzAbbrev } = getTimezoneOffsetMinutes(city.timeZoneId || 'Asia/Kolkata', date);
 
-  // 1. Tithi & Paksha calculation
-  const diffDays = (date.getTime() - new Date(2026, 7, 25).getTime()) / (1000 * 60 * 60 * 24);
-  const totalTithiAngle = normalizeAngle(146.4 + diffDays * 12.2);
+  // 1. Tithi & Paksha Sunrise (Udaya Tithi) calculation
+  // Parse target date at Sunrise time (06:00 AM) to calculate authentic Udaya Tithi of the day
+  const sunriseDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 6, 0, 0);
+  const diffDaysSunrise = (sunriseDate.getTime() - new Date(2026, 7, 25, 0, 0, 0).getTime()) / (1000 * 60 * 60 * 24);
+  const totalTithiAngle = normalizeAngle(133.55 + diffDaysSunrise * 12.2);
 
   const tithiIndex = Math.min(29, Math.max(0, Math.floor(totalTithiAngle / 12.0)));
   const paksha: Paksha = tithiIndex < 15 ? 'SHUKLA' : 'KRISHNA';
@@ -205,8 +208,8 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   const tithiEndMin = Math.floor((tithiIndex * 19) % 60);
 
   // 2. Nakshatra calculation
-  const moonLong = normalizeAngle(210.0 + diffDays * 13.176);
-  const sunLong = normalizeAngle(130.0 + diffDays * 0.9856);
+  const moonLong = normalizeAngle(210.0 + diffDaysSunrise * 13.176);
+  const sunLong = normalizeAngle(130.0 + diffDaysSunrise * 0.9856);
 
   const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(moonLong / (360.0 / 27.0))));
   const nakData = NAKSHATRA_DATA[nakshatraIndex];
