@@ -346,14 +346,18 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 onPress={() => setSelectedModalDateIso(dateIso)}
                 activeOpacity={0.7}
               >
+                {/* 1. Large Light Gray Background Watermark Tithi Number */}
+                <Text style={styles.watermarkTithiNum}>{tithiNum}</Text>
+
+                {/* 2. Top Row: Day Number & Moon Icon */}
                 <View style={styles.dayTopRow}>
                   <Text style={[styles.dayNumText, isHoliday && styles.holidayDayNum]}>{dayNum}</Text>
                   <Text style={styles.moonIconText}>{moonIcon}</Text>
                 </View>
 
-                {/* Clean Paksha & Tithi Number Row */}
+                {/* 3. Foreground Paksha Label */}
                 <Text style={styles.monthPakshaText} numberOfLines={1}>
-                  {pakshaTitle} {tithiNum}
+                  {pakshaTitle}
                 </Text>
 
                 {/* Specific Tradition Badge */}
@@ -1055,6 +1059,17 @@ const styles = StyleSheet.create({
     borderColor: '#F0E0D0',
     padding: 3,
     backgroundColor: '#FFFFFF',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  watermarkTithiNum: {
+    position: 'absolute',
+    bottom: 0,
+    right: 2,
+    fontSize: 42,
+    fontWeight: '900',
+    color: 'rgba(0, 0, 0, 0.08)',
+    letterSpacing: -1,
   },
   jainParvaCell: {
     backgroundColor: '#FFF8E1',
