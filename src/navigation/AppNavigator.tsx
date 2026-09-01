@@ -13,11 +13,12 @@ import { CalendarScreen } from '../screens/CalendarScreen';
 import { FestivalsScreen } from '../screens/FestivalsScreen';
 import { RashiphalScreen } from '../screens/RashiphalScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { RemindersScreen } from '../screens/RemindersScreen';
 
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
 import { useLanguage } from '../context/LanguageContext';
 
-type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'RASHIPHAL' | 'SETTINGS';
+type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'REMINDERS' | 'RASHIPHAL' | 'SETTINGS';
 
 const CITY_STORAGE_KEY = 'SOULRISE_SELECTED_CITY';
 const GPS_STORAGE_KEY = 'SOULRISE_USE_GPS';
@@ -165,6 +166,8 @@ export const AppNavigator: React.FC = () => {
           <FestivalsScreen onSelectFestivalDate={handleSelectFestivalDate} />
         )}
 
+        {activeTab === 'REMINDERS' && <RemindersScreen />}
+
         {activeTab === 'RASHIPHAL' && <RashiphalScreen />}
 
         {activeTab === 'SETTINGS' && (
@@ -203,6 +206,14 @@ export const AppNavigator: React.FC = () => {
         >
           <Text style={styles.tabIcon}>🚩</Text>
           <Text style={[styles.tabLabel, activeTab === 'FESTIVALS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('festivals')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tabItem, activeTab === 'REMINDERS' && styles.tabItemActive]}
+          onPress={() => setActiveTab('REMINDERS')}
+        >
+          <Text style={styles.tabIcon}>⏰</Text>
+          <Text style={[styles.tabLabel, activeTab === 'REMINDERS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>Reminders</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

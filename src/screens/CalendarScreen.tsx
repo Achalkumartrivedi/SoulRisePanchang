@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
 import { Colors } from '../theme/colors';
 import { FESTIVALS } from '../engine/festivalRepository';
 import { CityLocation, PanchangDayData } from '../types/panchang';
@@ -11,6 +11,8 @@ import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 import { getJainDayData } from '../engine/jainCalendarEngine';
 import { getWorldFestivalForDate } from '../engine/worldFestivalRepository';
 import { getDharmaCalendarDayData, DharmaDayData } from '../engine/dharmaCalendarEngine';
+import { saveReminder } from '../engine/reminderStorage';
+import { analyzeMuhuratSafety } from '../engine/muhuratSafetyChecker';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -111,6 +113,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
   const [showPopupInfoModal, setShowPopupInfoModal] = useState(false);
+
+  // Date Quick Reminder Modal State
+  const [dateRemModalVisible, setDateRemModalVisible] = useState(false);
+  const [dateRemTitle, setDateRemTitle] = useState('');
+  const [dateRemTimeStr, setDateRemTimeStr] = useState('10:30 AM');
+  const [dateRemNotes, setDateRemNotes] = useState('');
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
@@ -589,6 +597,22 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   </View>
                 </View>
 
+                {/* Quick Date Reminder Trigger Button */}
+                <TouchableOpacity
+                  style={[styles.openDailyPanchangBtn, { backgroundColor: '#FF6F00', marginBottom: 8 }]}
+                  onPress={() => {
+                    const dData = getDharmaCalendarDayData(mDate, calendarSystem, language);
+                    const defaultRemTitle = festMatchModal ? festMatchModal.name : `${dData.dayLabel} Reminder`;
+                    setDateRemTitle(defaultRemTitle);
+                    setDateRemNotes(`Reminder for ${dData.monthName} (${dData.dayLabel})`);
+                    setDateRemTimeStr('10:30 AM');
+                    setDateRemModalVisible(true);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.openDailyPanchangText}>⏰ Set Reminder for this Date (इस तिथि का स्मरण)</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.openDailyPanchangBtn}
                   onPress={() => {
@@ -598,6 +622,130 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   activeOpacity={0.8}
                 >
                   <Text style={styles.openDailyPanchangText}>View Complete Daily Panchang ➔</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date Quick Reminder & Real-Time Muhurat Safety Checker Modal */}
+      {dateRemModalVisible && (
+        <Modal visible={dateRemModalVisible} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTitleDate}>⏰ Date Reminder & Muhurat Checker</Text>
+                  <Text style={styles.modalSubLocation}>
+                    📅 {mDate.toDateString()} • 📍 {selectedCity.name}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setDateRemModalVisible(false)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 440 }}>
+                {/* Title Input */}
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 4 }}>
+                  Reminder Title / Event Name:
+                </Text>
+                <TextInput
+                  style={[styles.input, { marginBottom: 10 }]}
+                  value={dateRemTitle}
+                  onChangeText={setDateRemTitle}
+                  placeholder="e.g. Raksha Bandhan Puja, Fasting, Remedy"
+                />
+
+                {/* Time Input */}
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 4 }}>
+                  Select Time Slot (e.g. 10:30 AM, 03:30 PM):
+                </Text>
+                <TextInput
+                  style={[styles.input, { marginBottom: 10 }]}
+                  value={dateRemTimeStr}
+                  onChangeText={setDateRemTimeStr}
+                  placeholder="e.g. 10:30 AM"
+                />
+
+                {/* LIVE MUHURAT SAFETY CHECKER CARD */}
+                {(() => {
+                  const safety = analyzeMuhuratSafety(mDate, dateRemTimeStr, selectedCity);
+                  const isBad = safety.safetyRating === 'INAUSPICIOUS';
+                  const isGood = safety.safetyRating === 'AUSPICIOUS';
+
+                  return (
+                    <View style={[
+                      styles.muhuratSafetyBox,
+                      isBad && styles.muhuratSafetyBad,
+                      isGood && styles.muhuratSafetyGood
+                    ]}>
+                      <Text style={[
+                        styles.muhuratSafetyTitle,
+                        isBad && { color: '#C62828' },
+                        isGood && { color: '#2E7D32' }
+                      ]}>
+                        {safety.title}
+                      </Text>
+
+                      <Text style={styles.muhuratSafetyAdvice}>{safety.advice}</Text>
+
+                      <View style={{ marginTop: 8, gap: 4 }}>
+                        <Text style={{ fontSize: 11, color: Colors.textPrimary }}>
+                          • Active Choghadiya: <Text style={{ fontWeight: 'bold' }}>{safety.activeChoghadiyaName} ({safety.activeChoghadiyaHindi})</Text>
+                        </Text>
+                        <Text style={{ fontSize: 11, color: Colors.textPrimary }}>
+                          • Rahu Kalam Range: <Text style={{ fontWeight: 'bold', color: '#C62828' }}>{safety.rahuKalamRange}</Text>
+                        </Text>
+                        {safety.isAbhijitMuhurat && (
+                          <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#2E7D32' }}>
+                            ✨ Abhijit Muhurat is Active!
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })()}
+
+                {/* Notes Input */}
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.textPrimary, marginTop: 10, marginBottom: 4 }}>
+                  Special Ritual Notes:
+                </Text>
+                <TextInput
+                  style={[styles.input, { height: 50, marginBottom: 12 }]}
+                  value={dateRemNotes}
+                  onChangeText={setDateRemNotes}
+                  multiline
+                />
+
+                {/* Save Button */}
+                <TouchableOpacity
+                  style={[styles.openDailyPanchangBtn, { backgroundColor: Colors.maroon, marginTop: 6 }]}
+                  onPress={async () => {
+                    const safety = analyzeMuhuratSafety(mDate, dateRemTimeStr, selectedCity);
+                    await saveReminder({
+                      id: `rem-date-${Date.now()}`,
+                      title: dateRemTitle.trim() || 'Date Reminder',
+                      category: 'DATE_SPECIFIC',
+                      dateIso: selectedModalDateIso || undefined,
+                      timeStr: dateRemTimeStr,
+                      enabled: true,
+                      notes: dateRemNotes.trim(),
+                      createdAtIso: new Date().toISOString(),
+                      muhuratSafetyRating: safety.safetyRating,
+                      muhuratAdvice: safety.advice
+                    });
+
+                    setDateRemModalVisible(false);
+                    Alert.alert(
+                      '⏰ Reminder Saved!',
+                      `Reminder set for ${dateRemTitle} on ${mDate.toDateString()} at ${dateRemTimeStr}.\n\nAstrological Safety: ${safety.title}`
+                    );
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.openDailyPanchangText}>💾 Save Date Reminder</Text>
                 </TouchableOpacity>
               </ScrollView>
             </View>
@@ -1314,5 +1462,42 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
     lineHeight: 14,
+  },
+  muhuratSafetyBox: {
+    backgroundColor: '#FFF8E1',
+    borderWidth: 1,
+    borderColor: '#FFE082',
+    borderRadius: 12,
+    padding: 12,
+    marginVertical: 8,
+  },
+  muhuratSafetyBad: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#EF9A9A',
+  },
+  muhuratSafetyGood: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#A5D6A7',
+  },
+  muhuratSafetyTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#F57F17',
+    marginBottom: 4,
+  },
+  muhuratSafetyAdvice: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    lineHeight: 16,
+  },
+  input: {
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 12,
+    color: Colors.textPrimary,
   },
 });
