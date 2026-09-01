@@ -1047,11 +1047,11 @@ const styles = StyleSheet.create({
   },
   emptyDayCell: {
     width: '14.28%',
-    height: 80,
+    height: 88,
   },
   dayCell: {
     width: '14.28%',
-    height: 80,
+    height: 88,
     borderWidth: 0.5,
     borderColor: '#F0E0D0',
     padding: 3,
@@ -1182,12 +1182,12 @@ const styles = StyleSheet.create({
   festBadge: {
     backgroundColor: '#FFEBEE',
     borderRadius: 4,
-    paddingHorizontal: 3,
-    paddingVertical: 1.5,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
     marginTop: 2,
   },
   festBadgeText: {
-    fontSize: 10,
+    fontSize: 11.5,
     fontWeight: 'bold',
     color: '#C62828',
   },
