@@ -19,7 +19,7 @@ export const AnimatedFestivalIcon: React.FC<AnimatedFestivalIconProps> = ({ text
   const chars = Array.from(text);
   const iconEmoji = chars[0] || '';
   const labelText = chars.slice(1).join('').trim();
-  const isSway = ['🐍', '🚩', '🐒', '🌿'].includes(iconEmoji);
+  const isSway = ['🐍', '🚩', '🐒', '🌿', '🪈', '🪶', '🦚'].includes(iconEmoji);
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation;
