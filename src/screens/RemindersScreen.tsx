@@ -81,6 +81,10 @@ export const RemindersScreen: React.FC = () => {
   // Daily Chant Multiple Slots State
   const [timeSlots, setTimeSlots] = useState<string[]>(['06:00 AM']);
 
+  // Custom Delete Confirmation Modal State
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [reminderToDelete, setReminderToDelete] = useState<ReminderItem | null>(null);
+
   useEffect(() => {
     loadReminders();
   }, []);
@@ -210,18 +214,17 @@ export const RemindersScreen: React.FC = () => {
     setReminders(updated);
   };
 
-  const handleDelete = async (id: string) => {
-    Alert.alert('Delete Reminder', 'Are you sure you want to delete this reminder?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          const updated = await deleteReminder(id);
-          setReminders(updated);
-        }
-      }
-    ]);
+  const handleOpenDeleteModal = (item: ReminderItem) => {
+    setReminderToDelete(item);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!reminderToDelete) return;
+    const updated = await deleteReminder(reminderToDelete.id);
+    setReminders(updated);
+    setDeleteModalVisible(false);
+    setReminderToDelete(null);
   };
 
   const handleMarkLalKitabDone = async (id: string) => {
@@ -406,7 +409,7 @@ export const RemindersScreen: React.FC = () => {
                     <Text style={styles.actionBtnEditText}>✏️ Edit</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.actionBtnDelete} onPress={() => handleDelete(item.id)}>
+                  <TouchableOpacity style={styles.actionBtnDelete} onPress={() => handleOpenDeleteModal(item)}>
                     <Text style={styles.actionBtnDeleteText}>🗑️ Delete</Text>
                   </TouchableOpacity>
                 </View>
@@ -651,6 +654,83 @@ export const RemindersScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Custom In-App Themed Delete Confirmation Modal */}
+      {deleteModalVisible && reminderToDelete && (
+        <Modal visible={deleteModalVisible} animationType="fade" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalCard, { borderTopWidth: 4, borderTopColor: '#C62828' }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalHeaderTitle, { color: '#C62828' }]}>
+                  🗑️ Delete Reminder (स्मरण हटाएं)
+                </Text>
+                <TouchableOpacity style={styles.closeBtn} onPress={() => setDeleteModalVisible(false)}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ paddingVertical: 10 }}>
+                <Text style={{ fontSize: 13, color: Colors.textPrimary, marginBottom: 10, lineHeight: 18 }}>
+                  Are you sure you want to delete this reminder from your app?
+                </Text>
+
+                <View style={{ backgroundColor: '#FFEBEE', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#EF9A9A' }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#C62828' }}>
+                    "{reminderToDelete.title}"
+                  </Text>
+                  <Text style={{ fontSize: 11, color: Colors.textSecondary, marginTop: 4 }}>
+                    🕒 Notification Time: {reminderToDelete.timeStr}
+                  </Text>
+                  {reminderToDelete.notes ? (
+                    <Text style={{ fontSize: 10, color: Colors.textMuted, marginTop: 2, fontStyle: 'italic' }}>
+                      📝 {reminderToDelete.notes}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 10, fontStyle: 'italic' }}>
+                  ⚠️ This action is permanent and cannot be undone.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#FAF5EE',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: '#E8D8C8'
+                  }}
+                  onPress={() => setDeleteModalVisible(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.textSecondary }}>
+                    Cancel (रद्द करें)
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#C62828',
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    elevation: 2
+                  }}
+                  onPress={handleConfirmDelete}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#FFFFFF' }}>
+                    🗑️ Yes, Delete (हां, हटाएं)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
