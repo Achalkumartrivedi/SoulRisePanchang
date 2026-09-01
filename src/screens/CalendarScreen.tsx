@@ -311,13 +311,19 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             const isHoliday = isSunday || (festMatch && festMatch.isHoliday);
 
             const tithiIdx = calculateTithiForDate(dateObj);
-            const tithiName = getLocalizedTithi((tithiIdx % 15) + 1, language).name;
+            const tithiNum = (tithiIdx % 15) + 1;
+            const isKrishna = tithiIdx > 14;
+
+            let pakshaTitle = 'Krishna';
+            if (language === 'gu') {
+              pakshaTitle = isKrishna ? 'વદ' : 'સુદ';
+            } else if (language === 'hi') {
+              pakshaTitle = isKrishna ? 'कृष्ण' : 'शुक्ल';
+            } else {
+              pakshaTitle = isKrishna ? 'Krishna' : 'Shukla';
+            }
 
             const hinduMonthName = getHinduMonthName(dateObj);
-            const pakshaShort = tithiIdx <= 14 ? "Shu." : "Kru.";
-            const monthPakshaDisplay = `${hinduMonthName} - ${pakshaShort}`;
-
-            const miniRitual = getPerpetualMiniRitual(dateObj, tithiIdx, hinduMonthName);
             const jainData = getJainDayData(dateObj, tithiIdx);
 
             let moonIcon = '🌒';
@@ -346,8 +352,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   <Text style={styles.moonIconText}>{moonIcon}</Text>
                 </View>
 
-                {/* Specific Tradition Month & Day Label */}
-                <Text style={styles.monthPakshaText} numberOfLines={1}>{cellDharma.dayLabel}</Text>
+                {/* Clean Paksha & Tithi Number Watermark Row */}
+                <Text style={styles.monthPakshaText} numberOfLines={1} adjustsFontSizeToFit>
+                  <Text style={styles.pakshaLabelText}>{pakshaTitle} </Text>
+                  <Text style={styles.tithiNumWatermark}>{tithiNum}</Text>
+                </Text>
 
                 {/* Specific Tradition Badge */}
                 {cellDharma.badgeText ? (
@@ -367,13 +376,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                       cellDharma.calendarSystem === 'CHRISTIAN' && { color: '#0277BD' },
                       cellDharma.calendarSystem === 'PARSI' && { color: '#D84315' },
                       cellDharma.calendarSystem === 'GLOBAL' && { color: '#00695C' },
-                    ]} numberOfLines={1}>
+                    ]} numberOfLines={1} adjustsFontSizeToFit>
                       {cellDharma.badgeText}
                     </Text>
                   </View>
-                ) : (
-                  <Text style={styles.tithiText} numberOfLines={1}>{cellDharma.monthName.split(' ')[0]}</Text>
-                )}
+                ) : null}
               </TouchableOpacity>
             );
           })}
@@ -1080,9 +1087,22 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   monthPakshaText: {
-    fontSize: 8,
-    color: Colors.textMuted,
     marginTop: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  pakshaLabelText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#616161',
+  },
+  tithiNumWatermark: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#424242',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   jainMonthText: {
     fontSize: 8,
