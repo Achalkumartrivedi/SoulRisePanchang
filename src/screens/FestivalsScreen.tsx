@@ -92,64 +92,79 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </View>
       </View>
 
-      {/* Filter Category Chips (Horizontal Scrollable) */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBarScroll} contentContainerStyle={styles.filterBarContent}>
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'ALL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('ALL')}
+      {/* Filter Category Chips (Horizontal Scrollable Container) */}
+      <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterBarScroll}
+          contentContainerStyle={styles.filterBarContent}
         >
-          <Text style={[styles.filterText, selectedCategory === 'ALL' && styles.filterTextActive]}>All</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'ALL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('ALL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'ALL' && styles.filterTextActive]}>All (सभी)</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('MAJOR_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterTextActive]}>🕉️ Hindu</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('MAJOR_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterTextActive]}>🕉️ Hindu</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'JAIN_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('JAIN_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'JAIN_FESTIVAL' && styles.filterTextActive]}>🪔 Jain</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'JAIN_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('JAIN_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'JAIN_FESTIVAL' && styles.filterTextActive]}>🪔 Jain</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'SIKH_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('SIKH_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'SIKH_FESTIVAL' && styles.filterTextActive]}>☬ Sikh</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'SIKH_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('SIKH_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'SIKH_FESTIVAL' && styles.filterTextActive]}>☬ Sikh</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'BUDDHIST_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('BUDDHIST_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'BUDDHIST_FESTIVAL' && styles.filterTextActive]}>☸️ Buddhist</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'BUDDHIST_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('BUDDHIST_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'BUDDHIST_FESTIVAL' && styles.filterTextActive]}>☸️ Buddhist</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'CHRISTIAN_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('CHRISTIAN_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'CHRISTIAN_FESTIVAL' && styles.filterTextActive]}>✝️ Christian</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'CHRISTIAN_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('CHRISTIAN_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'CHRISTIAN_FESTIVAL' && styles.filterTextActive]}>✝️ Christian</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'PARSI_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('PARSI_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'PARSI_FESTIVAL' && styles.filterTextActive]}>🔥 Parsi</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'PARSI_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('PARSI_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'PARSI_FESTIVAL' && styles.filterTextActive]}>🔥 Parsi</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.filterChip, selectedCategory === 'WORLD_FESTIVAL' && styles.filterChipActive]}
-          onPress={() => setSelectedCategory('WORLD_FESTIVAL')}
-        >
-          <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            style={[styles.filterChip, selectedCategory === 'WORLD_FESTIVAL' && styles.filterChipActive]}
+            onPress={() => setSelectedCategory('WORLD_FESTIVAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
 
       {/* Hero Jain Chaturmas & Paryushan Banner */}
       {(selectedCategory === 'JAIN_FESTIVAL' || selectedCategory === 'ALL') && (
@@ -406,24 +421,30 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginLeft: 6,
   },
+  filterContainer: {
+    height: 48,
+    marginVertical: 6,
+  },
   filterBarScroll: {
-    marginBottom: 8,
+    flex: 1,
   },
   filterBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: '#FAF5EE',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
+    height: 36,
+    minWidth: 64,
+    borderRadius: 18,
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1.5,
+    borderColor: '#E8D8C8',
     marginRight: 8,
   },
   filterChipActive: {
@@ -433,7 +454,9 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: Colors.textSecondary,
+    color: '#424242',
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   filterTextActive: {
     color: '#FFD700',
