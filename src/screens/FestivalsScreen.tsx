@@ -10,6 +10,32 @@ interface FestivalsScreenProps {
   onSelectFestivalDate: (dateIso: string) => void;
 }
 
+export function getCategoryBadgeLabel(category: string): { label: string; bg: string; color: string } {
+  switch (category) {
+    case 'JAIN_FESTIVAL':
+      return { label: '🪔 Jain Parva', bg: '#FFF3E0', color: '#E65100' };
+    case 'SIKH_FESTIVAL':
+      return { label: '☬ Sikh Gurpurab', bg: '#FFF8E1', color: '#F57F17' };
+    case 'BUDDHIST_FESTIVAL':
+      return { label: '☸️ Buddhist Sacred Day', bg: '#E8F5E9', color: '#2E7D32' };
+    case 'CHRISTIAN_FESTIVAL':
+      return { label: '✝️ Christian Feast', bg: '#E1F5FE', color: '#0277BD' };
+    case 'PARSI_FESTIVAL':
+      return { label: '🔥 Parsi Holy Day', bg: '#FBE9E7', color: '#D84315' };
+    case 'WORLD_FESTIVAL':
+      return { label: '🌐 World Festival', bg: '#E0F2F1', color: '#00695C' };
+    case 'VRAT':
+      return { label: '🌿 Hindu Vrat', bg: '#F3E5F5', color: '#7B1FA2' };
+    case 'JAYANTI':
+      return { label: '🚩 Jayanti', bg: '#FFF3E0', color: '#D84315' };
+    case 'ECLIPSE':
+      return { label: '🌑 Eclipse / Grahan', bg: '#ECEFF1', color: '#37474F' };
+    case 'MAJOR_FESTIVAL':
+    default:
+      return { label: '🕉️ Hindu Festival', bg: '#FFF3E0', color: Colors.maroon };
+  }
+}
+
 export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestivalDate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<FestivalCategory | 'ALL' | 'WORLD_FESTIVAL'>('ALL');
@@ -201,23 +227,16 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
                     <Text style={styles.dateBadgeText}>{formattedDate}</Text>
                   </View>
 
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>
-                      {item.category === 'JAIN_FESTIVAL'
-                        ? '🪔 Jain Parva'
-                        : item.category === 'SIKH_FESTIVAL'
-                        ? '☬ Sikh Gurpurab'
-                        : item.category === 'BUDDHIST_FESTIVAL'
-                        ? '☸️ Buddhist'
-                        : item.category === 'CHRISTIAN_FESTIVAL'
-                        ? '✝️ Christian'
-                        : item.category === 'PARSI_FESTIVAL'
-                        ? '🔥 Parsi Navroz'
-                        : item.category === 'MAJOR_FESTIVAL'
-                        ? '🕉️ Hindu Festival'
-                        : 'Jayanti'}
-                    </Text>
-                  </View>
+                  {(() => {
+                    const badge = getCategoryBadgeLabel(item.category);
+                    return (
+                      <View style={[styles.categoryBadge, { backgroundColor: badge.bg, borderColor: badge.color }]}>
+                        <Text style={[styles.categoryBadgeText, { color: badge.color }]}>
+                          {badge.label}
+                        </Text>
+                      </View>
+                    );
+                  })()}
                 </View>
 
                 <Text style={styles.festName}>{item.name}</Text>
@@ -388,24 +407,16 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   filterBarScroll: {
-    height: 52,
     marginBottom: 8,
   },
   filterBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 8,
-  },
-  filterBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingVertical: 8,
   },
   filterChip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
     backgroundColor: '#FAF5EE',
@@ -413,13 +424,14 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
   },
   filterChipActive: {
     backgroundColor: Colors.maroon,
     borderColor: Colors.maroon,
   },
   filterText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     color: Colors.textSecondary,
   },
