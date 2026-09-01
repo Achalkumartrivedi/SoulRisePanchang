@@ -187,43 +187,37 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   const locAmavasya = getLocalizedTithi(30, language).name;
   const showHindiScript = language === 'hi' || language === 'hinglish';
 
+  const [calSystemModalVisible, setCalSystemModalVisible] = useState(false);
+
+  const getCalendarTitle = (sys: CalendarSystem) => {
+    switch (sys) {
+      case 'HINDU': return '🕉️ Hindu Calendar (Vikram Samvat)';
+      case 'GLOBAL': return '🌍 Gregorian Solar Calendar';
+      case 'JAIN': return '🪔 Jain Calendar (Vira Nirvana Samvat)';
+      case 'SIKH': return '☬ Nanakshahi Sikh Calendar';
+      case 'BUDDHIST': return '☸️ Buddhist Lunar Calendar (BE 2568)';
+      case 'CHRISTIAN': return '✝️ Christian Liturgical Calendar';
+      case 'PARSI': return '🔥 Zoroastrian Parsi Calendar';
+      default: return '🕉️ Hindu Calendar';
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Monthly Calendar Card */}
       <View style={styles.card}>
 
-        {/* Multi-Calendar System Switcher Bar */}
-        <View style={styles.calendarToggleContainer}>
-          <TouchableOpacity
-            style={[styles.calToggleBtn, calendarSystem === 'HINDU' && styles.calToggleBtnActive]}
-            onPress={() => setCalendarSystem('HINDU')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.calToggleText, calendarSystem === 'HINDU' && styles.calToggleTextActive]}>
-              🕉️ Hindu Calendar
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.calToggleBtn, calendarSystem === 'JAIN' && styles.calToggleBtnActive]}
-            onPress={() => setCalendarSystem('JAIN')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.calToggleText, calendarSystem === 'JAIN' && styles.calToggleTextActive]}>
-              🪔 Jain Calendar
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.calToggleBtn, calendarSystem === 'GLOBAL' && styles.calToggleBtnActive]}
-            onPress={() => setCalendarSystem('GLOBAL')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.calToggleText, calendarSystem === 'GLOBAL' && styles.calToggleTextActive]}>
-              🌍 Gregorian
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Multi-Calendar System Switcher Bar (Dropdown Pill) */}
+        <TouchableOpacity
+          style={styles.calendarDropdownPill}
+          onPress={() => setCalSystemModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.calendarDropdownPillText}>
+            {getCalendarTitle(calendarSystem)}
+          </Text>
+          <Text style={styles.calendarDropdownArrow}>▼</Text>
+        </TouchableOpacity>
 
         {/* Month Header Navigation */}
         <View style={styles.headerRow}>
@@ -604,7 +598,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   </View>
                 </View>
 
-                {/* Action Button: Navigate to Daily Panchang */}
                 <TouchableOpacity
                   style={styles.openDailyPanchangBtn}
                   onPress={() => {
@@ -615,6 +608,52 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 >
                   <Text style={styles.openDailyPanchangText}>View Complete Daily Panchang ➔</Text>
                 </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Multi-Dharma Calendar System Selector Modal */}
+      {calSystemModalVisible && (
+        <Modal visible={calSystemModalVisible} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitleDate}>📅 Choose Calendar System</Text>
+                <TouchableOpacity onPress={() => setCalSystemModalVisible(false)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 420 }}>
+                {[
+                  { id: 'HINDU', title: '🕉️ Hindu Calendar (Vikram Samvat)', desc: 'Standard Vedic Lunar/Solar Panchang with Tithis & Nakshatras' },
+                  { id: 'GLOBAL', title: '🌍 Gregorian Solar Calendar', desc: 'Standard Western Solar Dates & International Holidays' },
+                  { id: 'JAIN', title: '🪔 Jain Calendar (Vira Nirvana Samvat)', desc: 'Sacred Jain Parva Tithis (Aastham, Chaudas), Pachkhan & Fasting' },
+                  { id: 'SIKH', title: '☬ Nanakshahi Sikh Calendar', desc: 'Sikh Samvat 556, Gurpurabs, Shaheedi Diwas & Historic Dates' },
+                  { id: 'BUDDHIST', title: '☸️ Buddhist Lunar Calendar (BE 2568)', desc: 'Buddha Era 2568, Vesak, Asalha & Kathina Sacred Days' },
+                  { id: 'CHRISTIAN', title: '✝️ Christian Liturgical Calendar', desc: 'Feasts, Lent, Easter, Good Friday, Christmas & Seasons' },
+                  { id: 'PARSI', title: '🔥 Zoroastrian Parsi Calendar', desc: 'Shahenshahi / Fasli Yazdegerdi 1396 & Navroz Celebrations' },
+                ].map(item => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.calModalOption, calendarSystem === item.id && styles.calModalOptionActive]}
+                    onPress={() => {
+                      setCalendarSystem(item.id as CalendarSystem);
+                      setCalSystemModalVisible(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.calModalTitle, calendarSystem === item.id && styles.calModalTitleActive]}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.calModalDesc}>{item.desc}</Text>
+                    </View>
+                    {calendarSystem === item.id && <Text style={styles.checkIcon}>✓</Text>}
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
             </View>
           </View>
@@ -643,31 +682,60 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
 
-  // Multi-Calendar Switcher Toggle Bar
-  calendarToggleContainer: {
+  // Multi-Calendar Switcher Dropdown Pill & Modal
+  calendarDropdownPill: {
     flexDirection: 'row',
-    backgroundColor: '#E0E0E0',
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: 12,
-    gap: 4,
-  },
-  calToggleBtn: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 10,
+    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  calToggleBtnActive: {
     backgroundColor: Colors.maroon,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
   },
-  calToggleText: {
-    fontSize: 11,
+  calendarDropdownPillText: {
+    fontSize: 13,
     fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  calendarDropdownArrow: {
+    fontSize: 12,
+    color: '#FFD700',
+    fontWeight: 'bold',
+  },
+  calModalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+  },
+  calModalOptionActive: {
+    backgroundColor: '#FFF3E0',
+    borderColor: Colors.maroon,
+  },
+  calModalTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  calModalTitleActive: {
+    color: Colors.maroon,
+  },
+  calModalDesc: {
+    fontSize: 11,
     color: Colors.textSecondary,
   },
-  calToggleTextActive: {
-    color: '#FFD700',
+  checkIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginLeft: 8,
   },
 
   headerRow: {

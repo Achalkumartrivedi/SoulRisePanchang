@@ -165,47 +165,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <Text style={styles.cardSubTitle}>Choose your default calendar view (persists across app restarts):</Text>
 
           <View style={styles.calSystemList}>
-            <TouchableOpacity
-              style={[styles.calSystemItem, calendarSystem === 'HINDU' && styles.calSystemItemActive]}
-              onPress={() => setCalendarSystem('HINDU')}
-              activeOpacity={0.8}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.calSystemTitle, calendarSystem === 'HINDU' && styles.calSystemTitleActive]}>
-                  🕉️ Hindu Calendar (Vikram Samvat)
-                </Text>
-                <Text style={styles.calSystemDesc}>Standard Vedic Lunar/Solar Panchang with Tithis & Nakshatras</Text>
-              </View>
-              {calendarSystem === 'HINDU' && <Text style={styles.checkIcon}>✓</Text>}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.calSystemItem, calendarSystem === 'JAIN' && styles.calSystemItemActive]}
-              onPress={() => setCalendarSystem('JAIN')}
-              activeOpacity={0.8}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.calSystemTitle, calendarSystem === 'JAIN' && styles.calSystemTitleActive]}>
-                  🪔 Jain Calendar (Vira Nirvana Samvat)
-                </Text>
-                <Text style={styles.calSystemDesc}>Sacred Jain Parva Tithis (Aastham, Chaudas), Pachkhan & Festivals</Text>
-              </View>
-              {calendarSystem === 'JAIN' && <Text style={styles.checkIcon}>✓</Text>}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.calSystemItem, calendarSystem === 'GLOBAL' && styles.calSystemItemActive]}
-              onPress={() => setCalendarSystem('GLOBAL')}
-              activeOpacity={0.8}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.calSystemTitle, calendarSystem === 'GLOBAL' && styles.calSystemTitleActive]}>
-                  🌍 Global Gregorian Solar Calendar
-                </Text>
-                <Text style={styles.calSystemDesc}>Standard Western Solar Dates & International Holidays</Text>
-              </View>
-              {calendarSystem === 'GLOBAL' && <Text style={styles.checkIcon}>✓</Text>}
-            </TouchableOpacity>
+            {[
+              { id: 'HINDU', title: '🕉️ Hindu Calendar (Vikram Samvat)', desc: 'Standard Vedic Lunar/Solar Panchang with Tithis & Nakshatras' },
+              { id: 'GLOBAL', title: '🌍 Gregorian Solar Calendar', desc: 'Standard Western Solar Dates & International Holidays' },
+              { id: 'JAIN', title: '🪔 Jain Calendar (Vira Nirvana Samvat)', desc: 'Sacred Jain Parva Tithis (Aastham, Chaudas), Pachkhan & Fasting' },
+              { id: 'SIKH', title: '☬ Nanakshahi Sikh Calendar', desc: 'Sikh Samvat 556, Gurpurabs, Shaheedi Diwas & Historic Dates' },
+              { id: 'BUDDHIST', title: '☸️ Buddhist Lunar Calendar (BE 2568)', desc: 'Buddha Era 2568, Vesak, Asalha & Kathina Sacred Days' },
+              { id: 'CHRISTIAN', title: '✝️ Christian Liturgical Calendar', desc: 'Feasts, Lent, Easter, Good Friday, Christmas & Seasons' },
+              { id: 'PARSI', title: '🔥 Zoroastrian Parsi Calendar', desc: 'Shahenshahi / Fasli Yazdegerdi 1396 & Navroz Celebrations' },
+            ].map(item => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.calSystemItem, calendarSystem === item.id && styles.calSystemItemActive]}
+                onPress={() => setCalendarSystem(item.id as any)}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.calSystemTitle, calendarSystem === item.id && styles.calSystemTitleActive]}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.calSystemDesc}>{item.desc}</Text>
+                </View>
+                {calendarSystem === item.id && <Text style={styles.checkIcon}>✓</Text>}
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 

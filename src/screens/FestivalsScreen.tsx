@@ -59,8 +59,8 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </View>
       </View>
 
-      {/* Filter Category Chips */}
-      <View style={styles.filterBar}>
+      {/* Filter Category Chips (Horizontal Scrollable) */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBarScroll} contentContainerStyle={styles.filterBarContent}>
         <TouchableOpacity
           style={[styles.filterChip, selectedCategory === 'ALL' && styles.filterChipActive]}
           onPress={() => setSelectedCategory('ALL')}
@@ -72,23 +72,51 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           style={[styles.filterChip, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterChipActive]}
           onPress={() => setSelectedCategory('MAJOR_FESTIVAL')}
         >
-          <Text style={[styles.filterText, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterTextActive]}>Festivals</Text>
+          <Text style={[styles.filterText, selectedCategory === 'MAJOR_FESTIVAL' && styles.filterTextActive]}>🕉️ Hindu</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.filterChip, selectedCategory === 'JAIN_FESTIVAL' && styles.filterChipActive]}
           onPress={() => setSelectedCategory('JAIN_FESTIVAL')}
         >
-          <Text style={[styles.filterText, selectedCategory === 'JAIN_FESTIVAL' && styles.filterTextActive]}>🪔 Jain Parva</Text>
+          <Text style={[styles.filterText, selectedCategory === 'JAIN_FESTIVAL' && styles.filterTextActive]}>🪔 Jain</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, selectedCategory === 'SIKH_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('SIKH_FESTIVAL')}
+        >
+          <Text style={[styles.filterText, selectedCategory === 'SIKH_FESTIVAL' && styles.filterTextActive]}>☬ Sikh</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, selectedCategory === 'BUDDHIST_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('BUDDHIST_FESTIVAL')}
+        >
+          <Text style={[styles.filterText, selectedCategory === 'BUDDHIST_FESTIVAL' && styles.filterTextActive]}>☸️ Buddhist</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, selectedCategory === 'CHRISTIAN_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('CHRISTIAN_FESTIVAL')}
+        >
+          <Text style={[styles.filterText, selectedCategory === 'CHRISTIAN_FESTIVAL' && styles.filterTextActive]}>✝️ Christian</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, selectedCategory === 'PARSI_FESTIVAL' && styles.filterChipActive]}
+          onPress={() => setSelectedCategory('PARSI_FESTIVAL')}
+        >
+          <Text style={[styles.filterText, selectedCategory === 'PARSI_FESTIVAL' && styles.filterTextActive]}>🔥 Parsi</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.filterChip, selectedCategory === 'WORLD_FESTIVAL' && styles.filterChipActive]}
           onPress={() => setSelectedCategory('WORLD_FESTIVAL')}
         >
-          <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World Festivals</Text>
+          <Text style={[styles.filterText, selectedCategory === 'WORLD_FESTIVAL' && styles.filterTextActive]}>🌐 World</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* Hero Jain Chaturmas & Paryushan Banner */}
       {(selectedCategory === 'JAIN_FESTIVAL' || selectedCategory === 'ALL') && (
@@ -163,10 +191,16 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
                     <Text style={styles.categoryBadgeText}>
                       {item.category === 'JAIN_FESTIVAL'
                         ? '🪔 Jain Parva'
+                        : item.category === 'SIKH_FESTIVAL'
+                        ? '☬ Sikh Gurpurab'
+                        : item.category === 'BUDDHIST_FESTIVAL'
+                        ? '☸️ Buddhist'
+                        : item.category === 'CHRISTIAN_FESTIVAL'
+                        ? '✝️ Christian'
+                        : item.category === 'PARSI_FESTIVAL'
+                        ? '🔥 Parsi Navroz'
                         : item.category === 'MAJOR_FESTIVAL'
-                        ? 'Festival'
-                        : item.category === 'VRAT'
-                        ? 'Vrat'
+                        ? '🕉️ Hindu Festival'
                         : 'Jayanti'}
                     </Text>
                   </View>
@@ -332,6 +366,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textMuted,
     marginLeft: 6,
+  },
+  filterBarScroll: {
+    maxHeight: 50,
+    marginBottom: 8,
+  },
+  filterBarContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
   },
   filterBar: {
     flexDirection: 'row',

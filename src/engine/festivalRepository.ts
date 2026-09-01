@@ -300,6 +300,206 @@ export const FESTIVALS: Festival[] = [
     rituals: 'Khamasna to Jain Monks, Dev Diwali celebrations, Shatrunjaya Giriraj Yatra.',
     tithiDescription: 'Kartika Shukla Purnima',
     isHoliday: true
+  },
+
+  // Sikh Festivals (☬)
+  {
+    id: 'f_sikh_guru_gobind_singh',
+    name: '☬ Guru Gobind Singh Jayanti',
+    hindiName: '☬ गुरु गोबिंद सिंह जयंती',
+    dateIso: '2026-01-05',
+    category: 'SIKH_FESTIVAL',
+    deity: 'Guru Gobind Singh Ji',
+    description: 'Prakash Parv celebrating the birth anniversary of the 10th Sikh Guru who established the Khalsa Panth.',
+    rituals: 'Nagar Kirtan procession, Akhand Path, Gatka martial arts demonstration, Langar seva.',
+    tithiDescription: 'Poh Sudi Saptami (Nanakshahi)',
+    isHoliday: true
+  },
+  {
+    id: 'f_sikh_hola_mohalla',
+    name: '☬ Hola Mohalla',
+    hindiName: '☬ होला मोहल्ला',
+    dateIso: '2026-03-04',
+    category: 'SIKH_FESTIVAL',
+    deity: 'Khalsa Panth',
+    description: 'Grand Sikh festival of valor and martial arts instituted by Guru Gobind Singh Ji at Anandpur Sahib.',
+    rituals: 'Nihang Sikh martial displays, mock battles, horsemanship, kirtan and community feast (Langar).',
+    tithiDescription: 'Chet Vadi 1 (Nanakshahi)',
+    isHoliday: true
+  },
+  {
+    id: 'f_sikh_baisakhi',
+    name: '☬ Baisakhi (Vaisakhi / Khalsa Sirjana Diwas)',
+    hindiName: '☬ वैसाखी (खालसा साजना दिवस)',
+    dateIso: '2026-04-14',
+    category: 'SIKH_FESTIVAL',
+    deity: 'Khalsa Panth & Guru Gobind Singh Ji',
+    description: 'Commemorates the creation of the Khalsa Panth in 1699 by Guru Gobind Singh Ji and the spring harvest.',
+    rituals: 'Amrit Sanchar ceremony, Gurdwara prayers, Kar Seva, Bhangra & Gidda celebrations.',
+    tithiDescription: '1st Vaisakh (Nanakshahi Solar)',
+    isHoliday: true
+  },
+  {
+    id: 'f_sikh_guru_arjan_shaheedi',
+    name: '☬ Shaheedi Guru Arjan Dev Ji',
+    hindiName: '☬ शहादत दिवस गुरु अर्जुन देव जी',
+    dateIso: '2026-06-16',
+    category: 'SIKH_FESTIVAL',
+    deity: 'Guru Arjan Dev Ji',
+    description: 'Martyrdom day of the 5th Sikh Guru who compiled the Adi Granth and built Harmandir Sahib (Golden Temple).',
+    rituals: 'Chabeel (sweet cold water distribution), Kirtan darbar, silent prayers.',
+    tithiDescription: '2 Harh (Nanakshahi)',
+    isHoliday: true
+  },
+  {
+    id: 'f_sikh_bandi_chhor',
+    name: '☬ Bandi Chhor Divas',
+    hindiName: '☬ बंदी छोड़ दिवस',
+    dateIso: '2026-11-08',
+    category: 'SIKH_FESTIVAL',
+    deity: 'Guru Hargobind Sahib Ji',
+    description: 'Celebrates the liberation of 6th Sikh Guru Hargobind Ji and 52 Hindu kings from Gwalior Fort.',
+    rituals: 'Illumination of Golden Temple with lamps, fireworks, Kirtan, Deepmala.',
+    tithiDescription: 'Kattak Vadi 14 (Nanakshahi)',
+    isHoliday: true
+  },
+  {
+    id: 'f_sikh_guru_nanak_jayanti',
+    name: '☬ Guru Nanak Dev Ji Gurpurab',
+    hindiName: '☬ गुरु नानक देव जी प्रकाश पर्व',
+    dateIso: '2026-11-24',
+    category: 'SIKH_FESTIVAL',
+    deity: 'Guru Nanak Dev Ji',
+    description: 'Prakash Parv of Guru Nanak Dev Ji, founder of Sikhism who taught equality, truth, and devotion.',
+    rituals: 'Akhand Path completion, morning Prabhat Pheri, Nagar Kirtan, grand Langar distribution.',
+    tithiDescription: 'Kartik Purnima (Nanakshahi 558)',
+    isHoliday: true
+  },
+
+  // Buddhist Festivals (☸️)
+  {
+    id: 'f_buddhist_losar',
+    name: '☸️ Losar (Tibetan Buddhist New Year)',
+    hindiName: '☸️ लोसार (तिब्बती बौद्ध नववर्ष)',
+    dateIso: '2026-02-17',
+    category: 'BUDDHIST_FESTIVAL',
+    deity: 'Lord Buddha & Bodhisattvas',
+    description: 'Tibetan Buddhist New Year celebrated with prayers, butter sculpture offerings, and cham dances.',
+    rituals: 'Monastery prayers, hoisting prayer flags (Lungta), family gatherings, offering Khatas.',
+    tithiDescription: '1st Day of 1st Tibetan Month',
+    isHoliday: false
+  },
+  {
+    id: 'f_buddhist_buddha_purnima',
+    name: '☸️ Buddha Purnima / Vesak',
+    hindiName: '☸️ बुद्ध पूर्णिमा / वैशाख बुद्ध जयंती',
+    dateIso: '2026-05-31',
+    category: 'BUDDHIST_FESTIVAL',
+    deity: 'Gautama Buddha',
+    description: 'Triple blessed day commemorating Gautama Buddha\'s Birth, Enlightenment (Bodhi), and Parinirvana.',
+    rituals: 'Bodhi Tree puja, meditation, chanting Dhammacakkappavattana Sutta, acts of Metta (loving-kindness).',
+    tithiDescription: 'Vaisakha Purnima',
+    isHoliday: true
+  },
+  {
+    id: 'f_buddhist_asalha_puja',
+    name: '☸️ Asalha Puja (Dharma Day)',
+    hindiName: '☸️ असाल्हा पूजा (धम्म दिवस)',
+    dateIso: '2026-07-29',
+    category: 'BUDDHIST_FESTIVAL',
+    deity: 'Gautama Buddha & Sangha',
+    description: 'Commemorates Lord Buddha\'s first sermon at Sarnath and the turning of the Wheel of Dharma.',
+    rituals: 'Chanting the Four Noble Truths, candlelit circumambulation around stupas.',
+    tithiDescription: 'Ashadha Purnima',
+    isHoliday: false
+  },
+
+  // Christian Festivals (✝️)
+  {
+    id: 'f_christian_ash_wednesday',
+    name: '✝️ Ash Wednesday',
+    hindiName: '✝️ राख का बुधवार (Ash Wednesday)',
+    dateIso: '2026-02-18',
+    category: 'CHRISTIAN_FESTIVAL',
+    deity: 'Lord Jesus Christ',
+    description: 'First day of Lent, a period of 40 days of fasting, prayer, and repentance before Easter.',
+    rituals: 'Imposition of ashes on forehead, fasting, abstinence, charity.',
+    tithiDescription: '46 Days Before Easter',
+    isHoliday: false
+  },
+  {
+    id: 'f_christian_good_friday',
+    name: '✝️ Good Friday',
+    hindiName: '✝️ गुड फ्राइडे (पवित्र शुक्रवार)',
+    dateIso: '2026-04-03',
+    category: 'CHRISTIAN_FESTIVAL',
+    deity: 'Lord Jesus Christ',
+    description: 'Solemn day commemorating the crucifixion and supreme sacrifice of Lord Jesus Christ at Calvary.',
+    rituals: 'Veneration of the Cross, Stations of the Cross prayers, solemn afternoon service.',
+    tithiDescription: 'Friday Before Easter',
+    isHoliday: true
+  },
+  {
+    id: 'f_christian_easter',
+    name: '✝️ Easter Sunday (Resurrection Day)',
+    hindiName: '✝️ ईस्टर संडे (पुनरुत्थान पर्व)',
+    dateIso: '2026-04-05',
+    category: 'CHRISTIAN_FESTIVAL',
+    deity: 'Lord Jesus Christ',
+    description: 'Joyous festival celebrating the Resurrection of Jesus Christ from the dead on the third day.',
+    rituals: 'Sunrise Church mass, ringing Easter bells, Easter egg hunt, family feasts.',
+    tithiDescription: 'First Sunday After Full Moon Post-Equinox',
+    isHoliday: true
+  },
+  {
+    id: 'f_christian_christmas',
+    name: '✝️ Christmas Day',
+    hindiName: '✝️ बड़ा दिन (क्रिसमस)',
+    dateIso: '2026-12-25',
+    category: 'CHRISTIAN_FESTIVAL',
+    deity: 'Lord Jesus Christ',
+    description: 'Annual festival commemorating the nativity and birth of Jesus Christ.',
+    rituals: 'Midnight Mass, nativity scene displays, Christmas carols, gift sharing.',
+    tithiDescription: '25th December (Solar)',
+    isHoliday: true
+  },
+
+  // Parsi / Zoroastrian Festivals (🔥)
+  {
+    id: 'f_parsi_jamshedi_navroz',
+    name: '🔥 Jamshedi Navroz (Vernal Equinox)',
+    hindiName: '🔥 जमशेदी नौरोज़ (पारसी वसंत नववर्ष)',
+    dateIso: '2026-03-21',
+    category: 'PARSI_FESTIVAL',
+    deity: 'Ahura Mazda & Zarathustra',
+    description: 'Zoroastrian Spring New Year coinciding with the vernal equinox, celebrated by Parsis worldwide.',
+    rituals: 'Fire Temple (Agiary) prayers, setting up the Haft-Sin table, charity, family feasts.',
+    tithiDescription: 'Fasli Solar Equinox',
+    isHoliday: true
+  },
+  {
+    id: 'f_parsi_new_year',
+    name: '🔥 Shahenshahi Parsi New Year (Pateti / Navroz)',
+    hindiName: '🔥 पतेती एवं पारसी नववर्ष (शहंशाही)',
+    dateIso: '2026-08-16',
+    category: 'PARSI_FESTIVAL',
+    deity: 'Ahura Mazda',
+    description: 'New Year\'s Day according to the Shahenshahi Zoroastrian calendar, preceded by Pateti (Day of Repentance).',
+    rituals: 'Special Jasanam prayer service at Agiary, Wearing new clothes, Ravo & Falooda delicacies.',
+    tithiDescription: '1st Fravardin (Yazdegerdi 1396)',
+    isHoliday: true
+  },
+  {
+    id: 'f_parsi_khordad_sal',
+    name: '🔥 Khordad Sal (Birth Anniversary of Zarathustra)',
+    hindiName: '🔥 खोरदाद साल (पैगंबर ज़रथुस्ट्र का जन्म दिवस)',
+    dateIso: '2026-08-21',
+    category: 'PARSI_FESTIVAL',
+    deity: 'Prophet Zarathustra',
+    description: 'Celebrates the birth anniversary of Prophet Zarathustra (Zoroaster), founder of Zoroastrianism.',
+    rituals: 'Grand Jashan prayers at Fire Temple, floral decorations, community gatherings.',
+    tithiDescription: '6th Fravardin (Yazdegerdi 1396)',
+    isHoliday: false
   }
 ];
 

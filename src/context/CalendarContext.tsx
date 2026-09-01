@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type CalendarSystem = 'HINDU' | 'JAIN' | 'GLOBAL';
+export type CalendarSystem = 'HINDU' | 'GLOBAL' | 'JAIN' | 'SIKH' | 'BUDDHIST' | 'CHRISTIAN' | 'PARSI';
 
 interface CalendarContextType {
   calendarSystem: CalendarSystem;
@@ -22,7 +22,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (async () => {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored === 'HINDU' || stored === 'JAIN' || stored === 'GLOBAL') {
+        if (stored && ['HINDU', 'GLOBAL', 'JAIN', 'SIKH', 'BUDDHIST', 'CHRISTIAN', 'PARSI'].includes(stored)) {
           setCalendarSystemState(stored as CalendarSystem);
         }
       } catch (err) {
