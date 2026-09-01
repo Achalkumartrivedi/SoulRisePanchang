@@ -27,9 +27,9 @@ export const calculateTithiForDate = (d: Date): number => {
 };
 
 export const getHinduMonthName = (d: Date): string => {
-  const m = d.getMonth();
-  const hinduMonths = ["Pausha", "Magha", "Phalguna", "Chaitra", "Vaisakha", "Jyeshtha", "Ashadha", "Shravana", "Bhadrapada", "Ashvin", "Kartika", "Margashirsha"];
-  return hinduMonths[m % 12];
+  const defaultCity = { name: 'New Delhi', hindiName: 'नई दिल्ली', stateCountry: 'India', latitude: 28.6139, longitude: 77.2090, timeZoneId: 'Asia/Kolkata' };
+  const p = calculatePanchang(d, defaultCity);
+  return p.samvat.monthName;
 };
 
 export const getPerpetualMiniRitual = (d: Date, tithiIdx: number, monthName: string): string | null => {
@@ -307,7 +307,7 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   // Samvat
   const vikramYear = year + 57;
   const shakaYear = year - 78;
-  const monthIndex = (sunSignIndex + 11) % 12;
+  const monthIndex = (sunSignIndex + 1) % 12;
   const monthPair = HINDU_MONTHS[monthIndex];
 
   const rituPair = (monthIndex === 0 || monthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :

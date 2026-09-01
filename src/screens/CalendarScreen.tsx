@@ -4,7 +4,7 @@ import { Colors } from '../theme/colors';
 import { FESTIVALS } from '../engine/festivalRepository';
 import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
-import { calculatePanchang } from '../engine/panchangEngine';
+import { calculatePanchang, getHinduMonthName } from '../engine/panchangEngine';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
@@ -72,12 +72,6 @@ const calculateTithiForDate = (d: Date): number => {
   let idx = Math.floor((12 + diff) % 30);
   if (idx < 0) idx += 30;
   return idx;
-};
-
-const getHinduMonthName = (d: Date): string => {
-  const m = d.getMonth();
-  const hinduMonths = ["Pausha", "Magha", "Phalguna", "Chaitra", "Vaisakha", "Jyeshtha", "Ashadha", "Shravana", "Bhadrapada", "Ashvin", "Kartika", "Margashirsha"];
-  return hinduMonths[m % 12];
 };
 
 const getPerpetualMiniRitual = (d: Date, tithiIdx: number, monthName: string): string | null => {
