@@ -18,12 +18,12 @@ const SEED_REMINDERS: ReminderItem[] = [
   {
     id: 'seed-2',
     title: 'Poonam (Purnima) Vrat & Satyanarayan Puja',
-    category: 'TITHI_PHASE',
+    category: 'TITHI_FESTIVAL',
     timeStr: '06:30 AM',
     enabled: true,
     notes: 'Monthly Full Moon sacred fast & Katha',
     createdAtIso: new Date().toISOString(),
-    recurrence: { tithiType: 'POONAM_PURNIMA' }
+    recurrence: { subType: 'TITHI', tithiName: 'Purnima / Poonam (15th Tithi)' }
   },
   {
     id: 'seed-3',
@@ -42,11 +42,12 @@ const SEED_REMINDERS: ReminderItem[] = [
   },
   {
     id: 'seed-4',
-    title: 'Morning Gayatri Mantra Chant',
+    title: 'Gayatri Mantra & Evening Aarti',
     category: 'DAILY_CHANT',
     timeStr: '06:00 AM',
+    timeSlots: ['06:00 AM', '07:00 PM'],
     enabled: true,
-    notes: 'Daily 108 Japa of Om Bhur Bhuva Swaha',
+    notes: 'Daily 108 Japa of Om Bhur Bhuva Swaha Morning & Evening',
     createdAtIso: new Date().toISOString()
   }
 ];
@@ -55,11 +56,26 @@ export async function getStoredReminders(): Promise<ReminderItem[]> {
   try {
     const raw = await AsyncStorage.getItem(REMINDERS_KEY);
     if (!raw) {
-      // Seed initial sample reminders
       await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(SEED_REMINDERS));
       return SEED_REMINDERS;
     }
-    return JSON.parse(raw);
+    const list: ReminderItem[] = JSON.parse(raw);
+    // Migration: Map legacy TITHI_PHASE category to TITHI_FESTIVAL
+    const migrated = list.map(item => {
+      if ((item as any).category === 'TITHI_PHASE') {
+        return {
+          ...item,
+          category: 'TITHI_FESTIVAL' as const,
+          recurrence: {
+            ...item.recurrence,
+            subType: 'TITHI' as const,
+            tithiName: (item.recurrence as any)?.tithiType || 'Poonam / Purnima'
+          }
+        };
+      }
+      return item;
+    });
+    return migrated;
   } catch (e) {
     console.error('Error reading reminders from storage:', e);
     return SEED_REMINDERS;
