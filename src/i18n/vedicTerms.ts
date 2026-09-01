@@ -402,7 +402,11 @@ export const PAKSHA_MAP: Record<string, Record<LanguageCode, string>> = {
 };
 
 export function getLocalizedTithi(tithiNumber: number, language: LanguageCode): TithiTranslation {
-  const mapForNumber = TITHI_MAP[tithiNumber] || TITHI_MAP[1];
+  let normalizedNum = ((tithiNumber - 1) % 15) + 1;
+  if (isNaN(normalizedNum) || normalizedNum < 1 || normalizedNum > 15) {
+    normalizedNum = 1;
+  }
+  const mapForNumber = TITHI_MAP[normalizedNum] || TITHI_MAP[1];
   return mapForNumber[language] || mapForNumber.hinglish || { name: 'Pratipada', desc: '1st Lunar Day' };
 }
 

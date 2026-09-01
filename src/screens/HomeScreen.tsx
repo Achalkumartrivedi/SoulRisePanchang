@@ -43,7 +43,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showLangModal, setShowLangModal] = useState(false);
   const [showBirthChartModal, setShowBirthChartModal] = useState(false);
 
-  const locHeroTithi = getLocalizedTithi(panchang.tithi.number || 13, language);
+  const tithiInPaksha = (((panchang.tithi.number || 1) - 1) % 15) + 1;
+  const locHeroTithi = getLocalizedTithi(tithiInPaksha, language);
   const locHeroPaksha = getLocalizedPakshaName(panchang.tithi.paksha === 'KRISHNA' ? 'KRISHNA' : 'SHUKLA', language);
   const showHindiScript = language === 'hi' || language === 'hinglish';
 
