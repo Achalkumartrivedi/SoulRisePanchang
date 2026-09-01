@@ -15,9 +15,11 @@ interface AnimatedFestivalIconProps {
 export const AnimatedFestivalIcon: React.FC<AnimatedFestivalIconProps> = ({ text, style, badgeStyle }) => {
   const animValue = useRef(new Animated.Value(0)).current;
 
-  // Extract first emoji if present
-  const firstChar = Array.from(text)[0] || '';
-  const isSway = ['🐍', '🚩', '🐒', '🌿'].includes(firstChar);
+  // Separate first emoji icon from the rest of the text label
+  const chars = Array.from(text);
+  const iconEmoji = chars[0] || '';
+  const labelText = chars.slice(1).join('').trim();
+  const isSway = ['🐍', '🚩', '🐒', '🌿'].includes(iconEmoji);
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation;
@@ -74,12 +76,12 @@ export const AnimatedFestivalIcon: React.FC<AnimatedFestivalIconProps> = ({ text
   // Interpolations for Native Driver
   const rotateInterpolation = animValue.interpolate({
     inputRange: [-1, 0, 1],
-    outputRange: ['-10deg', '0deg', '10deg'],
+    outputRange: ['-12deg', '0deg', '12deg'],
   });
 
   const scaleInterpolation = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.14],
+    outputRange: [1, 1.25],
   });
 
   const opacityInterpolation = animValue.interpolate({
@@ -92,12 +94,18 @@ export const AnimatedFestivalIcon: React.FC<AnimatedFestivalIconProps> = ({ text
     : { transform: [{ scale: scaleInterpolation }], opacity: opacityInterpolation };
 
   return (
-    <View style={badgeStyle}>
+    <View style={[badgeStyle, { flexDirection: 'row', alignItems: 'center' }]}>
+      {/* 1. Animated Icon ONLY */}
       <Animated.View style={animatedTransformStyle}>
-        <Text style={style} numberOfLines={1}>
-          {text}
-        </Text>
+        <Text style={style}>{iconEmoji}</Text>
       </Animated.View>
+
+      {/* 2. Stationary Text Label Next to Icon */}
+      {labelText ? (
+        <Text style={[style, { marginLeft: 2 }]} numberOfLines={1}>
+          {labelText}
+        </Text>
+      ) : null}
     </View>
   );
 };
