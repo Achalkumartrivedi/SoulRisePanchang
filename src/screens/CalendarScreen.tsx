@@ -1085,10 +1085,11 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   monthPakshaText: {
-    fontSize: 10.5,
-    fontWeight: '700',
+    fontSize: 9.2,
+    fontWeight: 'bold',
     color: '#424242',
     marginTop: 2,
+    letterSpacing: -0.3,
   },
   jainMonthText: {
     fontSize: 8,
