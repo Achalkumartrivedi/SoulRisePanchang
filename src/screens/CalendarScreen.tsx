@@ -347,7 +347,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 activeOpacity={0.7}
               >
                 {/* 1. Large Light Gray Background Watermark Tithi Number */}
-                <Text style={styles.watermarkTithiNum}>{tithiNum}</Text>
+                <Text style={styles.watermarkTithiNum} numberOfLines={1}>{tithiNum}</Text>
 
                 {/* 2. Top Row: Day Number & Moon Icon */}
                 <View style={styles.dayTopRow}>
@@ -1064,12 +1064,12 @@ const styles = StyleSheet.create({
   },
   watermarkTithiNum: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 2,
     right: 2,
-    fontSize: 42,
+    fontSize: 28,
     fontWeight: '900',
     color: 'rgba(0, 0, 0, 0.08)',
-    letterSpacing: -1,
+    letterSpacing: -1.5,
   },
   jainParvaCell: {
     backgroundColor: '#FFF8E1',
