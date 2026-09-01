@@ -105,7 +105,7 @@ const getRahuKalamForDate = (d: Date): string => {
 
 export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = DEFAULT_CITIES[0], onSelectDate }) => {
   const { language, t } = useLanguage();
-  const { calendarSystem, setCalendarSystem } = useCalendarSystem();
+  const { calendarSystem, setCalendarSystem, lunarSystem } = useCalendarSystem();
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
   const [showPopupInfoModal, setShowPopupInfoModal] = useState(false);
@@ -310,9 +310,9 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             const festMatch = monthFestivals.find(f => f.dateIso === dateIso);
             const isHoliday = isSunday || (festMatch && festMatch.isHoliday);
 
-            const tithiIdx = calculateTithiForDate(dateObj);
-            const tithiNum = (tithiIdx % 15) + 1;
-            const isKrishna = tithiIdx > 14;
+            const cellPanchang = calculatePanchang(dateObj, selectedCity, lunarSystem);
+            const tithiNum = ((cellPanchang.tithi.number - 1) % 15) + 1;
+            const isKrishna = cellPanchang.tithi.paksha === 'KRISHNA';
 
             let pakshaTitle = 'Krishna';
             if (language === 'gu') {
@@ -323,13 +323,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
               pakshaTitle = isKrishna ? 'Krishna' : 'Shukla';
             }
 
-            const hinduMonthName = getHinduMonthName(dateObj);
-            const jainData = getJainDayData(dateObj, tithiIdx);
+            const jainData = getJainDayData(dateObj, cellPanchang.tithi.number - 1);
 
             let moonIcon = '🌒';
-            if (tithiIdx === 14) moonIcon = '🌕';
-            else if (tithiIdx === 29) moonIcon = '🌑';
-            else if (tithiIdx > 14) moonIcon = '🌘';
+            if (cellPanchang.tithi.number === 15) moonIcon = '🌕';
+            else if (cellPanchang.tithi.number === 30) moonIcon = '🌑';
+            else if (isKrishna) moonIcon = '🌘';
 
             const realToday = new Date();
             const isTodayCell = dayNum === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear();
