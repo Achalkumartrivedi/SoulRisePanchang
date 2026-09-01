@@ -148,6 +148,7 @@ export interface Festival {
   description: string;
   rituals: string;
   tithiDescription: string;
+  region?: string;
   isHoliday?: boolean;
 }
 

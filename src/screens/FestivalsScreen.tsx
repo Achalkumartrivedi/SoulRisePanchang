@@ -209,6 +209,12 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
                 <Text style={styles.festName}>{item.name}</Text>
                 <Text style={styles.festHindiName}>{item.hindiName}</Text>
 
+                {item.region ? (
+                  <View style={styles.regionBadgeRow}>
+                    <Text style={styles.regionBadgeText}>📍 {item.region}</Text>
+                  </View>
+                ) : null}
+
                 <View style={styles.deityRow}>
                   <Text style={styles.deityLabel}>Deity / Aradhana:</Text>
                   <Text style={styles.deityText}>{item.deity}</Text>
@@ -485,7 +491,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 2,
+    marginBottom: 4,
+  },
+  regionBadgeRow: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
     marginBottom: 6,
+  },
+  regionBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
   deityRow: {
     flexDirection: 'row',
