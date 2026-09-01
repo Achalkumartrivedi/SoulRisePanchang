@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
 import { Colors } from '../theme/colors';
-import { FESTIVALS } from '../engine/festivalRepository';
+import { FESTIVALS, getLocalizedFestivalTitle } from '../engine/festivalRepository';
 import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { calculatePanchang, getHinduMonthName } from '../engine/panchangEngine';
@@ -517,9 +517,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   if (!fest) return null;
                   return (
                     <View style={styles.modalFestBanner}>
-                      <Text style={styles.modalFestTitle}>🚩 {fest.name}</Text>
-                      {fest.hindiName ? (
+                      <Text style={styles.modalFestTitle}>🚩 {getLocalizedFestivalTitle(fest, language)}</Text>
+                      {language === 'hi' && fest.hindiName && fest.hindiName !== getLocalizedFestivalTitle(fest, language) ? (
                         <Text style={[styles.modalFestDesc, { fontWeight: 'bold' }]}>{fest.hindiName}</Text>
+                      ) : null}
+                      {language === 'gu' && fest.gujaratiName && fest.gujaratiName !== getLocalizedFestivalTitle(fest, language) ? (
+                        <Text style={[styles.modalFestDesc, { fontWeight: 'bold' }]}>{fest.gujaratiName}</Text>
                       ) : null}
                       {fest.description ? (
                         <Text style={styles.modalFestDesc}>{fest.description}</Text>

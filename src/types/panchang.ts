@@ -142,6 +142,7 @@ export interface Festival {
   id: string;
   name: string;
   hindiName: string;
+  gujaratiName?: string;
   dateIso: string;
   category: FestivalCategory;
   deity: string;

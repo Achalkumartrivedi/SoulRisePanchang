@@ -1,6 +1,6 @@
 import type { CalendarSystem } from '../context/CalendarContext';
 import { Festival } from '../types/panchang';
-import { FESTIVALS } from './festivalRepository';
+import { FESTIVALS, getLocalizedFestivalTitle } from './festivalRepository';
 import { getJainDayData, JainDayData } from './jainCalendarEngine';
 import { calculateTithiForDate, getHinduMonthName } from './panchangEngine';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
@@ -262,7 +262,7 @@ export function getDharmaCalendarDayData(
       if (tithiIdx === 14) badgeText = language === 'gu' ? '🌕 પૂનમ (Purnima)' : (language === 'hi' ? '🌕 पूर्णिमा' : '🌕 Purnima');
       else if (tithiIdx === 29) badgeText = language === 'gu' ? '🌑 અમાસ (Amavasya)' : (language === 'hi' ? '🌑 अमावस्या' : '🌑 Amavasya');
       else if (tithiIdx === 10 || tithiIdx === 25) badgeText = language === 'gu' ? '🌿 અગિયારસ (Ekadashi)' : (language === 'hi' ? '🌿 एकादशी' : '🌿 Ekadashi');
-      else if (hinduFest) badgeText = (language === 'hi' && hinduFest.hindiName) ? hinduFest.hindiName : hinduFest.name;
+      else if (hinduFest) badgeText = getLocalizedFestivalTitle(hinduFest, language);
 
       const eraTitle = language === 'gu'
         ? '🕉️ હિન્દુ તિથિ અને પંચાંગ વિગત'

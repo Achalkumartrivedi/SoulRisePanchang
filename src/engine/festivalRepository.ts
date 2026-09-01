@@ -958,8 +958,9 @@ export const FESTIVALS: Festival[] = [
   // ----------------------------------------------------
   {
     id: 'f_guj_bol_choth',
-    name: '🐄 Bol Choth (બોળ ચોથ / ગોવત્સ દ્વાદશી) - Gujarat',
+    name: '🐄 Bol Choth (Govatsa Dwadashi) - Gujarat',
     hindiName: '🐄 बोल चोथ / गौ पूजा (गुजरात)',
+    gujaratiName: '🐄 બોળ ચોથ (ગોવત્સ દ્વાદશી) - ગુજરાત',
     dateIso: '2026-09-01',
     category: 'MAJOR_FESTIVAL',
     deity: 'Gau Mata (Sacred Cow & Calf)',
@@ -970,8 +971,9 @@ export const FESTIVALS: Festival[] = [
   },
   {
     id: 'f_guj_nag_pancham',
-    name: '🐍 Nag Pancham (નાગ પાંચમ) - Gujarat',
+    name: '🐍 Nag Pancham - Gujarat',
     hindiName: '🐍 नाग पंचम (गुजरात)',
+    gujaratiName: '🐍 નાગ પાંચમ - ગુજરાત',
     dateIso: '2026-09-02',
     category: 'MAJOR_FESTIVAL',
     deity: 'Nag Devta (Serpent Deities)',
@@ -982,8 +984,9 @@ export const FESTIVALS: Festival[] = [
   },
   {
     id: 'f_guj_randhan_chhath',
-    name: '🍲 Randhan Chhath (રાંધણ છઠ્ઠ - ડીવોશનલ કુકિંગ ડે) - Gujarat',
+    name: '🍲 Randhan Chhath (Devotional Cooking Day) - Gujarat',
     hindiName: '🍲 रांधण छठ (गुजरात)',
+    gujaratiName: '🍲 રાંધણ છઠ્ઠ - ગુજરાત',
     dateIso: '2026-09-03',
     category: 'MAJOR_FESTIVAL',
     deity: 'Goddess Shitala',
@@ -994,8 +997,9 @@ export const FESTIVALS: Festival[] = [
   },
   {
     id: 'f_guj_shitala_satam',
-    name: '🌸 Shitala Satam (શીતળા સાતમ) - Gujarat',
+    name: '🌸 Shitala Satam - Gujarat',
     hindiName: '🌸 शीतला सातम (गुजरात)',
+    gujaratiName: '🌸 શીતળા સાતમ - ગુજરાત',
     dateIso: '2026-09-04',
     category: 'MAJOR_FESTIVAL',
     deity: 'Maa Shitala',
@@ -1006,8 +1010,9 @@ export const FESTIVALS: Festival[] = [
   },
   {
     id: 'f_guj_janmashtami',
-    name: '🚩 Gujarat Janmashtami / Aatham (જન્માષ્ટમી) - Gujarat',
+    name: '🚩 Gujarat Janmashtami (Aatham) - Gujarat',
     hindiName: '🚩 जन्माष्टमी (गुजरात)',
+    gujaratiName: '🚩 જન્માષ્ટમી (આઠમ) - ગુજરાત',
     dateIso: '2026-09-05',
     category: 'MAJOR_FESTIVAL',
     deity: 'Bhagwan Shri Krishna',
@@ -1018,8 +1023,9 @@ export const FESTIVALS: Festival[] = [
   },
   {
     id: 'f_guj_nandotsav',
-    name: '🌿 Gujarat Nandotsav / Nom (નંદોત્સવ) - Gujarat',
+    name: '🌿 Gujarat Nandotsav (Nom) - Gujarat',
     hindiName: '🌿 नन्दोत्सव (गुजरात)',
+    gujaratiName: '🌿 નંદોત્સવ (નોમ) - ગુજરાત',
     dateIso: '2026-09-06',
     category: 'MAJOR_FESTIVAL',
     deity: 'Shri Krishna & Nanda Baba',
@@ -1134,4 +1140,14 @@ export function getFestivalsForDate(dateIso: string): Festival[] {
 export function getFestivalsForMonth(year: number, month: number): Festival[] {
   const prefix = `${year}-${month < 10 ? '0' + month : month}`;
   return FESTIVALS.filter(f => f.dateIso.startsWith(prefix));
+}
+
+export function getLocalizedFestivalTitle(festival: Festival, language: string): string {
+  if (language === 'gu' && festival.gujaratiName) {
+    return festival.gujaratiName;
+  }
+  if (language === 'hi' && festival.hindiName) {
+    return festival.hindiName;
+  }
+  return festival.name;
 }
