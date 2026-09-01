@@ -10,6 +10,43 @@ const TITHI_NAMES: [string, string][] = [
   ['Trayodashi', 'त्रयोदशी'], ['Chaturdashi', 'चतुर्दशी'], ['Purnima / Amavasya', 'पूर्णिमा / अमावस्या']
 ];
 
+export const getJulianDay = (d: Date): number => {
+  let y = d.getFullYear();
+  let m = d.getMonth() + 1;
+  if (m <= 2) { y -= 1; m += 12; }
+  const a = Math.floor(y / 100);
+  const b = 2 - a + Math.floor(a / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d.getDate() + b - 1524.5;
+};
+
+export const calculateTithiForDate = (d: Date): number => {
+  const diff = ((d.getTime() - new Date(2026, 7, 25).getTime()) / (1000 * 60 * 60 * 24)) * 12.2;
+  let idx = Math.floor((12 + diff) % 30);
+  if (idx < 0) idx += 30;
+  return idx;
+};
+
+export const getHinduMonthName = (d: Date): string => {
+  const m = d.getMonth();
+  const hinduMonths = ["Pausha", "Magha", "Phalguna", "Chaitra", "Vaisakha", "Jyeshtha", "Ashadha", "Shravana", "Bhadrapada", "Ashvin", "Kartika", "Margashirsha"];
+  return hinduMonths[m % 12];
+};
+
+export const getPerpetualMiniRitual = (d: Date, tithiIdx: number, monthName: string): string | null => {
+  const dayOfWeek = d.getDay();
+  if (tithiIdx === 12 && dayOfWeek === 1) return "🔱 Soma Pradosh Vrat";
+  if (tithiIdx === 12 && dayOfWeek === 6) return "🔱 Shani Pradosh Vrat";
+  if (tithiIdx === 12) return "🔱 Pradosh Vrat";
+  if (tithiIdx === 10) return "🌿 Ekadashi Vrat";
+  if (tithiIdx === 14) return "🌕 Satyanarayan Puja";
+  if (tithiIdx === 29) return "🌑 Pitru Tarpana";
+  if (dayOfWeek === 1 && monthName === "Shravana") return "🌿 Shravan Somvar Vrat";
+  if (dayOfWeek === 2 && monthName === "Shravana") return "🌸 Mangla Gauri Puja";
+  if (dayOfWeek === 4) return "💛 Guru Vrat";
+  if (dayOfWeek === 6) return "🖤 Shani Dev Puja";
+  return null;
+};
+
 const NAKSHATRA_DATA: [string, string, string][] = [
   ['Ashwini', 'अश्विनी', 'Ketu / Ashwini Kumaras'],
   ['Bharani', 'भरणी', 'Venus / Yama'],

@@ -10,6 +10,7 @@ import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 import { getJainDayData } from '../engine/jainCalendarEngine';
 import { getWorldFestivalForDate } from '../engine/worldFestivalRepository';
+import { getDharmaCalendarDayData, DharmaDayData } from '../engine/dharmaCalendarEngine';
 
 interface CalendarScreenProps {
   selectedCity?: CityLocation;
@@ -227,13 +228,14 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
           <View style={styles.titleContainer}>
             <Text style={styles.monthTitle}>{MONTH_NAMES[month]} {year}</Text>
-            {calendarSystem === 'JAIN' ? (
-              <Text style={styles.samvatTitle}>
-                Vira Nirvana Samvat {year + 527} • {getJainDayData(new Date(year, month, 15), 0).jainMonthName}
-              </Text>
-            ) : (
-              <Text style={styles.samvatTitle}>Vikram Samvat 2083 • Shravana / Bhadrapada</Text>
-            )}
+            {(() => {
+              const headerData = getDharmaCalendarDayData(new Date(year, month, 15), calendarSystem, language);
+              return (
+                <Text style={styles.samvatTitle}>
+                  {headerData.eraTitle} • {headerData.monthName}
+                </Text>
+              );
+            })()}
           </View>
 
           <TouchableOpacity style={styles.navBtn} onPress={handleNextMonth}>
@@ -278,6 +280,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
             const realToday = new Date();
             const isTodayCell = dayNum === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear();
+            const cellDharma = getDharmaCalendarDayData(dateObj, calendarSystem, language);
 
             return (
               <TouchableOpacity
@@ -296,52 +299,33 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                   <Text style={styles.moonIconText}>{moonIcon}</Text>
                 </View>
 
-                {calendarSystem === 'JAIN' ? (
-                  <>
-                    <Text style={styles.jainMonthText} numberOfLines={1}>{jainData.jainTithiName}</Text>
+                {/* Specific Tradition Month & Day Label */}
+                <Text style={styles.monthPakshaText} numberOfLines={1}>{cellDharma.dayLabel}</Text>
 
-                    {jainData.jainFestivalName ? (
-                      <View style={styles.jainFestBadge}>
-                        <Text style={styles.jainFestText} numberOfLines={1}>🪔 {jainData.jainFestivalName.split(' ')[1] || 'Parva'}</Text>
-                      </View>
-                    ) : jainData.isParvaTithi ? (
-                      <View style={styles.jainParvaBadge}>
-                        <Text style={styles.jainParvaBadgeText} numberOfLines={1}>🪔 {jainData.parvaType?.split(' ')[1] || 'Parva'}</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.tithiText} numberOfLines={1}>{jainData.jainMonthName.split(' ')[0]}</Text>
-                    )}
-                  </>
+                {/* Specific Tradition Badge */}
+                {cellDharma.badgeText ? (
+                  <View style={[
+                    styles.festBadge,
+                    cellDharma.calendarSystem === 'JAIN' && styles.jainFestBadge,
+                    cellDharma.calendarSystem === 'SIKH' && { backgroundColor: '#FFF3E0', borderColor: '#FFB74D' },
+                    cellDharma.calendarSystem === 'BUDDHIST' && { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
+                    cellDharma.calendarSystem === 'CHRISTIAN' && { backgroundColor: '#E1F5FE', borderColor: '#4FC3F7' },
+                    cellDharma.calendarSystem === 'PARSI' && { backgroundColor: '#FBE9E7', borderColor: '#FF8A65' },
+                    cellDharma.calendarSystem === 'GLOBAL' && { backgroundColor: '#E0F2F1', borderColor: '#4DB6AC' },
+                  ]}>
+                    <Text style={[
+                      styles.festBadgeText,
+                      cellDharma.calendarSystem === 'SIKH' && { color: '#E65100' },
+                      cellDharma.calendarSystem === 'BUDDHIST' && { color: '#2E7D32' },
+                      cellDharma.calendarSystem === 'CHRISTIAN' && { color: '#0277BD' },
+                      cellDharma.calendarSystem === 'PARSI' && { color: '#D84315' },
+                      cellDharma.calendarSystem === 'GLOBAL' && { color: '#00695C' },
+                    ]} numberOfLines={1}>
+                      {cellDharma.badgeText}
+                    </Text>
+                  </View>
                 ) : (
-                  <>
-                    <Text style={styles.monthPakshaText} numberOfLines={1}>{monthPakshaDisplay}</Text>
-
-                    {tithiIdx === 14 ? (
-                      <View style={styles.purnimaBadge}>
-                        <Text style={styles.purnimaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌕 {locPurnima}</Text>
-                      </View>
-                    ) : tithiIdx === 29 ? (
-                      <View style={styles.amavasyaBadge}>
-                        <Text style={styles.amavasyaBadgeText} numberOfLines={1} adjustsFontSizeToFit>🌑 {locAmavasya}</Text>
-                      </View>
-                    ) : tithiIdx === 10 || tithiIdx === 25 ? (
-                      <View style={styles.ekadashiBadge}>
-                        <Text style={styles.ekadashiBadgeText} numberOfLines={1}>🌿 Ekadashi</Text>
-                      </View>
-                    ) : festMatch ? (
-                      <View style={styles.festBadge}>
-                        <Text style={styles.festBadgeText} numberOfLines={1}>🚩 {festMatch.name.split(' ')[0]}</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.tithiText} numberOfLines={1}>{tithiName}</Text>
-                    )}
-
-                    {miniRitual ? (
-                      <View style={styles.ritualBadge}>
-                        <Text style={styles.ritualBadgeText} numberOfLines={1}>{miniRitual}</Text>
-                      </View>
-                    ) : null}
-                  </>
+                  <Text style={styles.tithiText} numberOfLines={1}>{cellDharma.monthName.split(' ')[0]}</Text>
                 )}
               </TouchableOpacity>
             );
@@ -442,62 +426,60 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
               </View>
 
               <ScrollView style={{ maxHeight: 420 }}>
-                {/* Active Calendar System Indicator */}
-                {calendarSystem === 'JAIN' ? (
-                  <View style={styles.jainModalCard}>
-                    <Text style={styles.jainModalTitle}>🪔 Jain Vira Nirvana Samvat {mJainData.viraSamvatYear}</Text>
-                    <Text style={styles.jainModalTithi}>Month: {mJainData.jainMonthName} • Tithi: {mJainData.jainTithiName}</Text>
-                    
-                    {mJainData.isInChaturmas && (
-                      <View style={styles.chaturmasModalBadge}>
-                        <Text style={styles.chaturmasModalBadgeText}>{mJainData.chaturmasStatus}</Text>
-                      </View>
-                    )}
+                {(() => {
+                  const mDharmaData = getDharmaCalendarDayData(mDate, calendarSystem, language);
+                  return (
+                    <View style={styles.jainModalCard}>
+                      <Text style={styles.jainModalTitle}>{mDharmaData.eraTitle}</Text>
+                      <Text style={styles.jainModalTithi}>
+                        Month: {mDharmaData.monthName} • Date: {mDharmaData.dayLabel}
+                      </Text>
 
-                    {mJainData.isParvaTithi && (
-                      <View style={styles.jainParvaBox}>
-                        <Text style={styles.jainParvaBoxTitle}>{mJainData.parvaType}</Text>
-                        <Text style={styles.jainParvaBoxSub}>{mJainData.pachkhanInfo}</Text>
-                      </View>
-                    )}
+                      {mDharmaData.badgeText ? (
+                        <View style={styles.chaturmasModalBadge}>
+                          <Text style={styles.chaturmasModalBadgeText}>{mDharmaData.badgeText}</Text>
+                        </View>
+                      ) : null}
 
-                    {mJainData.jainFestivalName && (
-                      <View style={styles.jainFestBox}>
-                        <Text style={styles.jainFestBoxTitle}>{mJainData.jainFestivalName}</Text>
-                      </View>
-                    )}
+                      <Text style={[styles.worldModalDesc, { marginTop: 8 }]}>
+                        {mDharmaData.significance}
+                      </Text>
 
-                    {/* Religious Activities for the Date */}
-                    <Text style={styles.jainActHeader}>🪔 Tithi Guidelines & Spiritual Activities:</Text>
-                    {mJainData.religiousActivities.map((act, idx) => (
-                      <Text key={idx} style={styles.jainActItem}>• {act}</Text>
-                    ))}
-                  </View>
-                ) : calendarSystem === 'GLOBAL' && mWorldFest ? (
-                  <View style={styles.worldModalCard}>
-                    <Text style={styles.worldModalTitle}>
-                      {mWorldFest.countryFlag} {mWorldFest.country}: {mWorldFest.name}
-                    </Text>
-                    {mWorldFest.localName && mWorldFest.localName !== mWorldFest.name ? (
-                      <Text style={styles.worldModalSub}>{mWorldFest.localName}</Text>
-                    ) : null}
-                    <Text style={styles.worldModalDesc}>{mWorldFest.description}</Text>
-                    <View style={styles.worldSigBox}>
-                      <Text style={styles.worldSigTitle}>🌟 Significance & Traditions:</Text>
-                      <Text style={styles.worldSigText}>{mWorldFest.significance}</Text>
+                      {/* Additional Tradition Details */}
+                      <View style={{ marginTop: 10 }}>
+                        {mDharmaData.additionalDetails.map((item, idx) => (
+                          <View key={idx} style={styles.timingRow}>
+                            <Text style={styles.timingLabel}>{item.label}:</Text>
+                            <Text style={styles.timingVal}>{item.value}</Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                ) : null}
+                  );
+                })()}
 
-                {/* Festival / Event Banner if exists */}
-                {festMatchModal && (
-                  <View style={styles.modalFestBanner}>
-                    <Text style={styles.modalFestTitle}>🚩 {festMatchModal.name}</Text>
-                    {festMatchModal.description ? (
-                      <Text style={styles.modalFestDesc}>{festMatchModal.description}</Text>
-                    ) : null}
-                  </View>
-                )}
+                {/* Specific Festival / Event Banner if exists */}
+                {(() => {
+                  const mDharmaData = getDharmaCalendarDayData(mDate, calendarSystem, language);
+                  const fest = mDharmaData.festivalMatch || festMatchModal;
+                  if (!fest) return null;
+                  return (
+                    <View style={styles.modalFestBanner}>
+                      <Text style={styles.modalFestTitle}>🚩 {fest.name}</Text>
+                      {fest.hindiName ? (
+                        <Text style={[styles.modalFestDesc, { fontWeight: 'bold' }]}>{fest.hindiName}</Text>
+                      ) : null}
+                      {fest.description ? (
+                        <Text style={styles.modalFestDesc}>{fest.description}</Text>
+                      ) : null}
+                      {fest.rituals ? (
+                        <Text style={[styles.modalFestDesc, { fontStyle: 'italic', marginTop: 4 }]}>
+                          ✨ Rituals: {fest.rituals}
+                        </Text>
+                      ) : null}
+                    </View>
+                  );
+                })()}
 
                 {/* Mini Ritual Badge if exists */}
                 {mRitual && (
