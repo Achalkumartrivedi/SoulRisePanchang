@@ -242,23 +242,56 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
         {/* Month Header Navigation */}
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.navBtn} onPress={handlePrevMonth}>
+          <TouchableOpacity style={styles.navBtn} onPress={handlePrevMonth} activeOpacity={0.7}>
             <Text style={styles.navBtnText}>◀ Prev</Text>
           </TouchableOpacity>
 
           <View style={styles.titleContainer}>
-            <Text style={styles.monthTitle}>{MONTH_NAMES[month]} {year}</Text>
+            <Text style={styles.monthTitle} numberOfLines={1}>
+              {MONTH_NAMES[month]} {year}
+            </Text>
             {(() => {
-              const headerData = getDharmaCalendarDayData(new Date(year, month, 15), calendarSystem, language);
+              const startMonthDate = new Date(year, month, 1);
+              const endMonthDate = new Date(year, month, 25);
+              const startData = getDharmaCalendarDayData(startMonthDate, calendarSystem, language);
+              const endData = getDharmaCalendarDayData(endMonthDate, calendarSystem, language);
+
+              const shortEra = startData.eraTitle
+                .replace('Vikram Samvat', 'Vi.Sa.')
+                .replace('Nanakshahi Samvat', 'N.Sa.')
+                .replace('Buddha Era', 'B.E.');
+
+              let monthDisplay = startData.monthName;
+              if (endData.monthName && endData.monthName !== startData.monthName) {
+                monthDisplay = `${startData.monthName} / ${endData.monthName}`;
+              }
+
+              // Selected or Today Date Paksha & Tithi
+              const realToday = new Date();
+              const activeTargetDate = selectedModalDateIso
+                ? new Date(selectedModalDateIso)
+                : (month === realToday.getMonth() && year === realToday.getFullYear()
+                    ? realToday
+                    : new Date(year, month, 15));
+              
+              const tIdx = calculateTithiForDate(activeTargetDate);
+              const pakshaName = tIdx <= 14 ? 'Shukla Paksha (शुक्ल पक्ष)' : 'Krishna Paksha (कृष्ण पक्ष)';
+              const tName = getLocalizedTithi((tIdx % 15) + 1, language).name;
+
               return (
-                <Text style={styles.samvatTitle}>
-                  {headerData.eraTitle} • {headerData.monthName}
-                </Text>
+                <>
+                  <Text style={styles.samvatTitle} numberOfLines={1} ellipsizeMode="tail">
+                    {shortEra} • {monthDisplay}
+                  </Text>
+                  <Text style={styles.pakshaSubTitle} numberOfLines={1} ellipsizeMode="tail">
+                    🌙 {pakshaName} • {tName}
+                  </Text>
+                </>
               );
             })()}
           </View>
 
-          <TouchableOpacity style={styles.navBtn} onPress={handleNextMonth}>
+          <TouchableOpacity style={styles.navBtn} onPress={handleNextMonth} activeOpacity={0.7}>
             <Text style={styles.navBtnText}>Next ▶</Text>
           </TouchableOpacity>
         </View>
@@ -937,30 +970,45 @@ const styles = StyleSheet.create({
 
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   titleContainer: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
   },
   monthTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: Colors.maroon,
+    textAlign: 'center',
   },
   samvatTitle: {
     fontSize: 10,
+    fontWeight: '600',
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
+    textAlign: 'center',
+  },
+  pakshaSubTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#C62828',
+    marginTop: 1,
+    textAlign: 'center',
   },
   navBtn: {
     backgroundColor: '#FAF5EE',
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
+    minWidth: 54,
+    alignItems: 'center',
   },
   navBtnText: {
     fontSize: 11,
