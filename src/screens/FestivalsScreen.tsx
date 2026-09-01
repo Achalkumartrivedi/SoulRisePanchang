@@ -21,7 +21,14 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
       f.hindiName.includes(searchQuery) ||
       f.deity.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesCategory = selectedCategory === 'ALL' || f.category === selectedCategory;
+    let matchesCategory = false;
+    if (selectedCategory === 'ALL') {
+      matchesCategory = true;
+    } else if (selectedCategory === 'MAJOR_FESTIVAL') {
+      matchesCategory = f.category === 'MAJOR_FESTIVAL' || f.category === 'VRAT' || f.category === 'JAYANTI';
+    } else {
+      matchesCategory = f.category === selectedCategory;
+    }
 
     return matchesSearch && matchesCategory;
   });
@@ -168,6 +175,13 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           data={filteredFestivals}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>🔍</Text>
+              <Text style={styles.emptyTitle}>No Festivals Found</Text>
+              <Text style={styles.emptySub}>No festival records match the selected category or search query.</Text>
+            </View>
+          }
           renderItem={({ item }) => {
             const dateObj = new Date(item.dateIso + 'T00:00:00');
             const formattedDate = dateObj.toLocaleDateString('en-US', {
@@ -374,12 +388,14 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   filterBarScroll: {
-    maxHeight: 50,
+    height: 52,
     marginBottom: 8,
   },
   filterBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 6,
     gap: 8,
   },
   filterBar: {
@@ -389,24 +405,47 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
     backgroundColor: '#FAF5EE',
     borderWidth: 1,
     borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterChipActive: {
     backgroundColor: Colors.maroon,
     borderColor: Colors.maroon,
   },
   filterText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     color: Colors.textSecondary,
   },
   filterTextActive: {
     color: '#FFD700',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyIcon: {
+    fontSize: 32,
+    marginBottom: 10,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 4,
+  },
+  emptySub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 
   // Hero Jain Chaturmas Banner
