@@ -166,20 +166,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           <View style={styles.calSystemList}>
             <TouchableOpacity
-              style={[styles.calSystemItem, calendarSystem === 'HINDU' && styles.calSystemItemActive]}
-              onPress={() => setCalendarSystem('HINDU')}
-              activeOpacity={0.8}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.calSystemTitle, calendarSystem === 'HINDU' && styles.calSystemTitleActive]}>
-                  🕉️ Hindu Calendar (Vikram Samvat)
-                </Text>
-                <Text style={styles.calSystemDesc}>Standard Vedic Lunar/Solar Panchang with Tithis & Nakshatras</Text>
-              </View>
-              {calendarSystem === 'HINDU' && <Text style={styles.checkIcon}>✓</Text>}
-            </TouchableOpacity>
-
-            <TouchableOpacity
               style={[styles.calSystemItem, calendarSystem === 'JAIN' && styles.calSystemItemActive]}
               onPress={() => setCalendarSystem('JAIN')}
               activeOpacity={0.8}
@@ -194,17 +180,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.calSystemItem, calendarSystem === 'GLOBAL' && styles.calSystemItemActive]}
-              onPress={() => setCalendarSystem('GLOBAL')}
+              style={[styles.calSystemItem, calendarSystem === 'HINDU' && styles.calSystemItemActive]}
+              onPress={() => setCalendarSystem('HINDU')}
               activeOpacity={0.8}
             >
               <View style={{ flex: 1 }}>
-                <Text style={[styles.calSystemTitle, calendarSystem === 'GLOBAL' && styles.calSystemTitleActive]}>
-                  🌍 Global Gregorian Solar Calendar
+                <Text style={[styles.calSystemTitle, calendarSystem === 'HINDU' && styles.calSystemTitleActive]}>
+                  🕉️ Hindu Calendar (Vikram Samvat)
                 </Text>
-                <Text style={styles.calSystemDesc}>Standard Western Solar Dates & International Holidays</Text>
+                <Text style={styles.calSystemDesc}>Standard Vedic Lunar/Solar Panchang with Tithis & Nakshatras</Text>
               </View>
-              {calendarSystem === 'GLOBAL' && <Text style={styles.checkIcon}>✓</Text>}
+              {calendarSystem === 'HINDU' && <Text style={styles.checkIcon}>✓</Text>}
             </TouchableOpacity>
           </View>
         </View>

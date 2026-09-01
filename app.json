@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SoulRise Panchang",
-    "slug": "soulrise-panchang",
+    "name": "SoulRise Jain Panchang",
+    "slug": "soulrise-jain-panchang",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,14 +13,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.soulrise.panchang"
+      "bundleIdentifier": "com.soulrise.jaintithi"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FF6F00"
       },
-      "package": "com.soulrise.panchang"
+      "package": "com.soulrise.jaintithi"
     },
     "web": {
       "favicon": "./assets/favicon.png"

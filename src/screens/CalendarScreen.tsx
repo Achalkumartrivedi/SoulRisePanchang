@@ -195,16 +195,6 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
         {/* Multi-Calendar System Switcher Bar */}
         <View style={styles.calendarToggleContainer}>
           <TouchableOpacity
-            style={[styles.calToggleBtn, calendarSystem === 'HINDU' && styles.calToggleBtnActive]}
-            onPress={() => setCalendarSystem('HINDU')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.calToggleText, calendarSystem === 'HINDU' && styles.calToggleTextActive]}>
-              🕉️ Hindu Calendar
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             style={[styles.calToggleBtn, calendarSystem === 'JAIN' && styles.calToggleBtnActive]}
             onPress={() => setCalendarSystem('JAIN')}
             activeOpacity={0.8}
@@ -215,12 +205,12 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.calToggleBtn, calendarSystem === 'GLOBAL' && styles.calToggleBtnActive]}
-            onPress={() => setCalendarSystem('GLOBAL')}
+            style={[styles.calToggleBtn, calendarSystem === 'HINDU' && styles.calToggleBtnActive]}
+            onPress={() => setCalendarSystem('HINDU')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.calToggleText, calendarSystem === 'GLOBAL' && styles.calToggleTextActive]}>
-              🌍 Gregorian
+            <Text style={[styles.calToggleText, calendarSystem === 'HINDU' && styles.calToggleTextActive]}>
+              🕉️ Hindu Calendar
             </Text>
           </TouchableOpacity>
         </View>

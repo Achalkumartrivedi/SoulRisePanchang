@@ -109,9 +109,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.soulrise.panchang'
+    namespace 'com.soulrise.jaintithi'
     defaultConfig {
-        applicationId 'com.soulrise.panchang'
+        applicationId 'com.soulrise.jaintithi'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

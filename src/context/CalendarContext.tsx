@@ -11,12 +11,12 @@ interface CalendarContextType {
 const STORAGE_KEY = '@soulrise_calendar_system_preference_v1';
 
 const CalendarContext = createContext<CalendarContextType>({
-  calendarSystem: 'HINDU',
+  calendarSystem: 'JAIN',
   setCalendarSystem: async () => {}
 });
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [calendarSystem, setCalendarSystemState] = useState<CalendarSystem>('HINDU');
+  const [calendarSystem, setCalendarSystemState] = useState<CalendarSystem>('JAIN');
 
   useEffect(() => {
     (async () => {
@@ -24,6 +24,8 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored === 'HINDU' || stored === 'JAIN' || stored === 'GLOBAL') {
           setCalendarSystemState(stored as CalendarSystem);
+        } else {
+          setCalendarSystemState('JAIN');
         }
       } catch (err) {
         console.log('Error loading calendar system preference:', err);
