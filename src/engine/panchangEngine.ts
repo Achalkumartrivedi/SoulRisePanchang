@@ -173,7 +173,11 @@ export function getTimezoneOffsetMinutes(timeZoneId: string = 'Asia/Kolkata', da
   }
 }
 
-export function calculatePanchang(date: Date, city: CityLocation): PanchangDayData {
+export function calculatePanchang(
+  date: Date,
+  city: CityLocation,
+  lunarSystem: 'AMANTA' | 'PURNIMANTA' = 'AMANTA'
+): PanchangDayData {
   const dateIso = formatDateIso(date);
   const year = date.getFullYear();
 
@@ -310,14 +314,20 @@ export function calculatePanchang(date: Date, city: CityLocation): PanchangDayDa
   // Samvat
   const vikramYear = year + 57;
   const shakaYear = year - 78;
-  const monthIndex = (sunSignIndex + 1) % 12;
-  const monthPair = HINDU_MONTHS[monthIndex];
+  let purnimantaMonthIndex = (sunSignIndex + 1) % 12;
 
-  const rituPair = (monthIndex === 0 || monthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :
-    (monthIndex === 2 || monthIndex === 3) ? ['Grishma (Summer)', 'ग्रीष्म'] :
-    (monthIndex === 4 || monthIndex === 5) ? ['Varsha (Monsoon)', 'वर्षा'] :
-    (monthIndex === 6 || monthIndex === 7) ? ['Sharad (Autumn)', 'शरद'] :
-    (monthIndex === 8 || monthIndex === 9) ? ['Hemanta (Pre-Winter)', 'हेमन्त'] : ['Shishira (Winter)', 'शिशिर'];
+  // In Amanta system (Gujarat / MH), Krishna Paksha (Vad) belongs to the SAME lunar month name (Shravana)
+  let effectiveMonthIndex = purnimantaMonthIndex;
+  if (lunarSystem === 'AMANTA' && paksha === 'KRISHNA') {
+    effectiveMonthIndex = (purnimantaMonthIndex + 11) % 12;
+  }
+  const monthPair = HINDU_MONTHS[effectiveMonthIndex];
+
+  const rituPair = (effectiveMonthIndex === 0 || effectiveMonthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :
+    (effectiveMonthIndex === 2 || effectiveMonthIndex === 3) ? ['Grishma (Summer)', 'ग्रीष्म'] :
+    (effectiveMonthIndex === 4 || effectiveMonthIndex === 5) ? ['Varsha (Monsoon)', 'वर्षा'] :
+    (effectiveMonthIndex === 6 || effectiveMonthIndex === 7) ? ['Sharad (Autumn)', 'शरद'] :
+    (effectiveMonthIndex === 8 || effectiveMonthIndex === 9) ? ['Hemanta (Pre-Winter)', 'हेमन्त'] : ['Shishira (Winter)', 'शिशिर'];
 
   const ayanaPair = (sunSignIndex >= 9 || sunSignIndex <= 2) ? ['Uttarayana', 'उत्तरायण'] : ['Dakshinayana', 'दक्षिणायन'];
 

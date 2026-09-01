@@ -33,7 +33,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onOpenLanguageModal,
 }) => {
   const { language, t } = useLanguage();
-  const { calendarSystem, setCalendarSystem } = useCalendarSystem();
+  const { calendarSystem, setCalendarSystem, lunarSystem, setLunarSystem } = useCalendarSystem();
   const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
   const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
   const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
@@ -187,6 +187,34 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <Text style={styles.calSystemDesc}>{item.desc}</Text>
                 </View>
                 {calendarSystem === item.id && <Text style={styles.checkIcon}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Lunar Month System (Amanta vs Purnimanta) Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🌙 Lunar Month System (અમાંત પદ્ધતિ)</Text>
+          <Text style={styles.cardSubTitle}>Select Hindu Lunar Month calculation method for your region:</Text>
+
+          <View style={styles.calSystemList}>
+            {[
+              { id: 'AMANTA', title: '🌾 Amanta (Gujarat / Maharashtra / South)', desc: 'Month ends on Amavasya. Shravana Month active during Vad/Krishna Paksha.' },
+              { id: 'PURNIMANTA', title: '🏔️ Purnimanta (North India / Rajasthan / UP)', desc: 'Month ends on Purnima. Bhadrapada Month active during Krishna Paksha.' }
+            ].map(item => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.calSystemItem, lunarSystem === item.id && styles.calSystemItemActive]}
+                onPress={() => setLunarSystem(item.id as any)}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.calSystemTitle, lunarSystem === item.id && styles.calSystemTitleActive]}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.calSystemDesc}>{item.desc}</Text>
+                </View>
+                {lunarSystem === item.id && <Text style={styles.checkIcon}>✓</Text>}
               </TouchableOpacity>
             ))}
           </View>

@@ -952,6 +952,178 @@ export const FESTIVALS: Festival[] = [
     rituals: 'Grand Jashan prayers at Fire Temple, floral decorations, community gatherings.',
     tithiDescription: '6th Fravardin (Yazdegerdi 1396)',
     isHoliday: false
+  },
+  // ----------------------------------------------------
+  // GUJARAT SACRED FESTIVALS & NAVRATRIS & HOLY SHRAVAN MAAS
+  // ----------------------------------------------------
+  {
+    id: 'f_guj_bol_choth',
+    name: '🐄 Bol Choth (બોળ ચોથ / ગોવત્સ દ્વાદશી) - Gujarat',
+    hindiName: '🐄 बोल चोथ / गौ पूजा (गुजरात)',
+    dateIso: '2026-09-01',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Gau Mata (Sacred Cow & Calf)',
+    description: 'Sacred Gujarati fast observing worship of cows and calves. Wheat and milk products are abstained from today.',
+    rituals: 'Puja of cows and calves, applying kumkum & feeding sprouted grains (Bakhla).',
+    tithiDescription: 'Shravana Vad Choth (Amanta)',
+    isHoliday: false
+  },
+  {
+    id: 'f_guj_nag_pancham',
+    name: '🐍 Nag Pancham (નાગ પાંચમ) - Gujarat',
+    hindiName: '🐍 नाग पंचम (गुजरात)',
+    dateIso: '2026-09-02',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Nag Devta (Serpent Deities)',
+    description: 'Traditional Gujarati Nag Panchami fast observed on Shravana Vad Pancham for family protection.',
+    rituals: 'Worship of Nag Devta, offering milk and bajra rotla.',
+    tithiDescription: 'Shravana Vad Pancham (Amanta)',
+    isHoliday: true
+  },
+  {
+    id: 'f_guj_randhan_chhath',
+    name: '🍲 Randhan Chhath (રાંધણ છઠ્ઠ - ડીવોશનલ કુકિંગ ડે) - Gujarat',
+    hindiName: '🍲 रांधण छठ (गुजरात)',
+    dateIso: '2026-09-03',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Goddess Shitala',
+    description: 'Devotional Gujarati cooking day. All meals for Shitala Satam are cooked today; hearth/stove is cleaned and kept cold tomorrow.',
+    rituals: 'Cooking varieties of farsaans, sweets, and dishes; performing stove puja before cooling it down.',
+    tithiDescription: 'Shravana Vad Chhath (Amanta)',
+    isHoliday: false
+  },
+  {
+    id: 'f_guj_shitala_satam',
+    name: '🌸 Shitala Satam (શીતળા સાતમ) - Gujarat',
+    hindiName: '🌸 शीतला सातम (गुजरात)',
+    dateIso: '2026-09-04',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Shitala',
+    description: 'Sacred Gujarati festival honoring Goddess Shitala for health and immunity. No stove is lit today; families consume cold prepared food.',
+    rituals: 'Worship of Shitala Mata with cold milk/curd, eating food prepared on Randhan Chhath.',
+    tithiDescription: 'Shravana Vad Satam (Amanta)',
+    isHoliday: true
+  },
+  {
+    id: 'f_guj_janmashtami',
+    name: '🚩 Gujarat Janmashtami / Aatham (જન્માષ્ટમી) - Gujarat',
+    hindiName: '🚩 जन्माष्टमी (गुजरात)',
+    dateIso: '2026-09-05',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Bhagwan Shri Krishna',
+    description: 'Grand celebration of Shri Krishna Janma across Dwarka, Rajkot, Surat & Gujarat on Shravana Vad Aatham.',
+    rituals: 'Fasting, Matki Phod, Krishna Janam midnight Aarti and Darshan.',
+    tithiDescription: 'Shravana Vad Aatham (Amanta)',
+    isHoliday: true
+  },
+  {
+    id: 'f_guj_nandotsav',
+    name: '🌿 Gujarat Nandotsav / Nom (નંદોત્સવ) - Gujarat',
+    hindiName: '🌿 नन्दोत्सव (गुजरात)',
+    dateIso: '2026-09-06',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Shri Krishna & Nanda Baba',
+    description: 'Celebrates Nanda Bava Anand Bhayo in Nandalay on Shravana Vad Nom.',
+    rituals: 'Distributing sweets, Makhan-Mishri, and devotional dances.',
+    tithiDescription: 'Shravana Vad Nom (Amanta)',
+    isHoliday: false
+  },
+  {
+    id: 'f_shravan_arambha',
+    name: '🔱 Holy Shravan Maas Arambha (પવિત્ર શ્રાવણ માસ પ્રારંભ)',
+    hindiName: '🔱 पवित्र श्रावण मास प्रारम्भ (महादेव पूजा)',
+    dateIso: '2026-08-13',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Lord Shiva (Mahadev)',
+    description: 'Commencement of the holy month of Shravan dedicated to Bhagwan Shiv. Special Monday fasts and Jalabhishekam begin.',
+    rituals: 'Mahadev Jalabhishek, Bilvapatra offering, Shravan Somvar Vrat.',
+    tithiDescription: 'Shravana Shukla Pratipada',
+    isHoliday: false
+  },
+  {
+    id: 'f_shravan_samapti',
+    name: '🔱 Holy Shravan Maas Samapti (પવિત્ર શ્રાવણ માસ સમાપ્તિ)',
+    hindiName: '🔱 पवित्र श्रावण मास समाप्ति (अमावस्या)',
+    dateIso: '2026-09-11',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Lord Shiva & Dariyal Dev',
+    description: 'Conclusion of holy Shravan month in Gujarat (Shravan Vad Amavasya / Dariyal Dev Puja).',
+    rituals: 'Final Shravan Shiv Puja, offering coconut to sea/river.',
+    tithiDescription: 'Shravana Vad Amavasya (Amanta)',
+    isHoliday: false
+  },
+  // NAVRATRIS (All 4 Sacred Navratris)
+  {
+    id: 'f_chaitra_navratri_start',
+    name: '🌺 Chaitra Vasanta Navratri Ghatasthapana (ચૈત્ર નવરાત્રિ પ્રારંભ)',
+    hindiName: '🌺 चैत्र वसन्त नवरात्रि (घटस्थापना - मां दुर्गा)',
+    dateIso: '2026-03-19',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Durga (Mataji)',
+    description: 'Commencement of 9-day Chaitra Vasanta Navratri dedicated to 9 forms of Navdurga.',
+    rituals: 'Ghatasthapana, Akhand Jyot, reading Durga Saptashati.',
+    tithiDescription: 'Chaitra Shukla Pratipada',
+    isHoliday: true
+  },
+  {
+    id: 'f_magha_gupt_navratri',
+    name: '🌺 Magha Gupt Navratri Arambha (માઘ ગુપ્ત નવરાત્રિ)',
+    hindiName: '🌺 माघ गुप्त नवरात्रि प्रारम्भ',
+    dateIso: '2026-01-19',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Ten Mahavidyas',
+    description: 'Sacred 9-day Tantric Gupt Navratri in Magha month for inner spiritual Sadhana.',
+    rituals: 'Secret Mahavidya Sadhana, Chandi Path.',
+    tithiDescription: 'Magha Shukla Pratipada',
+    isHoliday: false
+  },
+  {
+    id: 'f_ashadha_gupt_navratri',
+    name: '🌺 Ashadha Gupt Navratri Arambha (આષાઢ ગુપ્ત નવરાત્રિ)',
+    hindiName: '🌺 आषाढ़ गुप्त नवरात्रि प्रारम्भ',
+    dateIso: '2026-07-15',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Durga',
+    description: 'Sacred Ashadha Gupt Navratri dedicated to Shakti Sadhana.',
+    rituals: 'Shakti Aradhana & Fasting.',
+    tithiDescription: 'Ashadha Shukla Pratipada',
+    isHoliday: false
+  },
+  {
+    id: 'f_sharad_navratri_start',
+    name: '🌺 Sharad Maha Navratri Arambha / Garba Start (શારદીય મહા નવરાત્રિ - ગરબા)',
+    hindiName: '🌺 शारदीय महा नवरात्रि प्रारम्भ (गरबा उत्सव)',
+    dateIso: '2026-10-11',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Durga / Amba Mata',
+    description: 'Grand 9-night Sharad Maha Navratri festival. World-famous Garba & Dandiya Raas begin across Gujarat & India.',
+    rituals: 'Garba Raas, Ghatasthapana, Akhand Deep, Mataji Aarti.',
+    tithiDescription: 'Ashvin Shukla Pratipada',
+    isHoliday: true
+  },
+  {
+    id: 'f_sharad_durga_ashtami',
+    name: '🌺 Sharad Navratri Durga Ashtami (મહા અષ્ટમી - ગરબા)',
+    hindiName: '🌺 महा अष्टमी पूजा (गरबा नाइट)',
+    dateIso: '2026-10-18',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Mahagauri',
+    description: 'Holy 8th night of Sharad Navratri. Kanya Pujan and Havan are performed.',
+    rituals: 'Kanya Pujan, Havan, Maha Aarti.',
+    tithiDescription: 'Ashvin Shukla Ashtami',
+    isHoliday: true
+  },
+  {
+    id: 'f_sharad_mahanavami',
+    name: '🌺 Sharad Navratri Mahanavami (મહા નોમ)',
+    hindiName: '🌺 महानवमी पूजा',
+    dateIso: '2026-10-19',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Maa Siddhidatri',
+    description: '9th and final night of Sharad Navratri.',
+    rituals: 'Navami Havan, Kanya Bhojan, Garba Samapti.',
+    tithiDescription: 'Ashvin Shukla Navami',
+    isHoliday: true
   }
 ];
 

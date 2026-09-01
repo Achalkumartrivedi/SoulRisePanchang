@@ -17,6 +17,7 @@ import { RemindersScreen } from '../screens/RemindersScreen';
 
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
 import { useLanguage } from '../context/LanguageContext';
+import { useCalendarSystem } from '../context/CalendarContext';
 
 type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'REMINDERS' | 'RASHIPHAL' | 'SETTINGS';
 
@@ -97,8 +98,9 @@ export const AppNavigator: React.FC = () => {
     })();
   }, []);
 
+  const { lunarSystem } = useCalendarSystem();
   const currentDateObj = new Date(currentDateIso + 'T00:00:00');
-  const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity);
+  const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity, lunarSystem);
 
   const handleSelectCity = async (city: CityLocation) => {
     setSelectedCity(city);
