@@ -259,14 +259,18 @@ export function getDharmaCalendarDayData(
       const hinduFest = FESTIVALS.find(f => f.dateIso === dateIso && f.category !== 'JAIN_FESTIVAL' && f.category !== 'WORLD_FESTIVAL');
 
       let badgeText = undefined;
-      if (tithiIdx === 14) badgeText = '🌕 Purnima (પૂનમ)';
-      else if (tithiIdx === 29) badgeText = '🌑 Amavasya (અમાસ)';
-      else if (tithiIdx === 10 || tithiIdx === 25) badgeText = '🌿 Ekadashi (અગિયારસ)';
-      else if (hinduFest) badgeText = hinduFest.name;
+      if (tithiIdx === 14) badgeText = language === 'gu' ? '🌕 પૂનમ (Purnima)' : (language === 'hi' ? '🌕 पूर्णिमा' : '🌕 Purnima');
+      else if (tithiIdx === 29) badgeText = language === 'gu' ? '🌑 અમાસ (Amavasya)' : (language === 'hi' ? '🌑 अमावस्या' : '🌑 Amavasya');
+      else if (tithiIdx === 10 || tithiIdx === 25) badgeText = language === 'gu' ? '🌿 અગિયારસ (Ekadashi)' : (language === 'hi' ? '🌿 एकादशी' : '🌿 Ekadashi');
+      else if (hinduFest) badgeText = (language === 'hi' && hinduFest.hindiName) ? hinduFest.hindiName : hinduFest.name;
+
+      const eraTitle = language === 'gu'
+        ? '🕉️ હિન્દુ તિથિ અને પંચાંગ વિગત'
+        : (language === 'hi' ? '🕉️ हिंदू तिथि एवं पंचांग विवरण' : '🕉️ Hindu Date & Panchang Details');
 
       return {
         calendarSystem: 'HINDU',
-        eraTitle: `🕉️ Hindu Date Details (હિન્દુ તિથિ અને પંચાંગ વિગત)`,
+        eraTitle,
         monthName: `${hinduMonthName} (${pakshaFull})`,
         dayLabel: `${pakshaFull} ${tithiName}`,
         badgeText,

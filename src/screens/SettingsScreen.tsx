@@ -194,7 +194,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
         {/* Lunar Month System (Amanta vs Purnimanta) Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🌙 Lunar Month System (અમાંત પદ્ધતિ)</Text>
+          <Text style={styles.cardTitle}>
+            {language === 'gu'
+              ? '🌙 લૂનાર માસ પદ્ધતિ (અમાંત પદ્ધતિ)'
+              : (language === 'hi' ? '🌙 लूनर मास पद्धति (अमांत / पूर्णिमांत)' : '🌙 Lunar Month System')}
+          </Text>
           <Text style={styles.cardSubTitle}>Select Hindu Lunar Month calculation method for your region:</Text>
 
           <View style={styles.calSystemList}>
