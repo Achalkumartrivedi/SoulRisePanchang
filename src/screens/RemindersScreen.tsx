@@ -317,8 +317,8 @@ export const RemindersScreen: React.FC = () => {
             { id: 'ALL', label: 'All (सभी)' },
             { id: 'WEEKLY_DAY', label: '🗓️ Weekly Vrat' },
             { id: 'TITHI_FESTIVAL', label: '🚩 Tithi & Festival' },
-            { id: 'LAL_KITAB_REMEDY', label: '🔮 Lal Kitab Remedies' },
-            { id: 'DAILY_CHANT', label: '📿 Daily Mantra Chants' },
+            { id: 'LAL_KITAB_REMEDY', label: '🔢 Daily Counter' },
+            { id: 'DAILY_CHANT', label: '🔔 Daily Reminder' },
             { id: 'DATE_SPECIFIC', label: '📅 Date Reminders' }
           ].map(tab => (
             <TouchableOpacity
@@ -341,7 +341,7 @@ export const RemindersScreen: React.FC = () => {
           <View style={styles.emptyCard}>
             <Text style={styles.emptyIcon}>⏰</Text>
             <Text style={styles.emptyTitle}>No Reminders Found</Text>
-            <Text style={styles.emptySub}>Tap "+ Create" to set your first Vrat, Tithi, Festival, or Lal Kitab remedy reminder.</Text>
+            <Text style={styles.emptySub}>Tap "+ Create" to set your first Vrat, Tithi, Festival, or Daily Counter reminder.</Text>
           </View>
         ) : (
           filteredReminders.map(item => {
@@ -364,9 +364,9 @@ export const RemindersScreen: React.FC = () => {
                               ? `🚩 ${item.recurrence?.festivalName || 'Festival'} (${item.dateIso || ''})`
                               : `🌙 ${item.recurrence?.tithiName || 'Tithi'} (${item.dateIso || ''})`
                             : item.category === 'LAL_KITAB_REMEDY'
-                            ? `🔮 Lal Kitab (${item.lalKitabData?.targetDays || 43} Days)`
+                            ? `🔢 Counter (${item.lalKitabData?.targetDays || 5} Days)`
                             : item.category === 'DAILY_CHANT'
-                            ? `📿 Daily Chant (${item.timeSlots?.length || 1} Slots)`
+                            ? `🔔 Daily Reminder (${item.timeSlots?.length || 1} Slots)`
                             : `📅 ${item.dateIso || 'Specific Date'}`}
                         </Text>
                       </View>
@@ -398,12 +398,12 @@ export const RemindersScreen: React.FC = () => {
                   <Text style={styles.cardNotes}>📝 {item.notes}</Text>
                 ) : null}
 
-                {/* Lal Kitab Remedy Progress Counter Section */}
+                {/* Progress Counter Section */}
                 {isLalKitab && item.lalKitabData ? (
                   <View style={styles.lalKitabBox}>
                     <View style={styles.lalKitabHeaderRow}>
                       <Text style={styles.lalKitabTitle}>
-                        🔮 {item.lalKitabData.counterLabel || 'Lal Kitab Remedy Progress Counter'}:
+                        🔢 {item.lalKitabData.counterLabel || 'Daily Progress Counter'}:
                       </Text>
                       <Text style={styles.lalKitabCounter}>
                         Day {item.lalKitabData.completedDays} of {item.lalKitabData.targetDays}
@@ -423,10 +423,10 @@ export const RemindersScreen: React.FC = () => {
                     <View style={styles.lalKitabActionRow}>
                       <Text style={styles.lalKitabStatus}>
                         {item.lalKitabData.isCompleted
-                          ? `🎉 ${item.lalKitabData.targetDays}-Day Remedy Successfully Completed!`
+                          ? `🎉 ${item.lalKitabData.targetDays}-Day Count Successfully Completed!`
                           : isDoneToday
-                          ? '✅ Today\'s Remedy Marked Done!'
-                          : '👉 Complete today\'s remedy and tap below:'}
+                          ? '✅ Today\'s Count Marked Done!'
+                          : '👉 Complete today\'s count and tap here:'}
                       </Text>
 
                       {!item.lalKitabData.isCompleted && (
@@ -490,8 +490,8 @@ export const RemindersScreen: React.FC = () => {
                 {[
                   { id: 'WEEKLY_DAY', title: '🗓️ Weekly Day (Saturday, Thursday, etc)' },
                   { id: 'TITHI_FESTIVAL', title: '🚩 Tithi & Calendar Festival' },
-                  { id: 'LAL_KITAB_REMEDY', title: '🔮 Lal Kitab Remedy Counter' },
-                  { id: 'DAILY_CHANT', title: '📿 Daily Mantra Chant' }
+                  { id: 'LAL_KITAB_REMEDY', title: '🔢 Daily Progress Counter (N-Days)' },
+                  { id: 'DAILY_CHANT', title: '🔔 Daily Reminder (Chant / Prayer)' }
                 ].map(cat => (
                   <TouchableOpacity
                     key={cat.id}
