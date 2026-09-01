@@ -11,8 +11,9 @@ import {
   Alert
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { ReminderItem, ReminderCategory } from '../types/reminder';
+import { ReminderItem, ReminderCategory, UpcomingTithiDateInfo } from '../types/reminder';
 import { FESTIVALS } from '../engine/festivalRepository';
+import { findUpcoming5DatesForTithi } from '../engine/tithiDateFinder';
 import {
   getStoredReminders,
   saveReminder,
@@ -72,11 +73,16 @@ export const RemindersScreen: React.FC = () => {
   // Tithi & Festival Sub-Type State
   const [tithiFestSubType, setTithiFestSubType] = useState<'TITHI' | 'FESTIVAL'>('TITHI');
   const [selectedTithiName, setSelectedTithiName] = useState<string>(ALL_15_TITHIS[0]);
+  const [upcomingTithiDates, setUpcomingTithiDates] = useState<UpcomingTithiDateInfo[]>([]);
+  const [selectedUpcomingDateIso, setSelectedUpcomingDateIso] = useState<string>('');
+
   const [selectedDharma, setSelectedDharma] = useState<string>('HINDU');
   const [selectedFestivalName, setSelectedFestivalName] = useState<string>('');
+  const [selectedFestivalDateIso, setSelectedFestivalDateIso] = useState<string>('');
 
-  // Lal Kitab Days State
+  // Lal Kitab Days & Editable Label State
   const [targetDays, setTargetDays] = useState<string>('43');
+  const [counterLabel, setCounterLabel] = useState<string>('Lal Kitab Remedy Progress Counter');
 
   // Daily Chant Multiple Slots State
   const [timeSlots, setTimeSlots] = useState<string[]>(['06:00 AM']);
@@ -89,20 +95,41 @@ export const RemindersScreen: React.FC = () => {
     loadReminders();
   }, []);
 
+  // Recalculate upcoming 5 Tithi dates whenever selectedTithiName changes
+  useEffect(() => {
+    if (category === 'TITHI_FESTIVAL' && tithiFestSubType === 'TITHI') {
+      const dates = findUpcoming5DatesForTithi(selectedTithiName, new Date());
+      setUpcomingTithiDates(dates);
+      if (dates[0]) {
+        setSelectedUpcomingDateIso(dates[0].dateIso);
+      }
+    }
+  }, [selectedTithiName, category, tithiFestSubType]);
+
   const loadReminders = async () => {
     const list = await getStoredReminders();
     setReminders(list);
   };
 
-  const getFilteredFestivalsByDharma = (dharma: string) => {
-    if (dharma === 'JAIN') return FESTIVALS.filter(f => f.category === 'JAIN_FESTIVAL');
-    if (dharma === 'SIKH') return FESTIVALS.filter(f => f.category === 'SIKH_FESTIVAL');
-    if (dharma === 'BUDDHIST') return FESTIVALS.filter(f => f.category === 'BUDDHIST_FESTIVAL');
-    if (dharma === 'CHRISTIAN') return FESTIVALS.filter(f => f.category === 'CHRISTIAN_FESTIVAL');
-    if (dharma === 'PARSI') return FESTIVALS.filter(f => f.category === 'PARSI_FESTIVAL');
-    if (dharma === 'WORLD') return FESTIVALS.filter(f => f.category === 'WORLD_FESTIVAL');
-    // Default Hindu
-    return FESTIVALS.filter(f => f.category === 'MAJOR_FESTIVAL' || f.category === 'VRAT' || f.category === 'JAYANTI');
+  /**
+   * Filters festivals to ONLY UPCOMING festivals (dateIso >= todayIso)
+   */
+  const getFilteredUpcomingFestivalsByDharma = (dharma: string) => {
+    const todayIso = new Date().toISOString().split('T')[0];
+    let rawList = FESTIVALS;
+
+    if (dharma === 'JAIN') rawList = FESTIVALS.filter(f => f.category === 'JAIN_FESTIVAL');
+    else if (dharma === 'SIKH') rawList = FESTIVALS.filter(f => f.category === 'SIKH_FESTIVAL');
+    else if (dharma === 'BUDDHIST') rawList = FESTIVALS.filter(f => f.category === 'BUDDHIST_FESTIVAL');
+    else if (dharma === 'CHRISTIAN') rawList = FESTIVALS.filter(f => f.category === 'CHRISTIAN_FESTIVAL');
+    else if (dharma === 'PARSI') rawList = FESTIVALS.filter(f => f.category === 'PARSI_FESTIVAL');
+    else if (dharma === 'WORLD') rawList = FESTIVALS.filter(f => f.category === 'WORLD_FESTIVAL');
+    else rawList = FESTIVALS.filter(f => f.category === 'MAJOR_FESTIVAL' || f.category === 'VRAT' || f.category === 'JAYANTI');
+
+    // ONLY UPCOMING FESTIVALS
+    return rawList
+      .filter(f => f.dateIso >= todayIso)
+      .sort((a, b) => a.dateIso.localeCompare(b.dateIso));
   };
 
   const handleOpenCreateModal = () => {
@@ -118,9 +145,13 @@ export const RemindersScreen: React.FC = () => {
     setSelectedTithiName(ALL_15_TITHIS[0]);
     setSelectedDharma('HINDU');
     
-    const hinduFests = getFilteredFestivalsByDharma('HINDU');
-    setSelectedFestivalName(hinduFests[0] ? hinduFests[0].name : 'Makar Sankranti');
+    const hinduFests = getFilteredUpcomingFestivalsByDharma('HINDU');
+    if (hinduFests[0]) {
+      setSelectedFestivalName(hinduFests[0].name);
+      setSelectedFestivalDateIso(hinduFests[0].dateIso);
+    }
     setTargetDays('43');
+    setCounterLabel('Lal Kitab Remedy Progress Counter');
     setModalVisible(true);
   };
 
@@ -144,6 +175,9 @@ export const RemindersScreen: React.FC = () => {
     if (item.recurrence?.tithiName) {
       setSelectedTithiName(item.recurrence.tithiName);
     }
+    if (item.recurrence?.selectedUpcomingDateIso) {
+      setSelectedUpcomingDateIso(item.recurrence.selectedUpcomingDateIso);
+    }
     if (item.recurrence?.festivalName) {
       setSelectedFestivalName(item.recurrence.festivalName);
     }
@@ -152,6 +186,7 @@ export const RemindersScreen: React.FC = () => {
     }
     if (item.lalKitabData) {
       setTargetDays(String(item.lalKitabData.targetDays));
+      setCounterLabel(item.lalKitabData.counterLabel || 'Lal Kitab Remedy Progress Counter');
     }
 
     setModalVisible(true);
@@ -163,7 +198,7 @@ export const RemindersScreen: React.FC = () => {
       if (category === 'WEEKLY_DAY') finalTitle = `${DAY_SHORT[selectedDayIdx]} Vrat Reminder`;
       else if (category === 'TITHI_FESTIVAL') {
         finalTitle = tithiFestSubType === 'TITHI' ? selectedTithiName.split(' ')[0] : selectedFestivalName;
-      } else if (category === 'LAL_KITAB_REMEDY') finalTitle = `Lal Kitab ${targetDays}-Day Remedy`;
+      } else if (category === 'LAL_KITAB_REMEDY') finalTitle = counterLabel.trim() || `Lal Kitab ${targetDays}-Day Remedy`;
       else if (category === 'DAILY_CHANT') finalTitle = `Daily Mantra Chant`;
       else finalTitle = 'Smart Reminder';
     }
@@ -174,6 +209,7 @@ export const RemindersScreen: React.FC = () => {
       category,
       timeStr: timeSlots[0] || timeStr,
       timeSlots: category === 'DAILY_CHANT' ? timeSlots : undefined,
+      dateIso: category === 'TITHI_FESTIVAL' ? (tithiFestSubType === 'TITHI' ? selectedUpcomingDateIso : selectedFestivalDateIso) : undefined,
       enabled: editingReminder ? editingReminder.enabled : true,
       notes: notes.trim(),
       createdAtIso: editingReminder ? editingReminder.createdAtIso : new Date().toISOString()
@@ -189,17 +225,21 @@ export const RemindersScreen: React.FC = () => {
         subType: tithiFestSubType,
         tithiName: tithiFestSubType === 'TITHI' ? selectedTithiName : undefined,
         festivalName: tithiFestSubType === 'FESTIVAL' ? selectedFestivalName : undefined,
-        festivalDharma: tithiFestSubType === 'FESTIVAL' ? selectedDharma : undefined
+        festivalDharma: tithiFestSubType === 'FESTIVAL' ? selectedDharma : undefined,
+        selectedUpcomingDateIso: tithiFestSubType === 'TITHI' ? selectedUpcomingDateIso : selectedFestivalDateIso,
+        upcomingDatesList: upcomingTithiDates
       };
     } else if (category === 'LAL_KITAB_REMEDY') {
       const tDays = parseInt(targetDays, 10) || 43;
       newItem.lalKitabData = editingReminder?.lalKitabData ? {
         ...editingReminder.lalKitabData,
-        targetDays: tDays
+        targetDays: tDays,
+        counterLabel: counterLabel.trim() || 'Lal Kitab Remedy Progress Counter'
       } : {
         targetDays: tDays,
         completedDays: 0,
         startDateIso: new Date().toISOString().split('T')[0],
+        counterLabel: counterLabel.trim() || 'Lal Kitab Remedy Progress Counter',
         isCompleted: false
       };
     }
@@ -254,7 +294,7 @@ export const RemindersScreen: React.FC = () => {
     return r.category === selectedTab;
   });
 
-  const activeDharmaFestivals = getFilteredFestivalsByDharma(selectedDharma);
+  const activeUpcomingDharmaFestivals = getFilteredUpcomingFestivalsByDharma(selectedDharma);
 
   return (
     <View style={styles.container}>
@@ -321,8 +361,8 @@ export const RemindersScreen: React.FC = () => {
                             ? `🗓️ Every ${DAY_SHORT[item.recurrence?.weeklyDayIndex ?? 6]}`
                             : item.category === 'TITHI_FESTIVAL'
                             ? item.recurrence?.subType === 'FESTIVAL'
-                              ? `🚩 Festival: ${item.recurrence?.festivalName || 'Calendar'}`
-                              : `🌙 Tithi: ${item.recurrence?.tithiName || 'Tithi'}`
+                              ? `🚩 ${item.recurrence?.festivalName || 'Festival'} (${item.dateIso || ''})`
+                              : `🌙 ${item.recurrence?.tithiName || 'Tithi'} (${item.dateIso || ''})`
                             : item.category === 'LAL_KITAB_REMEDY'
                             ? `🔮 Lal Kitab (${item.lalKitabData?.targetDays || 43} Days)`
                             : item.category === 'DAILY_CHANT'
@@ -362,7 +402,9 @@ export const RemindersScreen: React.FC = () => {
                 {isLalKitab && item.lalKitabData ? (
                   <View style={styles.lalKitabBox}>
                     <View style={styles.lalKitabHeaderRow}>
-                      <Text style={styles.lalKitabTitle}>🔮 {item.lalKitabData.targetDays}-Day Remedy Progress Counter:</Text>
+                      <Text style={styles.lalKitabTitle}>
+                        🔮 {item.lalKitabData.counterLabel || 'Lal Kitab Remedy Progress Counter'}:
+                      </Text>
                       <Text style={styles.lalKitabCounter}>
                         Day {item.lalKitabData.completedDays} of {item.lalKitabData.targetDays}
                       </Text>
@@ -516,11 +558,11 @@ export const RemindersScreen: React.FC = () => {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Sub-Type 1: TITHI PICKER (All 15 Tithis) */}
+                  {/* Sub-Type 1: TITHI PICKER & UPCOMING 5 DATES SCANNER */}
                   {tithiFestSubType === 'TITHI' ? (
                     <View>
-                      <Text style={styles.subLabel}>Choose Sacred Tithi (15 Tithis Available):</Text>
-                      <ScrollView style={{ maxHeight: 150 }} nestedScrollEnabled>
+                      <Text style={styles.subLabel}>1. Choose Sacred Tithi:</Text>
+                      <ScrollView style={{ maxHeight: 110 }} nestedScrollEnabled>
                         {ALL_15_TITHIS.map((tName, idx) => (
                           <TouchableOpacity
                             key={idx}
@@ -533,11 +575,50 @@ export const RemindersScreen: React.FC = () => {
                           </TouchableOpacity>
                         ))}
                       </ScrollView>
+
+                      {/* UPCOMING 5 DATES PREVIEW & SELECTOR */}
+                      <Text style={[styles.subLabel, { marginTop: 10, color: '#E65100' }]}>
+                        📅 Next 5 Upcoming Dates for {selectedTithiName.split(' ')[0]}:
+                      </Text>
+
+                      {upcomingTithiDates.length === 0 ? (
+                        <Text style={{ fontSize: 11, color: Colors.textMuted, fontStyle: 'italic' }}>
+                          Calculating upcoming dates...
+                        </Text>
+                      ) : (
+                        <ScrollView style={{ maxHeight: 140 }} nestedScrollEnabled>
+                          {upcomingTithiDates.map((uDate, idx) => (
+                            <TouchableOpacity
+                              key={uDate.dateIso}
+                              style={[
+                                styles.upcomingDateCard,
+                                selectedUpcomingDateIso === uDate.dateIso && styles.upcomingDateCardActive
+                              ]}
+                              onPress={() => setSelectedUpcomingDateIso(uDate.dateIso)}
+                            >
+                              <View style={{ flex: 1 }}>
+                                <Text style={[
+                                  styles.upcomingDateTitle,
+                                  selectedUpcomingDateIso === uDate.dateIso && { color: Colors.maroon }
+                                ]}>
+                                  📅 {uDate.dateDisplay} ({uDate.dayOfWeekName})
+                                </Text>
+                                <Text style={styles.upcomingDateSub}>
+                                  🌙 {uDate.tithiFullText}
+                                </Text>
+                              </View>
+                              {selectedUpcomingDateIso === uDate.dateIso && (
+                                <Text style={styles.upcomingDateCheck}>✓ Selected</Text>
+                              )}
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      )}
                     </View>
                   ) : (
-                    /* Sub-Type 2: FESTIVAL & DHARMA PICKER */
+                    /* Sub-Type 2: UPCOMING FESTIVAL & DHARMA PICKER WITH DATE/DAY/TITHI DETAILS */
                     <View>
-                      <Text style={styles.subLabel}>Filter Festivals by Dharma / Religion:</Text>
+                      <Text style={styles.subLabel}>1. Filter Festivals by Dharma / Religion:</Text>
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
                         {DHARMA_OPTIONS.map(dh => (
                           <TouchableOpacity
@@ -545,8 +626,11 @@ export const RemindersScreen: React.FC = () => {
                             style={[styles.dayChip, selectedDharma === dh.id && styles.dayChipActive]}
                             onPress={() => {
                               setSelectedDharma(dh.id);
-                              const fList = getFilteredFestivalsByDharma(dh.id);
-                              if (fList[0]) setSelectedFestivalName(fList[0].name);
+                              const fList = getFilteredUpcomingFestivalsByDharma(dh.id);
+                              if (fList[0]) {
+                                setSelectedFestivalName(fList[0].name);
+                                setSelectedFestivalDateIso(fList[0].dateIso);
+                              }
                             }}
                           >
                             <Text style={[styles.dayChipText, selectedDharma === dh.id && styles.dayChipTextActive]}>
@@ -556,28 +640,59 @@ export const RemindersScreen: React.FC = () => {
                         ))}
                       </ScrollView>
 
-                      <Text style={styles.subLabel}>Select Festival from Calendar:</Text>
-                      <ScrollView style={{ maxHeight: 150 }} nestedScrollEnabled>
-                        {activeDharmaFestivals.map(fest => (
-                          <TouchableOpacity
-                            key={fest.id}
-                            style={[styles.tithiChip, selectedFestivalName === fest.name && styles.tithiChipActive]}
-                            onPress={() => setSelectedFestivalName(fest.name)}
-                          >
-                            <Text style={[styles.tithiChipText, selectedFestivalName === fest.name && styles.tithiChipTextActive]}>
-                              🚩 {fest.name} ({fest.hindiName})
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
+                      <Text style={styles.subLabel}>2. Select Upcoming Festival (Showing Future Dates Only):</Text>
+                      {activeUpcomingDharmaFestivals.length === 0 ? (
+                        <Text style={{ fontSize: 11, color: Colors.textMuted, fontStyle: 'italic', paddingVertical: 10 }}>
+                          No upcoming festivals found for this category in the remainder of the year.
+                        </Text>
+                      ) : (
+                        <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled>
+                          {activeUpcomingDharmaFestivals.map(fest => {
+                            const fDateObj = new Date(fest.dateIso);
+                            const dayName = DAY_NAMES[fDateObj.getDay()] || '';
+                            const isSelected = selectedFestivalName === fest.name;
+
+                            return (
+                              <TouchableOpacity
+                                key={fest.id}
+                                style={[styles.tithiChip, isSelected && styles.tithiChipActive, { paddingVertical: 10 }]}
+                                onPress={() => {
+                                  setSelectedFestivalName(fest.name);
+                                  setSelectedFestivalDateIso(fest.dateIso);
+                                }}
+                              >
+                                <Text style={[styles.tithiChipText, isSelected && styles.tithiChipTextActive, { fontSize: 12, fontWeight: 'bold' }]}>
+                                  🚩 {fest.name} ({fest.hindiName})
+                                </Text>
+                                <Text style={{ fontSize: 11, color: isSelected ? Colors.maroon : Colors.textPrimary, marginTop: 3 }}>
+                                  📅 Date & Day: <Text style={{ fontWeight: 'bold' }}>{fest.dateIso} • {dayName}</Text>
+                                </Text>
+                                {fest.tithiDescription ? (
+                                  <Text style={{ fontSize: 10, color: isSelected ? Colors.maroon : Colors.textMuted, marginTop: 2, fontStyle: 'italic' }}>
+                                    🌙 Tithi: {fest.tithiDescription}
+                                  </Text>
+                                ) : null}
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ScrollView>
+                      )}
                     </View>
                   )}
                 </View>
               )}
 
-              {/* Category 3: LAL KITAB REMEDY OPTIONS */}
+              {/* Category 3: LAL KITAB REMEDY OPTIONS WITH EDITABLE COUNTER LABEL */}
               {category === 'LAL_KITAB_REMEDY' && (
                 <View style={styles.optionSubBox}>
+                  <Text style={styles.subLabel}>Counter Title / Label (Editable):</Text>
+                  <TextInput
+                    style={[styles.input, { marginBottom: 8 }]}
+                    placeholder="e.g. Surya Arghya Counter, Shani Daan Days"
+                    value={counterLabel}
+                    onChangeText={setCounterLabel}
+                  />
+
                   <Text style={styles.subLabel}>Target Remedy Days (Editable - e.g. 43, 21, 11, 108 days):</Text>
                   <TextInput
                     style={styles.input}
@@ -587,7 +702,7 @@ export const RemindersScreen: React.FC = () => {
                     onChangeText={setTargetDays}
                   />
                   <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 4 }}>
-                    🔮 Lal Kitab remedies are traditionally observed continuously for 43 consecutive days (or your custom target days).
+                    🔮 Lal Kitab remedies are traditionally observed continuously for 43 consecutive days (or custom target days).
                   </Text>
                 </View>
               )}
@@ -873,7 +988,9 @@ const styles = StyleSheet.create({
   lalKitabTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#F57F17'
+    color: '#F57F17',
+    flex: 1,
+    marginRight: 6
   },
   lalKitabCounter: {
     fontSize: 12,
@@ -1111,6 +1228,36 @@ const styles = StyleSheet.create({
   },
   tithiChipTextActive: {
     color: Colors.maroon
+  },
+  upcomingDateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    marginBottom: 6
+  },
+  upcomingDateCardActive: {
+    backgroundColor: '#FFF3E0',
+    borderColor: Colors.maroon
+  },
+  upcomingDateTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textPrimary
+  },
+  upcomingDateSub: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2
+  },
+  upcomingDateCheck: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginLeft: 6
   },
   addSlotBtn: {
     backgroundColor: Colors.maroon,

@@ -8,11 +8,19 @@ export type ReminderCategory =
   | 'DATE_SPECIFIC';   // Specific festival/date reminder e.g. Raksha Bandhan
 
 export interface LalKitabRemedyData {
-  targetDays: number;     // e.g. 43 days or custom N-days
-  completedDays: number;  // e.g. 14 days
-  startDateIso: string;   // YYYY-MM-DD
+  targetDays: number;       // e.g. 43 days or custom N-days
+  completedDays: number;    // e.g. 14 days
+  startDateIso: string;     // YYYY-MM-DD
+  counterLabel?: string;    // Custom editable counter label e.g. "Surya Arghya Counter"
   lastCompletedDateIso?: string;
   isCompleted: boolean;
+}
+
+export interface UpcomingTithiDateInfo {
+  dateIso: string;         // YYYY-MM-DD
+  dateDisplay: string;     // e.g. 25 Sep 2026
+  dayOfWeekName: string;   // e.g. Friday (शुक्रवार)
+  tithiFullText: string;   // e.g. Bhadrapada Shukla Purnima
 }
 
 export interface RecurrenceRule {
@@ -27,6 +35,8 @@ export interface RecurrenceRule {
   festivalId?: string;      // ID from festival repository
   festivalName?: string;    // Festival title
   festivalDharma?: string;  // HINDU, JAIN, SIKH, BUDDHIST, CHRISTIAN, PARSI, WORLD
+  selectedUpcomingDateIso?: string; // Binds reminder to specific upcoming date
+  upcomingDatesList?: UpcomingTithiDateInfo[];
 }
 
 export interface ReminderItem {
