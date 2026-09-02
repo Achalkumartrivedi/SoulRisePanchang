@@ -269,19 +269,6 @@ const RAW_FESTIVALS: Festival[] = [
     isHoliday: true
   },
   {
-    id: 'f_wb_kojagari_lakshmi',
-    name: '🎨 Kojagari Lakshmi Puja',
-    hindiName: '🎨 कोजागरी लक्ष्मी पूजा (बंगाल)',
-    dateIso: '2026-10-25',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Goddess Lakshmi',
-    description: 'Observed on the full moon night after Durga Puja in Bengal worshipping Goddess Lakshmi for wealth.',
-    rituals: 'Drawing Alpana floor art, offering Coconut Naru and Khichuri Bhog, staying awake at night.',
-    tithiDescription: 'Ashvin Purnima (Kojagari)',
-    region: 'Bengal & Odisha',
-    isHoliday: true
-  },
-  {
     id: 'f_wb_kali_puja',
     name: '🎨 Kali Puja / Shyama Puja',
     hindiName: '🎨 काली पूजा / श्यामा पूजा (बंगाल दीपावली रात्रि)',
@@ -310,19 +297,6 @@ const RAW_FESTIVALS: Festival[] = [
     isHoliday: true
   },
   {
-    id: 'f_od_raja_parba',
-    name: '⛵ Raja Parba (Swings & Earth Mother Festival)',
-    hindiName: '⛵ रजा पर्ब (ओडिशा पृथ्वी माता उत्सव)',
-    dateIso: '2026-06-14',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Bhudevi (Mother Earth)',
-    description: 'Unique 3-day Odia festival celebrating womanhood and the menstruating Earth Mother before monsoon.',
-    rituals: 'Girls playing on rope swings (Raja Doli), eating Poda Pitha, no agricultural digging.',
-    tithiDescription: 'Mithuna Sankranti Period',
-    region: 'Odisha',
-    isHoliday: true
-  },
-  {
     id: 'f_od_rath_yatra',
     name: '⛵ Puri Jagannath Ratha Yatra',
     hindiName: '⛵ पुरी श्री जगन्नाथ रथ यात्रा',
@@ -334,34 +308,6 @@ const RAW_FESTIVALS: Festival[] = [
     tithiDescription: 'Ashadha Shukla Dwitiya',
     region: 'Odisha',
     isHoliday: true
-  },
-
-  // Assam & North-East
-  {
-    id: 'f_as_bohag_bihu',
-    name: '🏔️ Bohag Bihu / Rongali Bihu (Assamese New Year)',
-    hindiName: '🏔️ बोहाग बिहू / रंगोली बिहू (असमिया नववर्ष)',
-    dateIso: '2026-04-14',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Mother Nature & Lord Vishnu',
-    description: '7-day Assamese spring harvest & New Year festival filled with music, Bihu dance, and joy.',
-    rituals: 'Goru Bihu (cattle bath with turmeric), Bihu dance performance, presenting Gamosa towels.',
-    tithiDescription: '1st Day of Bohag Month',
-    region: 'Assam & NE India',
-    isHoliday: true
-  },
-  {
-    id: 'f_as_ambubachi',
-    name: '🏔️ Ambubachi Mela (Kamakhya Temple)',
-    hindiName: '🏔️ अंबुबाची मेला (कामाख्या देवी पीठ)',
-    dateIso: '2026-06-22',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Goddess Kamakhya (Sakti)',
-    description: 'Annual fair celebrating the creative power and fertility of Goddess Kamakhya at Guwahati Shaktipeeth.',
-    rituals: 'Temple doors remain closed for 4 days, distribution of Rakta Vastra holy cloth prasadam.',
-    tithiDescription: 'Monsoon Ashadha Month',
-    region: 'Assam',
-    isHoliday: false
   },
 
   // Bihar, UP & Jharkhand Chhath Mahaparv (4-Day Vedic Festival)

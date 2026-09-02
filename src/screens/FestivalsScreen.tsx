@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import { Colors } from '../theme/colors';
 import { Festival, FestivalCategory } from '../types/panchang';
 import { FESTIVALS, getLocalizedFestivalTitle } from '../engine/festivalRepository';
@@ -38,12 +38,78 @@ export function getCategoryBadgeLabel(category: string): { label: string; bg: st
   }
 }
 
+// ⚡ Pure Memoized Festival Card Component for 60 FPS Zero-Lag Fast Scrolling
+interface FestivalCardItemProps {
+  item: Festival;
+  language: string;
+  onPress: (item: Festival) => void;
+}
+
+const FestivalCardItem = React.memo<FestivalCardItemProps>(({ item, language, onPress }) => {
+  const dateObj = new Date(item.dateIso + 'T00:00:00');
+  const formattedDate = dateObj.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
+  const localizedTitle = getLocalizedFestivalTitle(item, language);
+  const secondaryTitle = (language === 'gu' || language === 'hi')
+    ? (item.name !== localizedTitle ? item.name : '')
+    : (item.hindiName || item.gujaratiName || '');
+
+  const badge = getCategoryBadgeLabel(item.category);
+
+  return (
+    <TouchableOpacity
+      style={styles.festivalCard}
+      onPress={() => onPress(item)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.cardHeaderRow}>
+        <View style={styles.dateBadge}>
+          <Text style={styles.dateBadgeText}>{formattedDate}</Text>
+        </View>
+
+        <View style={[styles.categoryBadge, { backgroundColor: badge.bg, borderColor: badge.color }]}>
+          <Text style={[styles.categoryBadgeText, { color: badge.color }]}>
+            {badge.label}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.festName}>{localizedTitle}</Text>
+      {secondaryTitle ? <Text style={styles.festHindiName}>{secondaryTitle}</Text> : null}
+
+      {item.region ? (
+        <View style={styles.regionBadgeRow}>
+          <Text style={styles.regionBadgeText}>📍 {item.region}</Text>
+        </View>
+      ) : null}
+
+      <View style={styles.deityRow}>
+        <Text style={styles.deityLabel}>Deity / Aradhana:</Text>
+        <Text style={styles.deityText}>{item.deity}</Text>
+      </View>
+
+      <Text style={styles.shortDesc} numberOfLines={2}>{item.description}</Text>
+
+      <View style={styles.cardFooterRow}>
+        <Text style={styles.tithiDesc}>📜 {item.tithiDescription}</Text>
+        <Text style={styles.viewDetailsText}>Tap for Details ➔</Text>
+      </View>
+    </TouchableOpacity>
+  );
+});
+
 export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestivalDate }) => {
   const { language, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<FestivalCategory | 'ALL' | 'WORLD_FESTIVAL'>('ALL');
   const [activeModalFestival, setActiveModalFestival] = useState<Festival | null>(null);
   const [activeWorldFestival, setActiveWorldFestival] = useState<WorldFestivalItem | null>(null);
+
+  const flatListRef = useRef<FlatList<Festival>>(null);
 
   // 1. Comprehensive Multi-Language & Multi-Field Search Filter
   const filteredFestivals = FESTIVALS.filter(f => {
@@ -72,17 +138,50 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
   });
 
   // 2. Strict Chronological Sorting by Date ISO (Ascending Integer Timestamp) + Alphabetical Tie-Breaker for Same Date
-  const sortedFestivals = [...filteredFestivals].sort((a, b) => {
-    const tA = new Date(a.dateIso + 'T00:00:00Z').getTime();
-    const tB = new Date(b.dateIso + 'T00:00:00Z').getTime();
-    if (tA !== tB) {
-      return tA - tB;
+  const sortedFestivals = useMemo(() => {
+    return [...filteredFestivals].sort((a, b) => {
+      const tA = new Date(a.dateIso + 'T00:00:00Z').getTime();
+      const tB = new Date(b.dateIso + 'T00:00:00Z').getTime();
+      if (tA !== tB) {
+        return tA - tB;
+      }
+      const titleA = getLocalizedFestivalTitle(a, language);
+      const titleB = getLocalizedFestivalTitle(b, language);
+      return titleA.localeCompare(titleB, language === 'gu' ? 'gu' : language === 'hi' ? 'hi' : 'en');
+    });
+  }, [filteredFestivals, language]);
+
+  // 3. Compute Index of Current Month (e.g. September) to default focus directly on current month
+  const todayIso = new Date().toISOString().substring(0, 10);
+  const currentMonthPrefix = todayIso.substring(0, 7); // e.g., "2026-09"
+
+  const currentMonthIndex = useMemo(() => {
+    if (!sortedFestivals.length) return 0;
+    const idx = sortedFestivals.findIndex(f => f.dateIso >= todayIso || f.dateIso.startsWith(currentMonthPrefix));
+    return idx >= 0 ? idx : 0;
+  }, [sortedFestivals, todayIso, currentMonthPrefix]);
+
+  const jumpToCurrentMonth = useCallback(() => {
+    if (flatListRef.current && currentMonthIndex >= 0 && sortedFestivals.length > 0) {
+      try {
+        flatListRef.current.scrollToOffset({ offset: currentMonthIndex * 155, animated: true });
+      } catch (e) {
+        // Fallback
+      }
     }
-    // Secondary Sort (Same Date Tie-Breaker): Alphabetical by localized title
-    const titleA = getLocalizedFestivalTitle(a, language);
-    const titleB = getLocalizedFestivalTitle(b, language);
-    return titleA.localeCompare(titleB, language === 'gu' ? 'gu' : language === 'hi' ? 'hi' : 'en');
-  });
+  }, [currentMonthIndex, sortedFestivals.length]);
+
+  // Auto-scroll to current month on initial mount & category change
+  useEffect(() => {
+    if (currentMonthIndex > 0 && selectedCategory !== 'WORLD_FESTIVAL' && !searchQuery) {
+      const timer = setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToOffset({ offset: currentMonthIndex * 155, animated: false });
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedCategory, currentMonthIndex, searchQuery]);
 
   const worldCountryGroups = getWorldFestivalsByCountry().filter(g => {
     if (!searchQuery) return true;
@@ -113,6 +212,19 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Quick Jump to Current Month Pill */}
+        {selectedCategory !== 'WORLD_FESTIVAL' && !searchQuery && currentMonthIndex > 0 && (
+          <TouchableOpacity
+            style={styles.jumpBtn}
+            onPress={jumpToCurrentMonth}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.jumpBtnText}>
+              📅 Jump to This Month ({new Date().toLocaleDateString('en-US', { month: 'long' })}) ⚡
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Filter Category Chips (Horizontal Scrollable Container) */}
@@ -208,6 +320,10 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           data={worldCountryGroups}
           keyExtractor={item => item.country}
           contentContainerStyle={styles.listContent}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           renderItem={({ item: group }) => (
             <View style={styles.countryGroupCard}>
               <View style={styles.countryHeaderBox}>
@@ -236,9 +352,27 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         />
       ) : (
         <FlatList
+          ref={flatListRef}
           data={sortedFestivals}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          removeClippedSubviews={Platform.OS === 'android'}
+          getItemLayout={(data, index) => ({
+            length: 155,
+            offset: 155 * index,
+            index,
+          })}
+          onScrollToIndexFailed={(info) => {
+            setTimeout(() => {
+              flatListRef.current?.scrollToOffset({
+                offset: info.index * 155,
+                animated: false,
+              });
+            }, 100);
+          }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🔍</Text>
@@ -246,65 +380,13 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
               <Text style={styles.emptySub}>No festival records match the selected category or search query.</Text>
             </View>
           }
-          renderItem={({ item }) => {
-            const dateObj = new Date(item.dateIso + 'T00:00:00');
-            const formattedDate = dateObj.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            });
-
-            const localizedTitle = getLocalizedFestivalTitle(item, language);
-            const secondaryTitle = (language === 'gu' || language === 'hi')
-              ? (item.name !== localizedTitle ? item.name : '')
-              : (item.hindiName || item.gujaratiName || '');
-
-            return (
-              <TouchableOpacity
-                style={styles.festivalCard}
-                onPress={() => setActiveModalFestival(item)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.cardHeaderRow}>
-                  <View style={styles.dateBadge}>
-                    <Text style={styles.dateBadgeText}>{formattedDate}</Text>
-                  </View>
-
-                  {(() => {
-                    const badge = getCategoryBadgeLabel(item.category);
-                    return (
-                      <View style={[styles.categoryBadge, { backgroundColor: badge.bg, borderColor: badge.color }]}>
-                        <Text style={[styles.categoryBadgeText, { color: badge.color }]}>
-                          {badge.label}
-                        </Text>
-                      </View>
-                    );
-                  })()}
-                </View>
-
-                <Text style={styles.festName}>{localizedTitle}</Text>
-                {secondaryTitle ? <Text style={styles.festHindiName}>{secondaryTitle}</Text> : null}
-
-                {item.region ? (
-                  <View style={styles.regionBadgeRow}>
-                    <Text style={styles.regionBadgeText}>📍 {item.region}</Text>
-                  </View>
-                ) : null}
-
-                <View style={styles.deityRow}>
-                  <Text style={styles.deityLabel}>Deity / Aradhana:</Text>
-                  <Text style={styles.deityText}>{item.deity}</Text>
-                </View>
-
-                <Text style={styles.shortDesc} numberOfLines={2}>{item.description}</Text>
-
-                <View style={styles.cardFooterRow}>
-                  <Text style={styles.tithiDesc}>📜 {item.tithiDescription}</Text>
-                  <Text style={styles.viewDetailsText}>Tap for Details ➔</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
+          renderItem={({ item }) => (
+            <FestivalCardItem
+              item={item}
+              language={language}
+              onPress={setActiveModalFestival}
+            />
+          )}
         />
       )}
 
@@ -437,8 +519,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     marginTop: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  jumpBtn: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  jumpBtnText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   searchIcon: {
     fontSize: 14,
