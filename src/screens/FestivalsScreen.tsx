@@ -71,11 +71,12 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
     return matchesSearch && matchesCategory;
   });
 
-  // 2. Strict Chronological Sorting by Date ISO (Ascending) + Alphabetical Tie-Breaker for Same Date
+  // 2. Strict Chronological Sorting by Date ISO (Ascending Integer Timestamp) + Alphabetical Tie-Breaker for Same Date
   const sortedFestivals = [...filteredFestivals].sort((a, b) => {
-    // Primary Sort: ISO Date ascending ("2026-01-01" to "2026-12-31")
-    if (a.dateIso !== b.dateIso) {
-      return a.dateIso.localeCompare(b.dateIso);
+    const tA = new Date(a.dateIso + 'T00:00:00Z').getTime();
+    const tB = new Date(b.dateIso + 'T00:00:00Z').getTime();
+    if (tA !== tB) {
+      return tA - tB;
     }
     // Secondary Sort (Same Date Tie-Breaker): Alphabetical by localized title
     const titleA = getLocalizedFestivalTitle(a, language);

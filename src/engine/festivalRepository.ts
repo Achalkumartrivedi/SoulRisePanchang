@@ -1,6 +1,6 @@
 import { Festival } from '../types/panchang';
 
-export const FESTIVALS: Festival[] = [
+const RAW_FESTIVALS: Festival[] = [
   {
     id: 'f_makar_sankranti',
     name: 'Makar Sankranti / Pongal',
@@ -1450,6 +1450,15 @@ export const FESTIVALS: Festival[] = [
     isHoliday: true
   }
 ];
+
+export const FESTIVALS: Festival[] = [...RAW_FESTIVALS].sort((a, b) => {
+  const tA = new Date(a.dateIso + 'T00:00:00Z').getTime();
+  const tB = new Date(b.dateIso + 'T00:00:00Z').getTime();
+  if (tA !== tB) {
+    return tA - tB;
+  }
+  return a.name.localeCompare(b.name);
+});
 
 export function getFestivalsForDate(dateIso: string): Festival[] {
   return FESTIVALS.filter(f => f.dateIso === dateIso);
