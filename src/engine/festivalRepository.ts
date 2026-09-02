@@ -42,19 +42,6 @@ const RAW_FESTIVALS: Festival[] = [
   // ----------------------------------------------------
   // Tamil Nadu & South India
   {
-    id: 'f_tn_thaipusam',
-    name: '🌺 Thaipusam (Thai Poosam)',
-    hindiName: '🌺 थाईपूसम (भगवान मुरुगन उत्सव)',
-    dateIso: '2026-02-01',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Lord Murugan (Kartikeya)',
-    description: 'Grand Tamil festival honoring Lord Murugan receiving the divine Vel spear from Goddess Parvati to defeat Surapadman.',
-    rituals: 'Carrying Kavadi, Vel piercing, Pal Abhishekam (milk offering), fasting.',
-    tithiDescription: 'Thai Month Purnima (Pushya Nakshatra)',
-    region: 'Tamil Nadu',
-    isHoliday: true
-  },
-  {
     id: 'f_tn_puthandu',
     name: '🌺 Tamil Puthandu (Tamil New Year)',
     hindiName: '🌺 तमिल पुत्थांडु (तमिल सौर नववर्ष)',
@@ -462,32 +449,6 @@ const RAW_FESTIVALS: Festival[] = [
     rituals: 'Lighting 1 million lamps on Kashi Ghats, Ganga Aarti, Tripurasur Samhar puja.',
     tithiDescription: 'Kartika Purnima',
     region: 'UP & Varanasi',
-    isHoliday: true
-  },
-  {
-    id: 'f_hp_kullu_dussehra',
-    name: '🏔️ Kullu Dussehra',
-    hindiName: '🏔️ कुल्लू दशहरा (हिमाचल प्रदेश देव समागम)',
-    dateIso: '2026-10-20',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Lord Raghunath & 200+ Local Deities',
-    description: '7-day unique Himachali festival starting on Vijayadashami when over 200 local hill deities gather at Dhalpur Maidan.',
-    rituals: 'Rath Yatra of Lord Raghunath, Nati folk dance, animal sacrifice symbolic closure.',
-    tithiDescription: 'Vijayadashami onwards',
-    region: 'Himachal Pradesh',
-    isHoliday: true
-  },
-  {
-    id: 'f_jk_herath',
-    name: '❄️ Kashmiri Shivratri (Herath)',
-    hindiName: '❄️ हेरथ (कश्मीरी पंडित शिवरात्रि अखरोट पूजा)',
-    dateIso: '2026-02-15',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Lord Shiva & Goddess Parvati (Vatuk)',
-    description: 'Most sacred festival of Kashmiri Pandits worshipping Lord Shiva as Vatuk Bhairava with water-filled pitchers.',
-    rituals: 'Puja of water vessel (Vatuk Dham), offering walnuts soaked in water, distributing walnuts as prasadam.',
-    tithiDescription: 'Phalguna Krishna Trayodashi',
-    region: 'Kashmir',
     isHoliday: true
   },
   {
