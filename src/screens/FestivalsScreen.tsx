@@ -106,12 +106,16 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
   const { language, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<FestivalCategory | 'ALL' | 'WORLD_FESTIVAL'>('ALL');
+  const [viewScope, setViewScope] = useState<'CURRENT_ONWARDS' | 'ALL_YEAR'>('CURRENT_ONWARDS');
   const [activeModalFestival, setActiveModalFestival] = useState<Festival | null>(null);
   const [activeWorldFestival, setActiveWorldFestival] = useState<WorldFestivalItem | null>(null);
 
   const flatListRef = useRef<FlatList<Festival>>(null);
 
-  // 1. Comprehensive Multi-Language & Multi-Field Search Filter
+  const todayIso = new Date().toISOString().substring(0, 10);
+  const currentMonthPrefix = todayIso.substring(0, 7); // e.g., "2026-09"
+
+  // 1. Comprehensive Multi-Language & Multi-Field Search Filter with Scope Scoping
   const filteredFestivals = FESTIVALS.filter(f => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q ||
@@ -134,7 +138,13 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
       matchesCategory = f.category === selectedCategory;
     }
 
-    return matchesSearch && matchesCategory;
+    // Default scope: Show current month onwards unless search query is typed or user selects ALL_YEAR
+    let matchesScope = true;
+    if (viewScope === 'CURRENT_ONWARDS' && !q) {
+      matchesScope = f.dateIso >= todayIso || f.dateIso.startsWith(currentMonthPrefix);
+    }
+
+    return matchesSearch && matchesCategory && matchesScope;
   });
 
   // 2. Strict Chronological Sorting by Date ISO (Ascending Integer Timestamp) + Alphabetical Tie-Breaker for Same Date
@@ -150,38 +160,6 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
       return titleA.localeCompare(titleB, language === 'gu' ? 'gu' : language === 'hi' ? 'hi' : 'en');
     });
   }, [filteredFestivals, language]);
-
-  // 3. Compute Index of Current Month (e.g. September) to default focus directly on current month
-  const todayIso = new Date().toISOString().substring(0, 10);
-  const currentMonthPrefix = todayIso.substring(0, 7); // e.g., "2026-09"
-
-  const currentMonthIndex = useMemo(() => {
-    if (!sortedFestivals.length) return 0;
-    const idx = sortedFestivals.findIndex(f => f.dateIso >= todayIso || f.dateIso.startsWith(currentMonthPrefix));
-    return idx >= 0 ? idx : 0;
-  }, [sortedFestivals, todayIso, currentMonthPrefix]);
-
-  const jumpToCurrentMonth = useCallback(() => {
-    if (flatListRef.current && currentMonthIndex >= 0 && sortedFestivals.length > 0) {
-      try {
-        flatListRef.current.scrollToOffset({ offset: currentMonthIndex * 155, animated: true });
-      } catch (e) {
-        // Fallback
-      }
-    }
-  }, [currentMonthIndex, sortedFestivals.length]);
-
-  // Auto-scroll to current month on initial mount & category change
-  useEffect(() => {
-    if (currentMonthIndex > 0 && selectedCategory !== 'WORLD_FESTIVAL' && !searchQuery) {
-      const timer = setTimeout(() => {
-        if (flatListRef.current) {
-          flatListRef.current.scrollToOffset({ offset: currentMonthIndex * 155, animated: false });
-        }
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedCategory, currentMonthIndex, searchQuery]);
 
   const worldCountryGroups = getWorldFestivalsByCountry().filter(g => {
     if (!searchQuery) return true;
@@ -213,17 +191,29 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           )}
         </View>
 
-        {/* Quick Jump to Current Month Pill */}
-        {selectedCategory !== 'WORLD_FESTIVAL' && !searchQuery && currentMonthIndex > 0 && (
-          <TouchableOpacity
-            style={styles.jumpBtn}
-            onPress={jumpToCurrentMonth}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.jumpBtnText}>
-              📅 Jump to This Month ({new Date().toLocaleDateString('en-US', { month: 'long' })}) ⚡
-            </Text>
-          </TouchableOpacity>
+        {/* Month View Scope Selector Toggle (Current Month Onwards vs All Months) */}
+        {selectedCategory !== 'WORLD_FESTIVAL' && !searchQuery && (
+          <View style={styles.scopeToggleRow}>
+            <TouchableOpacity
+              style={[styles.scopeChip, viewScope === 'CURRENT_ONWARDS' && styles.scopeChipActive]}
+              onPress={() => setViewScope('CURRENT_ONWARDS')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.scopeChipText, viewScope === 'CURRENT_ONWARDS' && styles.scopeChipTextActive]}>
+                📅 {new Date().toLocaleDateString('en-US', { month: 'short' })} Onwards (Default)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scopeChip, viewScope === 'ALL_YEAR' && styles.scopeChipActive]}
+              onPress={() => setViewScope('ALL_YEAR')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.scopeChipText, viewScope === 'ALL_YEAR' && styles.scopeChipTextActive]}>
+                🗓️ All 12 Months
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -360,19 +350,6 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           maxToRenderPerBatch={10}
           windowSize={7}
           removeClippedSubviews={Platform.OS === 'android'}
-          getItemLayout={(data, index) => ({
-            length: 155,
-            offset: 155 * index,
-            index,
-          })}
-          onScrollToIndexFailed={(info) => {
-            setTimeout(() => {
-              flatListRef.current?.scrollToOffset({
-                offset: info.index * 155,
-                animated: false,
-              });
-            }, 100);
-          }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>🔍</Text>
@@ -527,19 +504,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
   },
-  jumpBtn: {
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    alignSelf: 'center',
+  scopeToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
     marginTop: 10,
+  },
+  scopeChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  scopeChipActive: {
+    backgroundColor: '#FFD700',
     borderColor: '#FFD700',
   },
-  jumpBtnText: {
-    color: '#FFD700',
-    fontSize: 12,
+  scopeChipText: {
+    color: '#FFF8E1',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  scopeChipTextActive: {
+    color: Colors.maroon,
     fontWeight: 'bold',
   },
   searchIcon: {
