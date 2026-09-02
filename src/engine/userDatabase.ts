@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { syncUserToFirebaseCloud } from './firebaseSync';
 
 export interface UserProfile {
   id: string;
@@ -39,6 +40,9 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
       accounts.push(profile);
     }
     await AsyncStorage.setItem(ALL_ACCOUNTS_DATABASE_KEY, JSON.stringify(accounts));
+
+    // Sync in real-time to Firebase Cloud Firestore
+    syncUserToFirebaseCloud(profile).catch(err => console.log('Firebase background sync catch:', err));
   } catch (e) {
     console.log('Error saving user profile to DB:', e);
   }
@@ -62,6 +66,7 @@ export async function loginGuestUser(email: string, pin: string): Promise<{ succ
     }
 
     await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(existing));
+    syncUserToFirebaseCloud(existing).catch(err => console.log('Firebase background sync catch:', err));
     return { success: true, profile: existing };
   } catch (e) {
     console.log('Error logging in guest user:', e);
