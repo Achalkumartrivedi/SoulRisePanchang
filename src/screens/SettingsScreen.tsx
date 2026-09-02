@@ -14,6 +14,9 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { SUPPORTED_LANGUAGES } from '../types/language';
 import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
+import { getUserProfile, clearUserProfile, UserProfile } from '../engine/userDatabase';
+import { AuthModal } from '../components/AuthModal';
+import { FeedbackModal } from '../components/FeedbackModal';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -44,8 +47,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [amavasyaNotif, setAmavasyaNotif] = useState(true);
   const [reminderDays, setReminderDays] = useState<number>(1); // 0 (same day), 1, 2, or 5 days before
 
+  // Customer Profile & Support Modal States
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
+
   useEffect(() => {
     (async () => {
+      const profile = await getUserProfile();
+      setUserProfile(profile);
+
       const stored = await AsyncStorage.getItem(CHOGHADIYA_NOTIF_KEY);
       if (stored === 'true') {
         setUseChoghadiyaNotif(true);
@@ -58,6 +70,26 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       if (rDays !== null) setReminderDays(parseInt(rDays, 10));
     })();
   }, []);
+
+  const handleDeleteAccountAndReset = () => {
+    Alert.alert(
+      '🗑️ Delete Account & Reset Data',
+      'Are you sure you want to delete your profile, saved reminders, and reset all app preferences? This action is permanent.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete & Reset',
+          style: 'destructive',
+          onPress: async () => {
+            await clearUserProfile();
+            await AsyncStorage.clear();
+            setUserProfile(null);
+            Alert.alert('✅ Data Cleared', 'Your account data and preferences have been completely deleted.');
+          }
+        }
+      ]
+    );
+  };
 
   const handleChoghadiyaToggle = async (val: boolean) => {
     setUseChoghadiyaNotif(val);
@@ -326,7 +358,160 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             ))}
           </View>
         </View>
+
+        {/* 👤 Customer Profile Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>👤 Customer Profile & Account</Text>
+
+          {userProfile ? (
+            <View style={styles.profileBox}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.profileName}>
+                  {userProfile.name} {userProfile.authType === 'GOOGLE' ? '🔴 (Google)' : '👤 (Guest)'}
+                </Text>
+                <Text style={styles.profileEmail}>{userProfile.email}</Text>
+                <Text style={styles.profileDate}>
+                  Member Since: {new Date(userProfile.createdAtIso).toLocaleDateString()}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.changeProfileBtn}
+                onPress={() => setAuthModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.changeProfileText}>Switch User</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.signInBtn}
+              onPress={() => setAuthModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.signInBtnText}>🔑 Sign In (Google or Guest)</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* 💬 Customer Feedback & Support Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>💬 Support & Customer Feedback</Text>
+          <Text style={styles.cardSubTitle}>
+            {'Have a suggestion, bug report, or Panchang question? Send feedback directly to our team (Supports file attachments < 2MB, 3-day cooldown).'}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.feedbackBtn}
+            onPress={() => setFeedbackModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.feedbackBtnText}>✉️ Send Feedback / Contact Us</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 🔐 Legal & Privacy Policy Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🔐 Privacy & Legal Compliance</Text>
+          <Text style={styles.cardSubTitle}>
+            Google Play Developer Policy compliant data handling. We process location data locally and do not sell your personal data.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.policyBtn}
+            onPress={() => setPrivacyPolicyVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.policyBtnText}>📜 View Official Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 🗑️ Google Play Compliant Account Deletion & Reset Card */}
+        <View style={[styles.card, { borderColor: '#FFCDD2', backgroundColor: '#FFEBEE' }]}>
+          <Text style={[styles.cardTitle, { color: '#C62828' }]}>🗑️ Account Deletion & Data Reset</Text>
+          <Text style={styles.cardSubTitle}>
+            Google Play Requirement: Delete your profile, saved custom reminders, and clear local storage data permanently.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={handleDeleteAccountAndReset}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.deleteBtnText}>⚠️ Delete Account & Erase All Data</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {/* Auth Modal */}
+      <AuthModal
+        visible={authModalVisible}
+        onClose={() => setAuthModalVisible(false)}
+        onSuccess={(profile) => {
+          setUserProfile(profile);
+          setAuthModalVisible(false);
+          Alert.alert('✅ Profile Saved', `Welcome, ${profile.name}! Your profile is now active.`);
+        }}
+      />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        visible={feedbackModalVisible}
+        onClose={() => setFeedbackModalVisible(false)}
+        userEmail={userProfile?.email}
+      />
+
+      {/* Privacy Policy Modal */}
+      <Modal visible={privacyPolicyVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { maxHeight: 580 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>📜 Privacy Policy</Text>
+              <TouchableOpacity onPress={() => setPrivacyPolicyVisible(false)} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.maroon, marginBottom: 8 }}>
+                🌐 Live GitHub Pages Privacy Policy URL:
+              </Text>
+              <View style={{ backgroundColor: '#FFF8E7', padding: 10, borderRadius: 6, marginBottom: 12 }}>
+                <Text style={{ fontSize: 11, color: Colors.textPrimary, fontFamily: 'monospace' }}>
+                  {'https://your-username.github.io/SoulRisePanchang/docs/index.html'}
+                </Text>
+              </View>
+
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
+                1. Data Collection & Location Usage
+              </Text>
+              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 10, lineHeight: 18 }}>
+                SoulRise Panchang uses GPS location data solely to compute accurate city-specific sunrise, sunset, Tithi, Rahu Kalam, and planetary calculations. Location data is processed locally on your device and is NEVER sold or shared with third parties.
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
+                2. User Authentication & Profile
+              </Text>
+              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 10, lineHeight: 18 }}>
+                Guest and Google Sign-In profile names are used to auto-populate your Janam Kundli charts and personalize your experience. Profile data remains under your full control.
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
+                3. Account Deletion Rights
+              </Text>
+              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 10, lineHeight: 18 }}>
+                You can delete your account, wipe all stored local profiles, and clear all local data at any time under Settings ➔ Delete Account & Erase All Data.
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
+                4. Children's Privacy (COPPA)
+              </Text>
+              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 16, lineHeight: 18 }}>
+                SoulRise Panchang is rated 3+ (Everyone). We do not knowingly collect personal data from children under 13.
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* City Modal */}
       <Modal visible={isModalVisible} animationType="slide" transparent>
@@ -599,4 +784,83 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.maroon,
   },
+  profileBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  profileName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary
+  },
+  profileEmail: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2
+  },
+  profileDate: {
+    fontSize: 10,
+    color: '#888888',
+    marginTop: 2
+  },
+  changeProfileBtn: {
+    backgroundColor: Colors.maroon,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6
+  },
+  changeProfileText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold'
+  },
+  signInBtn: {
+    backgroundColor: Colors.maroon,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  signInBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13
+  },
+  feedbackBtn: {
+    backgroundColor: '#FF6F00',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  feedbackBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13
+  },
+  policyBtn: {
+    backgroundColor: '#2E7D32',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  policyBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13
+  },
+  deleteBtn: {
+    backgroundColor: '#D32F2F',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  deleteBtnText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 13
+  }
 });

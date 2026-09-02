@@ -20,6 +20,7 @@ import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingServi
 import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
 import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, SavedKundaliProfile } from '../utils/profileStorage';
 import { SoulPurposeModal } from './SoulPurposeModal';
+import { getUserProfile } from '../engine/userDatabase';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -131,6 +132,17 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
       72.8311
     );
   });
+
+  useEffect(() => {
+    if (visible) {
+      (async () => {
+        const profile = await getUserProfile();
+        if (profile && profile.name) {
+          setName(profile.name);
+        }
+      })();
+    }
+  }, [visible]);
 
   // Load saved profiles from AsyncStorage on mount
   useEffect(() => {
