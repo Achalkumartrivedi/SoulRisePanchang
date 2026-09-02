@@ -66,7 +66,6 @@ SoulRise Panchang is a spiritual and educational calendar application rated **3+
 If you have any questions, feedback, or data privacy requests regarding this Privacy Policy, please contact us at:
 
 - **Email**: support@soulrisepanchang.com
-- **Website**: https://www.buildshare.in
 - **In-App**: Settings ➔ Send Feedback / Contact Us
 
 ---
