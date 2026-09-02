@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Colors } from '../theme/colors';
 import { Festival, FestivalCategory } from '../types/panchang';
-import { FESTIVALS } from '../engine/festivalRepository';
+import { FESTIVALS, getLocalizedFestivalTitle } from '../engine/festivalRepository';
 import { useLanguage } from '../context/LanguageContext';
 import { getWorldFestivalsByCountry, WorldFestivalItem } from '../engine/worldFestivalRepository';
 
@@ -28,6 +28,8 @@ export function getCategoryBadgeLabel(category: string): { label: string; bg: st
       return { label: '🌿 Hindu Vrat', bg: '#F3E5F5', color: '#7B1FA2' };
     case 'JAYANTI':
       return { label: '🚩 Jayanti', bg: '#FFF3E0', color: '#D84315' };
+    case 'CULTURAL':
+      return { label: '🌾 Cultural Festival', bg: '#FFF8E1', color: '#F57F17' };
     case 'ECLIPSE':
       return { label: '🌑 Eclipse / Grahan', bg: '#ECEFF1', color: '#37474F' };
     case 'MAJOR_FESTIVAL':
@@ -37,21 +39,31 @@ export function getCategoryBadgeLabel(category: string): { label: string; bg: st
 }
 
 export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestivalDate }) => {
+  const { language, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<FestivalCategory | 'ALL' | 'WORLD_FESTIVAL'>('ALL');
   const [activeModalFestival, setActiveModalFestival] = useState<Festival | null>(null);
   const [activeWorldFestival, setActiveWorldFestival] = useState<WorldFestivalItem | null>(null);
 
+  // 1. Comprehensive Multi-Language & Multi-Field Search Filter
   const filteredFestivals = FESTIVALS.filter(f => {
-    const matchesSearch = f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.hindiName.includes(searchQuery) ||
-      f.deity.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q ||
+      f.name.toLowerCase().includes(q) ||
+      (f.hindiName && f.hindiName.toLowerCase().includes(q)) ||
+      (f.gujaratiName && f.gujaratiName.toLowerCase().includes(q)) ||
+      (f.deity && f.deity.toLowerCase().includes(q)) ||
+      (f.description && f.description.toLowerCase().includes(q)) ||
+      (f.rituals && f.rituals.toLowerCase().includes(q)) ||
+      (f.tithiDescription && f.tithiDescription.toLowerCase().includes(q)) ||
+      (f.region && f.region.toLowerCase().includes(q)) ||
+      f.dateIso.includes(q);
 
     let matchesCategory = false;
     if (selectedCategory === 'ALL') {
       matchesCategory = true;
     } else if (selectedCategory === 'MAJOR_FESTIVAL') {
-      matchesCategory = f.category === 'MAJOR_FESTIVAL' || f.category === 'VRAT' || f.category === 'JAYANTI';
+      matchesCategory = f.category === 'MAJOR_FESTIVAL' || f.category === 'VRAT' || f.category === 'JAYANTI' || f.category === 'CULTURAL';
     } else {
       matchesCategory = f.category === selectedCategory;
     }
@@ -59,13 +71,23 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
     return matchesSearch && matchesCategory;
   });
 
-  const worldCountryGroups = getWorldFestivalsByCountry().filter(g => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return g.country.toLowerCase().includes(q) || g.festivals.some(f => f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q));
+  // 2. Strict Chronological Sorting by Date ISO (Ascending) + Alphabetical Tie-Breaker for Same Date
+  const sortedFestivals = [...filteredFestivals].sort((a, b) => {
+    // Primary Sort: ISO Date ascending ("2026-01-01" to "2026-12-31")
+    if (a.dateIso !== b.dateIso) {
+      return a.dateIso.localeCompare(b.dateIso);
+    }
+    // Secondary Sort (Same Date Tie-Breaker): Alphabetical by localized title
+    const titleA = getLocalizedFestivalTitle(a, language);
+    const titleB = getLocalizedFestivalTitle(b, language);
+    return titleA.localeCompare(titleB, language === 'gu' ? 'gu' : language === 'hi' ? 'hi' : 'en');
   });
 
-  const { t } = useLanguage();
+  const worldCountryGroups = getWorldFestivalsByCountry().filter(g => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return g.country.toLowerCase().includes(q) || g.festivals.some(f => f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q));
+  });
 
   return (
     <View style={styles.container}>
@@ -166,8 +188,8 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         </ScrollView>
       </View>
 
-      {/* Hero Jain Chaturmas & Paryushan Banner */}
-      {(selectedCategory === 'JAIN_FESTIVAL' || selectedCategory === 'ALL') && (
+      {/* Hero Jain Chaturmas & Paryushan Banner (Only visible under Jain filter) */}
+      {selectedCategory === 'JAIN_FESTIVAL' && (
         <View style={styles.jainChaturmasBanner}>
           <Text style={styles.chaturmasTitle}>🪔 JAIN CHATURMAS 2026 (4-MONTH HOLY MAHAVRAT)</Text>
           <Text style={styles.chaturmasDates}>
@@ -213,7 +235,7 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
         />
       ) : (
         <FlatList
-          data={filteredFestivals}
+          data={sortedFestivals}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
@@ -230,6 +252,11 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
               day: 'numeric',
               year: 'numeric'
             });
+
+            const localizedTitle = getLocalizedFestivalTitle(item, language);
+            const secondaryTitle = (language === 'gu' || language === 'hi')
+              ? (item.name !== localizedTitle ? item.name : '')
+              : (item.hindiName || item.gujaratiName || '');
 
             return (
               <TouchableOpacity
@@ -254,8 +281,8 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
                   })()}
                 </View>
 
-                <Text style={styles.festName}>{item.name}</Text>
-                <Text style={styles.festHindiName}>{item.hindiName}</Text>
+                <Text style={styles.festName}>{localizedTitle}</Text>
+                {secondaryTitle ? <Text style={styles.festHindiName}>{secondaryTitle}</Text> : null}
 
                 {item.region ? (
                   <View style={styles.regionBadgeRow}>
@@ -333,13 +360,19 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle} numberOfLines={1}>{activeModalFestival.name}</Text>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  {getLocalizedFestivalTitle(activeModalFestival, language)}
+                </Text>
                 <TouchableOpacity onPress={() => setActiveModalFestival(null)} style={styles.closeBtn}>
                   <Text style={styles.closeBtnText}>✕</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.modalHindi}>{activeModalFestival.hindiName}</Text>
+              {activeModalFestival.hindiName && activeModalFestival.name !== getLocalizedFestivalTitle(activeModalFestival, language) ? (
+                <Text style={styles.modalHindi}>{activeModalFestival.name}</Text>
+              ) : activeModalFestival.hindiName ? (
+                <Text style={styles.modalHindi}>{activeModalFestival.hindiName}</Text>
+              ) : null}
 
               <View style={styles.modalMetaRow}>
                 <Text style={styles.modalMetaTag}>📅 Date: {activeModalFestival.dateIso}</Text>
