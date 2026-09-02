@@ -10,7 +10,7 @@ import {
   Alert
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { getUserProfile, UserProfile } from '../engine/userDatabase';
+import { getUserProfile, getAllRegisteredUsers, UserProfile } from '../engine/userDatabase';
 import { getFeedbackHistory, FeedbackItem } from '../engine/feedbackStorage';
 
 interface AdminDatabaseModalProps {
@@ -20,6 +20,7 @@ interface AdminDatabaseModalProps {
 
 export const AdminDatabaseModal: React.FC<AdminDatabaseModalProps> = ({ visible, onClose }) => {
   const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null);
+  const [allUsersList, setAllUsersList] = useState<UserProfile[]>([]);
   const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [activeTab, setActiveTab] = useState<'USERS' | 'FEEDBACK' | 'CLOUD_INFO'>('USERS');
 
@@ -32,6 +33,9 @@ export const AdminDatabaseModal: React.FC<AdminDatabaseModalProps> = ({ visible,
   const loadData = async () => {
     const p = await getUserProfile();
     setCurrentProfile(p);
+
+    const all = await getAllRegisteredUsers();
+    setAllUsersList(all);
 
     const fb = await getFeedbackHistory();
     setFeedbackList(fb);
@@ -84,27 +88,41 @@ export const AdminDatabaseModal: React.FC<AdminDatabaseModalProps> = ({ visible,
           <ScrollView contentContainerStyle={{ padding: 16 }}>
             {activeTab === 'USERS' && (
               <View>
-                <Text style={styles.sectionTitle}>👤 Registered User Profiles (Local Database)</Text>
+                <Text style={styles.sectionTitle}>
+                  👤 Registered User Accounts Database ({allUsersList.length})
+                </Text>
 
-                {currentProfile ? (
-                  <View style={styles.userCard}>
-                    <View style={styles.userBadge}>
-                      <Text style={styles.userBadgeText}>
-                        {currentProfile.authType === 'GOOGLE' ? '🔴 GOOGLE USER' : '👤 GUEST USER'}
+                {allUsersList.length > 0 ? (
+                  allUsersList.map((user, idx) => (
+                    <View key={user.id || idx} style={styles.userCard}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <View style={styles.userBadge}>
+                          <Text style={styles.userBadgeText}>
+                            {user.authType === 'GOOGLE' ? '🔴 GOOGLE USER' : '👤 GUEST USER'}
+                          </Text>
+                        </View>
+                        {currentProfile?.email.toLowerCase() === user.email.toLowerCase() && (
+                          <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#2E7D32', backgroundColor: '#E8F5E9', paddingVertical: 2, paddingHorizontal: 6, borderRadius: 4 }}>
+                            Active User
+                          </Text>
+                        )}
+                      </View>
+
+                      <Text style={styles.userName}>{user.name}</Text>
+                      <Text style={styles.userDetail}>📧 Email: {user.email}</Text>
+                      {user.pin6Digit ? (
+                        <Text style={styles.userDetail}>🔑 6-Digit PIN: {user.pin6Digit}</Text>
+                      ) : null}
+                      <Text style={styles.userDetail}>🆔 User ID: {user.id}</Text>
+                      <Text style={styles.userDetail}>
+                        📅 Registered Date: {new Date(user.createdAtIso).toLocaleString()}
                       </Text>
                     </View>
-
-                    <Text style={styles.userName}>{currentProfile.name}</Text>
-                    <Text style={styles.userDetail}>📧 Email: {currentProfile.email}</Text>
-                    <Text style={styles.userDetail}>🆔 User ID: {currentProfile.id}</Text>
-                    <Text style={styles.userDetail}>
-                      📅 First Sign-In: {new Date(currentProfile.createdAtIso).toLocaleString()}
-                    </Text>
-                  </View>
+                  ))
                 ) : (
                   <View style={styles.emptyBox}>
-                    <Text style={styles.emptyText}>No user logged in currently.</Text>
-                    <Text style={styles.emptySub}>Sign in via Guest or Google on Settings screen to populate user DB.</Text>
+                    <Text style={styles.emptyText}>No registered users in database yet.</Text>
+                    <Text style={styles.emptySub}>Sign in via Guest (Email + PIN) or Google on Settings screen to populate user DB.</Text>
                   </View>
                 )}
               </View>
@@ -241,7 +259,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     padding: 14,
-    borderRadius: 10
+    borderRadius: 10,
+    marginBottom: 10
   },
   userBadge: {
     backgroundColor: Colors.maroon,
