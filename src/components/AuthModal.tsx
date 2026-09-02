@@ -10,7 +10,7 @@ import {
   ScrollView
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { saveUserProfile, UserProfile } from '../engine/userDatabase';
+import { saveUserProfile, loginGuestUser, UserProfile } from '../engine/userDatabase';
 
 interface AuthModalProps {
   visible: boolean;
@@ -19,30 +19,76 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSuccess }) => {
-  const [authMode, setAuthMode] = useState<'SELECT' | 'GUEST_NAME' | 'GOOGLE_EMAIL'>('SELECT');
+  const [authMode, setAuthMode] = useState<'SELECT' | 'GUEST_REGISTER' | 'GUEST_LOGIN' | 'GOOGLE_EMAIL'>('SELECT');
+
+  // Registration Form State
   const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPin, setGuestPin] = useState('');
+
+  // Existing Login Form State
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPin, setLoginPin] = useState('');
+
+  // Google State
   const [googleEmail, setGoogleEmail] = useState('');
   const [googleName, setGoogleName] = useState('');
 
-  const handleGuestSubmit = async () => {
-    const trimmed = guestName.trim();
-    if (!trimmed) {
-      Alert.alert('⚠️ Name Required', 'Please enter your full name to proceed with Guest Sign-In.');
+  const handleGuestRegisterSubmit = async () => {
+    const nameTrimmed = guestName.trim();
+    const emailTrimmed = guestEmail.trim().toLowerCase();
+    const pinTrimmed = guestPin.trim();
+
+    if (!nameTrimmed) {
+      Alert.alert('⚠️ Name Required', 'Please enter your Full Name.');
+      return;
+    }
+
+    if (!emailTrimmed || !emailTrimmed.includes('@')) {
+      Alert.alert('⚠️ Email Required', 'Please enter a valid email address so you can restore your data later.');
+      return;
+    }
+
+    if (!pinTrimmed || pinTrimmed.length < 6) {
+      Alert.alert('⚠️ 6-Digit PIN Required', 'Please create a 6-digit security PIN to protect and sync your account.');
       return;
     }
 
     const profile: UserProfile = {
       id: `guest_${Date.now()}`,
-      name: trimmed,
-      email: `${trimmed.toLowerCase().replace(/\s+/g, '')}@guest.local`,
+      name: nameTrimmed,
+      email: emailTrimmed,
+      pin6Digit: pinTrimmed,
       authType: 'GUEST',
       createdAtIso: new Date().toISOString()
     };
 
     await saveUserProfile(profile);
     onSuccess(profile);
-    setGuestName('');
-    setAuthMode('SELECT');
+    resetForm();
+  };
+
+  const handleGuestLoginSubmit = async () => {
+    const emailTrimmed = loginEmail.trim().toLowerCase();
+    const pinTrimmed = loginPin.trim();
+
+    if (!emailTrimmed || !emailTrimmed.includes('@')) {
+      Alert.alert('⚠️ Email Required', 'Please enter your registered email address.');
+      return;
+    }
+
+    if (!pinTrimmed || pinTrimmed.length < 6) {
+      Alert.alert('⚠️ 6-Digit PIN Required', 'Please enter your 6-digit security PIN.');
+      return;
+    }
+
+    const res = await loginGuestUser(emailTrimmed, pinTrimmed);
+    if (res.success && res.profile) {
+      onSuccess(res.profile);
+      resetForm();
+    } else {
+      Alert.alert('❌ Login Failed', res.message || 'Incorrect email or PIN.');
+    }
   };
 
   const handleGoogleSubmit = async () => {
@@ -65,8 +111,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
 
     await saveUserProfile(profile);
     onSuccess(profile);
-    setGoogleEmail('');
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setGuestName('');
+    setGuestEmail('');
+    setGuestPin('');
+    setLoginEmail('');
+    setLoginPin('');
     setGoogleName('');
+    setGoogleEmail('');
     setAuthMode('SELECT');
   };
 
@@ -77,7 +132,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {authMode === 'SELECT' && '👤 Sign In to SoulRise Panchang'}
-              {authMode === 'GUEST_NAME' && '🙋 Guest Profile Setup'}
+              {authMode === 'GUEST_REGISTER' && '✍️ Create Guest Account (Name + Email + PIN)'}
+              {authMode === 'GUEST_LOGIN' && '🔑 Restore Guest Account (Email + PIN)'}
               {authMode === 'GOOGLE_EMAIL' && '🌐 Google Account Sign In'}
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -86,13 +142,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 16 }}>
+            {/* Warning Banner regarding app uninstallation data wipe */}
+            <View style={styles.warnBanner}>
+              <Text style={styles.warnTitle}>⚠️ Important Data Notice</Text>
+              <Text style={styles.warnText}>
+                Without creating a profile, your saved Janam Kundli charts and Panchang reminders are stored locally on this phone and will be permanently cleared if the app is uninstalled!
+              </Text>
+            </View>
+
             {authMode === 'SELECT' && (
               <View>
                 <Text style={styles.desc}>
-                  Sign in to personalize your Vedic Panchang, sync sacred reminders, and auto-populate your details in Janam Kundli charts.
+                  Sign in or create a profile to back up your Janam Kundli charts, auto-populate your details, and sync sacred reminders.
                 </Text>
 
-                {/* Google Sign In Option */}
+                {/* Google Sign In Button */}
                 <TouchableOpacity
                   style={styles.googleBtn}
                   onPress={() => setAuthMode('GOOGLE_EMAIL')}
@@ -102,25 +166,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
                   <Text style={styles.googleBtnText}>Continue with Google</Text>
                 </TouchableOpacity>
 
-                {/* Guest Sign In Option */}
+                {/* New Guest Sign Up */}
                 <TouchableOpacity
                   style={styles.guestBtn}
-                  onPress={() => setAuthMode('GUEST_NAME')}
+                  onPress={() => setAuthMode('GUEST_REGISTER')}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.guestIcon}>👤</Text>
-                  <Text style={styles.guestBtnText}>Continue as Guest (Guest Sign-In)</Text>
+                  <Text style={styles.guestBtnText}>Register New Guest Profile (Email + 6-Digit PIN)</Text>
+                </TouchableOpacity>
+
+                {/* Existing Guest Login */}
+                <TouchableOpacity
+                  style={styles.restoreBtn}
+                  onPress={() => setAuthMode('GUEST_LOGIN')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.restoreBtnText}>🔑 Existing Guest? Re-login with Email & PIN</Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {authMode === 'GUEST_NAME' && (
+            {authMode === 'GUEST_REGISTER' && (
               <View>
-                <Text style={styles.label}>Please enter your Full Name:</Text>
-                <Text style={styles.subLabel}>
-                  Your name will be used across the app and auto-filled in your Janam Kundli / Birth Generator.
-                </Text>
-
+                <Text style={styles.label}>Full Name:</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Rahul Sharma"
@@ -129,13 +198,70 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
                   autoFocus
                 />
 
+                <Text style={styles.label}>Email Address (for backup & login sync):</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="rahul@gmail.com"
+                  value={guestEmail}
+                  onChangeText={setGuestEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                <Text style={styles.label}>Create 6-Digit Security PIN / Password:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 6-digit PIN (e.g. 123456)"
+                  value={guestPin}
+                  onChangeText={setGuestPin}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  secureTextEntry
+                />
+
                 <View style={styles.btnRow}>
                   <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
                     <Text style={styles.cancelBtnText}>Back</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.submitBtn} onPress={handleGuestSubmit}>
-                    <Text style={styles.submitBtnText}>Save & Continue ➔</Text>
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleGuestRegisterSubmit}>
+                    <Text style={styles.submitBtnText}>Create & Save ➔</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {authMode === 'GUEST_LOGIN' && (
+              <View>
+                <Text style={styles.label}>Registered Email Address:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="rahul@gmail.com"
+                  value={loginEmail}
+                  onChangeText={setLoginEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoFocus
+                />
+
+                <Text style={styles.label}>6-Digit Security PIN / Password:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 6-digit PIN"
+                  value={loginPin}
+                  onChangeText={setLoginPin}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  secureTextEntry
+                />
+
+                <View style={styles.btnRow}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
+                    <Text style={styles.cancelBtnText}>Back</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleGuestLoginSubmit}>
+                    <Text style={styles.submitBtnText}>Re-login & Sync ➔</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -143,20 +269,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
 
             {authMode === 'GOOGLE_EMAIL' && (
               <View>
-                <Text style={styles.label}>Google Account Details:</Text>
-                <Text style={styles.subLabel}>
-                  Enter your Google Account display name and email address.
-                </Text>
-
-                <Text style={styles.fieldLabel}>Display Name:</Text>
+                <Text style={styles.label}>Display Name:</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Amit Patel"
                   value={googleName}
                   onChangeText={setGoogleName}
+                  autoFocus
                 />
 
-                <Text style={styles.fieldLabel}>Google Email Address:</Text>
+                <Text style={styles.label}>Google Email Address:</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="user@gmail.com"
@@ -189,13 +311,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
-    padding: 20
+    padding: 16
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
-    maxHeight: 520
+    maxHeight: 580
   },
   header: {
     backgroundColor: Colors.maroon,
@@ -206,95 +328,116 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     flex: 1
   },
   closeBtn: {
-    padding: 6
+    padding: 4
   },
   closeText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold'
   },
+  warnBanner: {
+    backgroundColor: '#FFF3E0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6F00',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 14
+  },
+  warnTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#E65100',
+    marginBottom: 2
+  },
+  warnText: {
+    fontSize: 11,
+    color: Colors.textPrimary,
+    lineHeight: 16
+  },
   desc: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textSecondary,
-    marginBottom: 20,
-    lineHeight: 18
+    marginBottom: 16,
+    lineHeight: 17
   },
   googleBtn: {
     backgroundColor: '#4285F4',
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12
+    marginBottom: 10
   },
   googleIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: 8
   },
   googleBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold'
   },
   guestBtn: {
     backgroundColor: '#F5F5F5',
     borderWidth: 1,
-    borderColor: '#DDDDDD',
-    paddingVertical: 14,
+    borderColor: Colors.maroon,
+    paddingVertical: 12,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginBottom: 10
   },
   guestIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: 8
   },
   guestBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 14,
+    color: Colors.maroon,
+    fontSize: 12,
+    fontWeight: 'bold'
+  },
+  restoreBtn: {
+    backgroundColor: '#ECEFF1',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  restoreBtnText: {
+    color: '#37474F',
+    fontSize: 12,
     fontWeight: 'bold'
   },
   label: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginBottom: 4
-  },
-  subLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 16
-  },
-  fieldLabel: {
     fontSize: 12,
     fontWeight: 'bold',
     color: Colors.textPrimary,
-    marginBottom: 4
+    marginBottom: 4,
+    marginTop: 6
   },
   input: {
     borderWidth: 1,
     borderColor: '#CCCCCC',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
+    padding: 10,
+    fontSize: 13,
     backgroundColor: '#FAFAFA',
-    marginBottom: 16
+    marginBottom: 10
   },
   btnRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8
+    marginTop: 12
   },
   cancelBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 8,
     backgroundColor: '#EEEEEE'
   },
@@ -303,14 +446,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   submitBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 8,
     backgroundColor: Colors.maroon
   },
   googleSubmitBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 8,
     backgroundColor: '#4285F4'
   },

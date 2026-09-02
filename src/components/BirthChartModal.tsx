@@ -21,6 +21,8 @@ import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
 import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, SavedKundaliProfile } from '../utils/profileStorage';
 import { SoulPurposeModal } from './SoulPurposeModal';
 import { getUserProfile } from '../engine/userDatabase';
+import { AuthModal } from './AuthModal';
+import { Alert } from 'react-native';
 
 interface BirthChartModalProps {
   visible: boolean;
@@ -112,6 +114,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [showYearModal, setShowYearModal] = useState(false);
   const [showHourModal, setShowHourModal] = useState(false);
   const [showMinuteModal, setShowMinuteModal] = useState(false);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
 
   // Default Chart Style is NORTH (North Indian Diamond Style)
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH' | 'GLOBAL'>('NORTH');
@@ -188,7 +191,23 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   };
 
   const handleSaveProfile = async () => {
-    const profileName = name.trim() || 'Achal';
+    const currentProfile = await getUserProfile();
+    if (!currentProfile) {
+      Alert.alert(
+        '🔒 Sign In Required',
+        'You are currently not signed in!\n\nWithout creating a profile, your saved Kundli charts are stored locally and will be cleared if the app is uninstalled.\n\nPlease sign in or register as a Guest with a 6-digit PIN to save and sync your profile.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign In / Register ➔',
+            onPress: () => setAuthModalVisible(true)
+          }
+        ]
+      );
+      return;
+    }
+
+    const profileName = name.trim() || currentProfile.name || 'Achal';
     const updated = await saveKundaliProfile({
       name: profileName,
       dobDay,
@@ -981,6 +1000,19 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
         </TouchableWithoutFeedback>
       </Modal>
 
+      {/* Auth Modal Triggered when user attempts to save profile without sign in */}
+      <AuthModal
+        visible={authModalVisible}
+        onClose={() => setAuthModalVisible(false)}
+        onSuccess={(profile) => {
+          setAuthModalVisible(false);
+          setName(profile.name);
+          // Automatically complete profile saving after sign in
+          setTimeout(() => {
+            handleSaveProfile();
+          }, 300);
+        }}
+      />
     </Modal>
   );
 };
