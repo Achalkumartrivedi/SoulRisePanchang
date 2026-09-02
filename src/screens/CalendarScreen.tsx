@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { Colors } from '../theme/colors';
 import { FESTIVALS, getLocalizedFestivalTitle } from '../engine/festivalRepository';
 import { CityLocation, PanchangDayData } from '../types/panchang';
@@ -648,7 +649,19 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                 {/* Quick Date Reminder Trigger Button */}
                 <TouchableOpacity
                   style={[styles.openDailyPanchangBtn, { backgroundColor: '#FF6F00', marginBottom: 8 }]}
-                  onPress={() => {
+                  onPress={async () => {
+                    // Check and ask notification permissions immediately when user taps reminder button on date popup
+                    const { status } = await Notifications.getPermissionsAsync();
+                    if (status !== 'granted') {
+                      const req = await Notifications.requestPermissionsAsync();
+                      if (req.status !== 'granted') {
+                        Alert.alert(
+                          '🔔 Notification Permission Required',
+                          'Please allow notification permissions so SoulRise Panchang can alert you for this date reminder.'
+                        );
+                      }
+                    }
+
                     if (isDateInPast(mDate)) {
                       Alert.alert(
                         '⚠️ Past Date Blocked',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
 import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../theme/colors';
 import { CityLocation, PanchangDayData } from '../types/panchang';
@@ -146,6 +147,26 @@ export const AppNavigator: React.FC = () => {
     setActiveTab('TODAY');
   };
 
+  const handleTabPress = async (tab: TabName) => {
+    if (tab === 'REMINDERS') {
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== 'granted') {
+          const req = await Notifications.requestPermissionsAsync();
+          if (req.status !== 'granted') {
+            Alert.alert(
+              '🔔 Notification Permission Required',
+              'Please allow notification permissions so SoulRise Panchang can alert you for your set reminders on time.'
+            );
+          }
+        }
+      } catch (e) {
+        console.log('Error requesting notification permission on tab press:', e);
+      }
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.maroon} />
@@ -160,7 +181,7 @@ export const AppNavigator: React.FC = () => {
             onPrevDay={handlePrevDay}
             onNextDay={handleNextDay}
             onToday={handleToday}
-            onNavigateToFestivals={() => setActiveTab('FESTIVALS')}
+            onNavigateToFestivals={() => handleTabPress('FESTIVALS')}
           />
         )}
 
@@ -198,7 +219,7 @@ export const AppNavigator: React.FC = () => {
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'TODAY' && styles.tabItemActive]}
-          onPress={() => setActiveTab('TODAY')}
+          onPress={() => handleTabPress('TODAY')}
         >
           <Text style={styles.tabIcon}>☀️</Text>
           <Text style={[styles.tabLabel, activeTab === 'TODAY' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('today')}</Text>
@@ -206,7 +227,7 @@ export const AppNavigator: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'CALENDAR' && styles.tabItemActive]}
-          onPress={() => setActiveTab('CALENDAR')}
+          onPress={() => handleTabPress('CALENDAR')}
         >
           <Text style={styles.tabIcon}>📅</Text>
           <Text style={[styles.tabLabel, activeTab === 'CALENDAR' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('calendar')}</Text>
@@ -214,7 +235,7 @@ export const AppNavigator: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'FESTIVALS' && styles.tabItemActive]}
-          onPress={() => setActiveTab('FESTIVALS')}
+          onPress={() => handleTabPress('FESTIVALS')}
         >
           <Text style={styles.tabIcon}>🚩</Text>
           <Text style={[styles.tabLabel, activeTab === 'FESTIVALS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('festivals')}</Text>
@@ -222,7 +243,7 @@ export const AppNavigator: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'REMINDERS' && styles.tabItemActive]}
-          onPress={() => setActiveTab('REMINDERS')}
+          onPress={() => handleTabPress('REMINDERS')}
         >
           <Text style={styles.tabIcon}>⏰</Text>
           <Text style={[styles.tabLabel, activeTab === 'REMINDERS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>Reminders</Text>
@@ -230,7 +251,7 @@ export const AppNavigator: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'RASHIPHAL' && styles.tabItemActive]}
-          onPress={() => setActiveTab('RASHIPHAL')}
+          onPress={() => handleTabPress('RASHIPHAL')}
         >
           <Text style={styles.tabIcon}>♈</Text>
           <Text style={[styles.tabLabel, activeTab === 'RASHIPHAL' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('horoscope')}</Text>
@@ -238,7 +259,7 @@ export const AppNavigator: React.FC = () => {
 
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'SETTINGS' && styles.tabItemActive]}
-          onPress={() => setActiveTab('SETTINGS')}
+          onPress={() => handleTabPress('SETTINGS')}
         >
           <Text style={styles.tabIcon}>⚙️</Text>
           <Text style={[styles.tabLabel, activeTab === 'SETTINGS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('settings')}</Text>
