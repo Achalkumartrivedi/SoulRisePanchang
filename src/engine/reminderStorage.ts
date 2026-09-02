@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ReminderItem } from '../types/reminder';
+import {
+  scheduleSingleReminderNotification,
+  cancelReminderNotifications
+} from '../utils/reminderScheduler';
 
 const REMINDERS_KEY = '@soulrise_user_reminders_v1';
 
@@ -94,6 +98,10 @@ export async function saveReminder(item: ReminderItem): Promise<ReminderItem[]> 
       updated = [item, ...current];
     }
     await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+
+    // Schedule local OS notification for this saved item
+    await scheduleSingleReminderNotification(item);
+
     return updated;
   } catch (e) {
     console.error('Error saving reminder:', e);
@@ -104,11 +112,24 @@ export async function saveReminder(item: ReminderItem): Promise<ReminderItem[]> 
 export async function toggleReminderState(id: string): Promise<ReminderItem[]> {
   try {
     const current = await getStoredReminders();
+    let targetItem: ReminderItem | undefined;
     const updated = current.map(r => {
-      if (r.id === id) return { ...r, enabled: !r.enabled };
+      if (r.id === id) {
+        targetItem = { ...r, enabled: !r.enabled };
+        return targetItem;
+      }
       return r;
     });
     await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+
+    if (targetItem) {
+      if (targetItem.enabled) {
+        await scheduleSingleReminderNotification(targetItem);
+      } else {
+        await cancelReminderNotifications(targetItem.id);
+      }
+    }
+
     return updated;
   } catch (e) {
     console.error('Error toggling reminder state:', e);
@@ -121,6 +142,10 @@ export async function deleteReminder(id: string): Promise<ReminderItem[]> {
     const current = await getStoredReminders();
     const updated = current.filter(r => r.id !== id);
     await AsyncStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+
+    // Cancel OS notifications for deleted reminder
+    await cancelReminderNotifications(id);
+
     return updated;
   } catch (e) {
     console.error('Error deleting reminder:', e);

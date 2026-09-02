@@ -7,6 +7,8 @@ import { CityLocation, PanchangDayData } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { calculatePanchang } from '../engine/panchangEngine';
 import { updateLiveChoghadiyaNotification } from '../utils/choghadiyaNotifier';
+import { getStoredReminders } from '../engine/reminderStorage';
+import { rescheduleAllReminders } from '../utils/reminderScheduler';
 
 import { HomeScreen } from '../screens/HomeScreen';
 import { CalendarScreen } from '../screens/CalendarScreen';
@@ -94,6 +96,14 @@ export const AppNavigator: React.FC = () => {
         }
       } catch (e) {
         console.log('App launch location init error:', e);
+      } finally {
+        // Register all user reminders with Android OS local notifications
+        try {
+          const reminders = await getStoredReminders();
+          await rescheduleAllReminders(reminders);
+        } catch (err) {
+          console.log('App launch reminder reschedule error:', err);
+        }
       }
     })();
   }, []);
