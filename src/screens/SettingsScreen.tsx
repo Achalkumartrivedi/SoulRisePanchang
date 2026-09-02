@@ -477,7 +477,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </Text>
               <View style={{ backgroundColor: '#FFF8E7', padding: 10, borderRadius: 6, marginBottom: 12 }}>
                 <Text style={{ fontSize: 11, color: Colors.textPrimary, fontFamily: 'monospace' }}>
-                  {'https://achalkumartrivedi.github.io/SoulRisePanchang/docs/index.html'}
+                  {'https://achalkumartrivedi.github.io/SoulRisePanchang/'}
                 </Text>
               </View>
 
