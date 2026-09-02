@@ -364,18 +364,61 @@ export const FESTIVALS: Festival[] = [
     isHoliday: false
   },
 
-  // Bihar & Jharkhand
+  // Bihar, UP & Jharkhand Chhath Mahaparv (4-Day Vedic Festival)
   {
-    id: 'f_bh_chhath_puja',
-    name: '☀️ Chhath Puja (Nahay-Khay to Usha Arghya)',
-    hindiName: '☀️ छठ पूजा (महापर्व - नहाय-खाय से उषा अर्घ्य)',
+    id: 'f_bh_chhath_day1',
+    name: '☀️ Chhath Puja: Nahay-Khay',
+    hindiName: '☀️ छठ पूजा: नहाय-खाय',
+    gujaratiName: '☀️ છઠ પૂજા: નહાય-ખાય',
+    dateIso: '2026-11-12',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Surya Dev & Chhathi Maiya',
+    description: 'Day 1 of Chhath Mahaparv: Holy ritual bath at riverbank and preparation of pure sattvik Kaddu-Bhat meal.',
+    rituals: 'Pavitra Snan, cooking lau ki sabzi and rice in brass/clay utensils.',
+    tithiDescription: 'Kartika Shukla Chaturthi',
+    region: 'Bihar, UP & Jharkhand',
+    isHoliday: true
+  },
+  {
+    id: 'f_bh_chhath_day2',
+    name: '☀️ Chhath Puja: Kharna',
+    hindiName: '☀️ छठ पूजा: खरना (रसियाव-रोटी)',
+    gujaratiName: '☀️ છઠ પૂજા: ખરના',
+    dateIso: '2026-11-13',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Surya Dev & Chhathi Maiya',
+    description: 'Day 2 of Chhath Mahaparv: Full day waterless fast ending at night after offering Rasiya-Kheer (jaggery kheer) and Roti to Sun God.',
+    rituals: 'Nirjala Fast, preparing Gur Kheer on earthen stove, beginning 36-hour strict fast.',
+    tithiDescription: 'Kartika Shukla Panchami',
+    region: 'Bihar, UP & Jharkhand',
+    isHoliday: true
+  },
+  {
+    id: 'f_bh_chhath_day3',
+    name: '☀️ Chhath Puja: Sandhya Arghya (Pahli Arghya)',
+    hindiName: '☀️ छठ पूजा: संध्या अर्घ्य (पहला अर्घ्य)',
+    gujaratiName: '☀️ છઠ પૂજા: સંધ્યા અર્ઘ્ય',
     dateIso: '2026-11-14',
     category: 'MAJOR_FESTIVAL',
     deity: 'Surya Dev & Chhathi Maiya',
-    description: 'Rigorous 4-day ancient Vedic waterless fasting festival worshipping the Sun God & Chhathi Maiya at riverbanks.',
-    rituals: 'Nahay-Khay, Kharna (jaggery kheer), Sandhya Arghya (sunset offering), Usha Arghya (sunrise offering), Thekua prasad.',
+    description: 'Main Day 3 of Chhath Mahaparv: Thousands gather at riverbanks at sunset to offer Sandhya Arghya to setting Sun with bamboo Soop.',
+    rituals: 'Offering milk/water Arghya to setting Sun with Thekua, sugarcane, coconut in bamboo Soop.',
     tithiDescription: 'Kartika Shukla Shashthi',
-    region: 'Bihar, Jharkhand & Eastern UP',
+    region: 'Bihar, UP & Jharkhand',
+    isHoliday: true
+  },
+  {
+    id: 'f_bh_chhath_day4',
+    name: '☀️ Chhath Puja: Usha Arghya & Paran',
+    hindiName: '☀️ छठ पूजा: उषा अर्घ्य एवं पारण (दूसरा अर्घ्य)',
+    gujaratiName: '☀️ છઠ પૂજા: ઉષા અર્ઘ્ય અને પારણ',
+    dateIso: '2026-11-15',
+    category: 'MAJOR_FESTIVAL',
+    deity: 'Surya Dev & Chhathi Maiya',
+    description: 'Final Day 4 of Chhath Mahaparv: Offering Usha Arghya to rising Sun God at dawn, breaking 36-hour fast with ginger/water.',
+    rituals: 'Offering dawn Arghya to rising Sun, Paran ritual, distributing Prasad.',
+    tithiDescription: 'Kartika Shukla Saptami',
+    region: 'Bihar, UP & Jharkhand',
     isHoliday: true
   },
   {
@@ -608,19 +651,6 @@ export const FESTIVALS: Festival[] = [
     description: 'The Festival of Lights celebrating Lord Rama\'s return to Ayodhya.',
     rituals: 'Lighting oil lamps (Diyas), Lakshmi Puja.',
     tithiDescription: 'Kartika Amavasya',
-    isHoliday: true
-  },
-  {
-    id: 'f_chhath_puja',
-    name: 'Chhath Puja',
-    hindiName: 'छठ पूजा',
-    dateIso: '2026-11-14',
-    category: 'MAJOR_FESTIVAL',
-    deity: 'Surya Dev & Chhathi Maiya',
-    description: 'Sacred festival offering gratitude to the Sun God.',
-    rituals: '36-hour waterless fast, Arghya to setting & rising Sun.',
-    tithiDescription: 'Kartika Shukla Shasthi',
-    isHoliday: true
   },
   {
     id: 'f_jain_chaturmas_start',
