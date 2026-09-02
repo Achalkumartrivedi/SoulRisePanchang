@@ -17,6 +17,7 @@ import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 import { getUserProfile, clearUserProfile, UserProfile } from '../engine/userDatabase';
 import { AuthModal } from '../components/AuthModal';
 import { FeedbackModal } from '../components/FeedbackModal';
+import { AdminDatabaseModal } from '../components/AdminDatabaseModal';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -52,6 +53,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
+  const [adminModalVisible, setAdminModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -391,6 +393,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <Text style={styles.signInBtnText}>🔑 Sign In (Google or Guest)</Text>
             </TouchableOpacity>
           )}
+
+          {/* Admin / Developer User DB Viewer */}
+          <TouchableOpacity
+            style={[styles.feedbackBtn, { backgroundColor: '#455A64', marginTop: 10 }]}
+            onPress={() => setAdminModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.feedbackBtnText}>📊 View User Database & Logins</Text>
+          </TouchableOpacity>
         </View>
 
         {/* 💬 Customer Feedback & Support Card */}
@@ -458,6 +469,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         visible={feedbackModalVisible}
         onClose={() => setFeedbackModalVisible(false)}
         userEmail={userProfile?.email}
+      />
+
+      {/* Admin User Database & Logins Viewer Modal */}
+      <AdminDatabaseModal
+        visible={adminModalVisible}
+        onClose={() => setAdminModalVisible(false)}
       />
 
       {/* Privacy Policy Modal */}
