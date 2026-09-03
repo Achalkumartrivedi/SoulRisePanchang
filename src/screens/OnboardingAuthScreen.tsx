@@ -8,12 +8,12 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Modal,
   Alert
 } from 'react-native';
 import { Colors } from '../theme/colors';
 import { saveUserProfile, loginGuestUser, UserProfile } from '../engine/userDatabase';
 import { restoreKundliProfilesFromCloud } from '../utils/profileStorage';
-import { useLanguage } from '../context/LanguageContext';
 
 interface OnboardingAuthScreenProps {
   onComplete: () => void;
@@ -21,10 +21,12 @@ interface OnboardingAuthScreenProps {
 }
 
 export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onComplete, onSkip }) => {
-  const { t } = useLanguage();
-  const [authMode, setAuthMode] = useState<'SELECT' | 'GUEST_REGISTER' | 'GUEST_LOGIN' | 'GOOGLE_EMAIL'>('SELECT');
+  const [authMode, setAuthMode] = useState<'SELECT' | 'GUEST_REGISTER' | 'GUEST_LOGIN'>('SELECT');
+  const [showGooglePicker, setShowGooglePicker] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  // Guest State
+  // Guest Registration State
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPin, setGuestPin] = useState('');
@@ -33,9 +35,32 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPin, setLoginPin] = useState('');
 
-  // Google State
-  const [googleName, setGoogleName] = useState('');
-  const [googleEmail, setGoogleEmail] = useState('');
+  // Custom Google Account Input State inside Picker
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [customGoogleName, setCustomGoogleName] = useState('');
+  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+
+  // Simulated Device Google Accounts
+  const DEVICE_GOOGLE_ACCOUNTS = [
+    { name: 'Achal Trivedi', email: 'achal.trivedi@gmail.com' },
+    { name: 'SoulRise Dev', email: 'soulrise.dev@gmail.com' }
+  ];
+
+  const handleSelectGoogleAccount = async (name: string, email: string) => {
+    setShowGooglePicker(false);
+    const profile: UserProfile = {
+      id: `google_${Date.now()}`,
+      name: name.trim() || 'Google User',
+      email: email.trim().toLowerCase(),
+      authType: 'GOOGLE',
+      createdAtIso: new Date().toISOString(),
+      avatarUrl: 'https://lh3.googleusercontent.com/a/default-user'
+    };
+
+    await saveUserProfile(profile);
+    await restoreKundliProfilesFromCloud(email);
+    onComplete();
+  };
 
   const handleGuestRegisterSubmit = async () => {
     const nameTrimmed = guestName.trim();
@@ -94,38 +119,15 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
     }
   };
 
-  const handleGoogleSubmit = async () => {
-    const trimmedName = googleName.trim() || 'Google User';
-    const trimmedEmail = googleEmail.trim().toLowerCase();
-
-    if (trimmedEmail && !trimmedEmail.includes('@')) {
-      Alert.alert('⚠️ Invalid Email', 'Please enter a valid Google email address.');
-      return;
-    }
-
-    const emailToUse = trimmedEmail || 'google.user@gmail.com';
-    const profile: UserProfile = {
-      id: `google_${Date.now()}`,
-      name: trimmedName,
-      email: emailToUse,
-      authType: 'GOOGLE',
-      createdAtIso: new Date().toISOString(),
-      avatarUrl: 'https://lh3.googleusercontent.com/a/default-user'
-    };
-
-    await saveUserProfile(profile);
-    await restoreKundliProfilesFromCloud(emailToUse);
-    onComplete();
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.maroon} />
+      <StatusBar barStyle="light-content" backgroundColor="#1A0006" />
 
-      {/* Top Header with Skip */}
-      <View style={styles.header}>
-        <Text style={styles.omIcon}>🕉️</Text>
-        <Text style={styles.appName}>SoulRise Panchang</Text>
+      {/* Top Bar with Skip */}
+      <View style={styles.topBar}>
+        <View style={styles.topStarBadge}>
+          <Text style={styles.starIcon}>✨ 🌌 ✨</Text>
+        </View>
 
         {/* Skip Button */}
         <TouchableOpacity style={styles.skipBtn} onPress={onSkip} activeOpacity={0.8}>
@@ -134,26 +136,27 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Title Banner */}
-        <View style={styles.bannerBox}>
-          <Text style={styles.bannerTitle}>Sign In to Sync Kundli & Reminders</Text>
-          <Text style={styles.bannerSub}>
-            Sign in with Google or Guest account to protect your saved Janam Kundli charts. Restores your charts automatically whenever you reinstall!
+        {/* Sacred Sun Logo & Centered Welcome Header */}
+        <View style={styles.welcomeBanner}>
+          <Text style={styles.sunLogo}>☀️</Text>
+          <Text style={styles.welcomeTitle}>Welcome to SoulRise Panchang and Kundali</Text>
+          <Text style={styles.welcomeSub}>
+            Connect your account to back up Janam Kundli charts & sync sacred Panchang reminders across all your devices.
           </Text>
         </View>
 
         {authMode === 'SELECT' && (
-          <View style={styles.card}>
-            {/* Google Sign In Button with Official G Logo Badge */}
+          <View style={styles.cardContainer}>
+            {/* Button 1: Sign in With Google (opens Google Account Picker) */}
             <TouchableOpacity
               style={styles.googleBtn}
-              onPress={() => setAuthMode('GOOGLE_EMAIL')}
+              onPress={() => setShowGooglePicker(true)}
               activeOpacity={0.85}
             >
-              <View style={styles.googleBadge}>
-                <Text style={styles.googleGBadge}>G</Text>
+              <View style={styles.googleLogoBadge}>
+                <Text style={{ color: '#4285F4', fontSize: 16, fontWeight: 'bold' }}>G</Text>
               </View>
-              <Text style={styles.googleBtnText}>Sign in with Google</Text>
+              <Text style={styles.googleBtnText}>Sign in With Google</Text>
             </TouchableOpacity>
 
             <View style={styles.dividerRow}>
@@ -162,17 +165,17 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Guest Registration */}
+            {/* Button 2: Signup With Email */}
             <TouchableOpacity
-              style={styles.guestBtn}
+              style={styles.emailSignupBtn}
               onPress={() => setAuthMode('GUEST_REGISTER')}
               activeOpacity={0.85}
             >
-              <Text style={styles.guestIcon}>👤</Text>
-              <Text style={styles.guestBtnText}>Create Guest Profile (Email + 6-Digit PIN)</Text>
+              <Text style={styles.emailIcon}>✉️</Text>
+              <Text style={styles.emailSignupBtnText}>Signup With Email</Text>
             </TouchableOpacity>
 
-            {/* Existing Guest Re-login */}
+            {/* Button 3: Existing Account Re-login */}
             <TouchableOpacity
               style={styles.restoreBtn}
               onPress={() => setAuthMode('GUEST_LOGIN')}
@@ -181,69 +184,46 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               <Text style={styles.restoreBtnText}>🔑 Existing Account? Re-login with Email & PIN</Text>
             </TouchableOpacity>
 
+            {/* Bottom Skip Link */}
             <TouchableOpacity style={styles.bottomSkipLink} onPress={onSkip}>
-              <Text style={styles.bottomSkipText}>Continue without Sign In ➔</Text>
+              <Text style={styles.bottomSkipText}>Continue Without Sign In ➔</Text>
             </TouchableOpacity>
-          </View>
-        )}
 
-        {authMode === 'GOOGLE_EMAIL' && (
-          <View style={styles.card}>
-            <View style={styles.modeHeader}>
-              <View style={styles.googleBadgeSmall}>
-                <Text style={styles.googleGBadgeSmall}>G</Text>
-              </View>
-              <Text style={styles.modeTitle}>Google Account Sign In</Text>
-            </View>
-
-            <Text style={styles.label}>Display Name:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Amit Patel"
-              value={googleName}
-              onChangeText={setGoogleName}
-              autoFocus
-            />
-
-            <Text style={styles.label}>Google Email Address (Mobile Google Account):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="user@gmail.com"
-              value={googleEmail}
-              onChangeText={setGoogleEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
-                <Text style={styles.cancelBtnText}>Back</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.googleSubmitBtn} onPress={handleGoogleSubmit}>
-                <Text style={styles.submitBtnText}>Sign In & Restore ➔</Text>
-              </TouchableOpacity>
+            {/* Legal Terms & Privacy Policy Footer Link */}
+            <View style={styles.termsFooter}>
+              <Text style={styles.termsFooterText}>
+                By Signing up, you agree to our{' '}
+                <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>
+                  Terms of Use
+                </Text>{' '}
+                and{' '}
+                <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>
+                  Privacy Policy
+                </Text>
+              </Text>
             </View>
           </View>
         )}
 
         {authMode === 'GUEST_REGISTER' && (
-          <View style={styles.card}>
-            <Text style={styles.modeTitle}>✍️ Register Guest Account</Text>
+          <View style={styles.cardContainer}>
+            <Text style={styles.modeTitle}>✉️ Signup With Email</Text>
 
             <Text style={styles.label}>Full Name:</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g. Rahul Sharma"
+              placeholderTextColor="#999"
               value={guestName}
               onChangeText={setGuestName}
               autoFocus
             />
 
-            <Text style={styles.label}>Email Address (for Multi-Device Sync):</Text>
+            <Text style={styles.label}>Email Address (for Multi-Device Backup & Sync):</Text>
             <TextInput
               style={styles.input}
               placeholder="rahul@gmail.com"
+              placeholderTextColor="#999"
               value={guestEmail}
               onChangeText={setGuestEmail}
               keyboardType="email-address"
@@ -254,6 +234,7 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
             <TextInput
               style={styles.input}
               placeholder="Enter 6-digit PIN (e.g. 123456)"
+              placeholderTextColor="#999"
               value={guestPin}
               onChangeText={setGuestPin}
               keyboardType="number-pad"
@@ -267,20 +248,34 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.submitBtn} onPress={handleGuestRegisterSubmit}>
-                <Text style={styles.submitBtnText}>Create & Restore ➔</Text>
+                <Text style={styles.submitBtnText}>Create Account & Sync ➔</Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.termsFooter}>
+              <Text style={styles.termsFooterText}>
+                By Signing up, you agree to our{' '}
+                <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>
+                  Terms of Use
+                </Text>{' '}
+                and{' '}
+                <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>
+                  Privacy Policy
+                </Text>
+              </Text>
             </View>
           </View>
         )}
 
         {authMode === 'GUEST_LOGIN' && (
-          <View style={styles.card}>
+          <View style={styles.cardContainer}>
             <Text style={styles.modeTitle}>🔑 Restore Existing Account</Text>
 
             <Text style={styles.label}>Registered Email Address:</Text>
             <TextInput
               style={styles.input}
               placeholder="rahul@gmail.com"
+              placeholderTextColor="#999"
               value={loginEmail}
               onChangeText={setLoginEmail}
               keyboardType="email-address"
@@ -292,6 +287,7 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
             <TextInput
               style={styles.input}
               placeholder="Enter 6-digit PIN"
+              placeholderTextColor="#999"
               value={loginPin}
               onChangeText={setLoginPin}
               keyboardType="number-pad"
@@ -308,9 +304,175 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
                 <Text style={styles.submitBtnText}>Re-login & Restore ➔</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={styles.termsFooter}>
+              <Text style={styles.termsFooterText}>
+                By Signing up, you agree to our{' '}
+                <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>
+                  Terms of Use
+                </Text>{' '}
+                and{' '}
+                <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>
+                  Privacy Policy
+                </Text>
+              </Text>
+            </View>
           </View>
         )}
       </ScrollView>
+
+      {/* Google Account Picker Modal */}
+      <Modal visible={showGooglePicker} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerModalCard}>
+            <View style={styles.pickerHeader}>
+              <View style={styles.googleBadgeSmall}>
+                <Text style={{ color: '#4285F4', fontSize: 13, fontWeight: 'bold' }}>G</Text>
+              </View>
+              <Text style={styles.pickerHeaderTitle}>Choose an account to SoulRise Panchang and Kundli</Text>
+              <TouchableOpacity onPress={() => setShowGooglePicker(false)} style={styles.closeBtn}>
+                <Text style={styles.closeText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.pickerSubTitle}>
+              Select a Google account connected on this device to continue to SoulRise Panchang:
+            </Text>
+
+            {/* List Device Accounts */}
+            {DEVICE_GOOGLE_ACCOUNTS.map((acc, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.accountRow}
+                onPress={() => handleSelectGoogleAccount(acc.name, acc.email)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.avatarCircle}>
+                  <Text style={styles.avatarLetter}>{acc.name.charAt(0)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.accountName}>{acc.name}</Text>
+                  <Text style={styles.accountEmail}>{acc.email}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            {/* Add Custom Google Email Option */}
+            {!showCustomGoogleInput ? (
+              <TouchableOpacity
+                style={styles.addAccountBtn}
+                onPress={() => setShowCustomGoogleInput(true)}
+              >
+                <Text style={styles.addAccountText}>➕ Add or enter another Google email</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.customInputBox}>
+                <Text style={styles.label}>Enter Full Name:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Amit Patel"
+                  placeholderTextColor="#999"
+                  value={customGoogleName}
+                  onChangeText={setCustomGoogleName}
+                />
+                <Text style={styles.label}>Enter Google Email Address:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="user@gmail.com"
+                  placeholderTextColor="#999"
+                  value={customGoogleEmail}
+                  onChangeText={setCustomGoogleEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.googleSubmitBtn}
+                  onPress={() => {
+                    if (!customGoogleEmail || !customGoogleEmail.includes('@')) {
+                      Alert.alert('⚠️ Invalid Email', 'Please enter a valid Google email.');
+                      return;
+                    }
+                    handleSelectGoogleAccount(customGoogleName || 'Google User', customGoogleEmail);
+                  }}
+                >
+                  <Text style={styles.submitBtnText}>Sign In with This Account ➔</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.pickerCancelBtn} onPress={() => setShowGooglePicker(false)}>
+              <Text style={styles.pickerCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Terms of Use Modal */}
+      <Modal visible={showTermsModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.docModalCard}>
+            <View style={styles.docHeader}>
+              <Text style={styles.docTitle}>📜 Terms of Use</Text>
+              <TouchableOpacity onPress={() => setShowTermsModal(false)} style={styles.closeBtn}>
+                <Text style={styles.closeText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <Text style={styles.docHeading}>1. Acceptance of Terms</Text>
+              <Text style={styles.docText}>
+                By downloading or using SoulRise Panchang and Kundli, you agree to these Terms of Use.
+              </Text>
+
+              <Text style={styles.docHeading}>2. Services & Calculations</Text>
+              <Text style={styles.docText}>
+                Provides Vedic Panchang, Tithi, Rahu Kalam, Choghadiya, Janam Kundli, and Horoscope readings for spiritual & educational purposes.
+              </Text>
+
+              <Text style={styles.docHeading}>3. Account & Data Backup</Text>
+              <Text style={styles.docText}>
+                User accounts and saved Kundli charts are stored locally and backed up to Firebase Cloud (`soulrise-panchang`).
+              </Text>
+
+              <Text style={styles.docHeading}>4. Astrological Disclaimer</Text>
+              <Text style={styles.docText}>
+                Astrological readings are for guidance only and do not replace professional medical, legal, or financial advice.
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Privacy Policy Modal */}
+      <Modal visible={showPrivacyModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.docModalCard}>
+            <View style={styles.docHeader}>
+              <Text style={styles.docTitle}>📜 Privacy Policy</Text>
+              <TouchableOpacity onPress={() => setShowPrivacyModal(false)} style={styles.closeBtn}>
+                <Text style={styles.closeText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <Text style={styles.docHeading}>1. Location Usage</Text>
+              <Text style={styles.docText}>
+                GPS data is processed locally on your device to calculate city-specific Panchang, Rahu Kalam, and Tithis. We NEVER sell your location data.
+              </Text>
+
+              <Text style={styles.docHeading}>2. User Account Data</Text>
+              <Text style={styles.docText}>
+                We collect Profile Name, Email, and 6-Digit PIN to back up your Janam Kundli charts and sync reminders across devices.
+              </Text>
+
+              <Text style={styles.docHeading}>3. Data Control & Deletion</Text>
+              <Text style={styles.docText}>
+                You can delete your account and erase all saved local data anytime in App Settings ➔ Delete Account.
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -318,35 +480,36 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.creamBg
+    backgroundColor: '#1A0006' // Deep Vedic Galaxy Cosmic Background
   },
-  header: {
-    backgroundColor: Colors.maroon,
+  topBar: {
     paddingTop: 16,
-    paddingBottom: 20,
     paddingHorizontal: 20,
+    paddingBottom: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    position: 'relative'
+    justifyContent: 'space-between'
   },
-  omIcon: {
-    fontSize: 28
+  topStarBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.4)'
   },
-  appName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  starIcon: {
+    fontSize: 13,
     color: '#FFD700',
-    marginTop: 2
+    fontWeight: 'bold'
   },
   skipBtn: {
-    position: 'absolute',
-    right: 16,
-    top: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)'
   },
   skipBtnText: {
     color: '#FFFFFF',
@@ -354,69 +517,74 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   scrollContent: {
-    padding: 16
+    paddingHorizontal: 20,
+    paddingBottom: 40
   },
-  bannerBox: {
-    backgroundColor: '#FFF8E7',
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.maroon,
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FFE0B2'
+  welcomeBanner: {
+    alignItems: 'center',
+    marginVertical: 24,
+    paddingHorizontal: 10
   },
-  bannerTitle: {
-    fontSize: 15,
+  sunLogo: {
+    fontSize: 54,
+    marginBottom: 10
+  },
+  welcomeTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: Colors.maroon,
-    marginBottom: 4
+    color: '#FFD700',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    lineHeight: 30,
+    marginBottom: 8
   },
-  bannerSub: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    lineHeight: 18
+  welcomeSub: {
+    fontSize: 13,
+    color: '#FFE0B2',
+    textAlign: 'center',
+    lineHeight: 19,
+    paddingHorizontal: 12,
+    opacity: 0.95
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    elevation: 4
+  cardContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: '#FFD700',
+    elevation: 8
   },
   googleBtn: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#DDDDDD',
     paddingVertical: 14,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2
+    elevation: 3
   },
-  googleBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+  googleLogoBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10
-  },
-  googleGBadge: {
-    color: '#4285F4',
-    fontSize: 15,
-    fontWeight: 'bold'
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0'
   },
   googleBtnText: {
-    color: '#FFFFFF',
+    color: '#3C4043',
     fontSize: 15,
     fontWeight: 'bold'
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16
+    marginVertical: 18
   },
   dividerLine: {
     flex: 1,
@@ -426,42 +594,43 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: Colors.textMuted,
-    paddingHorizontal: 10
+    color: '#888888',
+    paddingHorizontal: 12
   },
-  guestBtn: {
-    backgroundColor: '#FAF5EE',
-    borderWidth: 1.5,
-    borderColor: Colors.maroon,
+  emailSignupBtn: {
+    backgroundColor: Colors.maroon,
     paddingVertical: 14,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10
+    marginBottom: 12,
+    elevation: 3
   },
-  guestIcon: {
+  emailIcon: {
     fontSize: 16,
     marginRight: 8
   },
-  guestBtnText: {
-    color: Colors.maroon,
-    fontSize: 13,
+  emailSignupBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: 'bold'
   },
   restoreBtn: {
-    backgroundColor: '#ECEFF1',
+    backgroundColor: '#FFF8E7',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center'
   },
   restoreBtnText: {
-    color: '#37474F',
+    color: Colors.maroon,
     fontSize: 12,
     fontWeight: 'bold'
   },
   bottomSkipLink: {
-    marginTop: 20,
+    marginTop: 18,
     alignItems: 'center'
   },
   bottomSkipText: {
@@ -470,29 +639,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textDecorationLine: 'underline'
   },
-  modeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14
+  termsFooter: {
+    marginTop: 18,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+    alignItems: 'center'
   },
-  googleBadgeSmall: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#4285F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8
+  termsFooterText: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 16
   },
-  googleGBadgeSmall: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold'
+  termsLink: {
+    color: Colors.maroon,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline'
   },
   modeTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: Colors.maroon
+    color: Colors.maroon,
+    marginBottom: 12
   },
   label: {
     fontSize: 12,
@@ -508,6 +677,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     backgroundColor: '#FAFAFA',
+    color: Colors.textPrimary,
     marginBottom: 12
   },
   btnRow: {
@@ -517,7 +687,7 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     borderRadius: 10,
     backgroundColor: '#EEEEEE'
   },
@@ -527,18 +697,164 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     borderRadius: 10,
     backgroundColor: Colors.maroon
   },
   googleSubmitBtn: {
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     borderRadius: 10,
-    backgroundColor: '#4285F4'
+    backgroundColor: '#4285F4',
+    alignItems: 'center',
+    marginTop: 10
   },
   submitBtnText: {
     color: '#FFFFFF',
     fontWeight: 'bold'
+  },
+  // Modal Overlays & Picker Cards
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    padding: 16
+  },
+  pickerModalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12
+  },
+  googleBadgeSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0'
+  },
+  pickerHeaderTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+    flex: 1
+  },
+  pickerSubTitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 14,
+    lineHeight: 16
+  },
+  closeBtn: {
+    padding: 4
+  },
+  closeText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#888'
+  },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10
+  },
+  avatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.maroon,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12
+  },
+  avatarLetter: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  accountName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.textPrimary
+  },
+  accountEmail: {
+    fontSize: 12,
+    color: Colors.textSecondary
+  },
+  addAccountBtn: {
+    backgroundColor: '#ECEFF1',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 10
+  },
+  addAccountText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#37474F'
+  },
+  customInputBox: {
+    backgroundColor: '#F9F9F9',
+    padding: 12,
+    borderRadius: 10,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0'
+  },
+  pickerCancelBtn: {
+    marginTop: 10,
+    alignItems: 'center',
+    paddingVertical: 8
+  },
+  pickerCancelText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textMuted
+  },
+  docModalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    maxHeight: 520
+  },
+  docHeader: {
+    backgroundColor: Colors.maroon,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  docTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  docHeading: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginTop: 10,
+    marginBottom: 4
+  },
+  docText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 8
   }
 });
