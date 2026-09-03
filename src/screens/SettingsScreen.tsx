@@ -17,7 +17,6 @@ import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 import { getUserProfile, clearUserProfile, UserProfile } from '../engine/userDatabase';
 import { AuthModal } from '../components/AuthModal';
 import { FeedbackModal } from '../components/FeedbackModal';
-import { AdminDatabaseModal } from '../components/AdminDatabaseModal';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -53,7 +52,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
-  const [adminModalVisible, setAdminModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -393,15 +391,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <Text style={styles.signInBtnText}>🔑 Sign In (Google or Guest)</Text>
             </TouchableOpacity>
           )}
-
-          {/* Admin / Developer User DB Viewer */}
-          <TouchableOpacity
-            style={[styles.feedbackBtn, { backgroundColor: '#455A64', marginTop: 10 }]}
-            onPress={() => setAdminModalVisible(true)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.feedbackBtnText}>📊 View User Database & Logins</Text>
-          </TouchableOpacity>
         </View>
 
         {/* 💬 Customer Feedback & Support Card */}
@@ -471,12 +460,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         userEmail={userProfile?.email}
       />
 
-      {/* Admin User Database & Logins Viewer Modal */}
-      <AdminDatabaseModal
-        visible={adminModalVisible}
-        onClose={() => setAdminModalVisible(false)}
-      />
-
       {/* Privacy Policy Modal */}
       <Modal visible={privacyPolicyVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -489,14 +472,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 16 }}>
-              <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.maroon, marginBottom: 8 }}>
-                🌐 Live GitHub Pages Privacy Policy URL:
-              </Text>
-              <View style={{ backgroundColor: '#FFF8E7', padding: 10, borderRadius: 6, marginBottom: 12 }}>
-                <Text style={{ fontSize: 11, color: Colors.textPrimary, fontFamily: 'monospace' }}>
-                  {'https://achalkumartrivedi.github.io/SoulRisePanchang/'}
-                </Text>
-              </View>
 
               <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
                 1. Data Collection & Location Usage
