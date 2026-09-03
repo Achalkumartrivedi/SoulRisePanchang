@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserProfile } from '../engine/userDatabase';
+import { syncKundliProfilesToCloud, fetchKundliProfilesFromCloud } from '../engine/firebaseSync';
 
 export interface SavedKundaliProfile {
   id: string;
@@ -31,7 +33,7 @@ export async function getSavedProfiles(): Promise<SavedKundaliProfile[]> {
 }
 
 /**
- * Save or update a Kundali profile locally
+ * Save or update a Kundali profile locally and sync to Firebase Cloud
  */
 export async function saveKundaliProfile(profile: Omit<SavedKundaliProfile, 'id' | 'savedAt'>): Promise<SavedKundaliProfile[]> {
   try {
@@ -48,10 +50,44 @@ export async function saveKundaliProfile(profile: Omit<SavedKundaliProfile, 'id'
     const updated = [newProfile, ...filtered];
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+    // Cloud Sync if user is logged in
+    const currentUser = await getUserProfile();
+    if (currentUser?.email) {
+      syncKundliProfilesToCloud(currentUser.email, updated).catch(e => console.log('Cloud sync error:', e));
+    }
+
     return updated;
   } catch (err) {
     console.log('Error saving profile:', err);
     return [];
+  }
+}
+
+/**
+ * Restore user's saved Kundli profiles from Firebase Cloud upon sign-in or re-installation
+ */
+export async function restoreKundliProfilesFromCloud(userEmail: string): Promise<SavedKundaliProfile[]> {
+  if (!userEmail) return await getSavedProfiles();
+
+  try {
+    const cloudProfiles = await fetchKundliProfilesFromCloud(userEmail);
+    if (cloudProfiles && cloudProfiles.length > 0) {
+      const localProfiles = await getSavedProfiles();
+
+      // Merge cloud and local profiles by unique ID/name+DOB
+      const mergedMap = new Map<string, SavedKundaliProfile>();
+      localProfiles.forEach(p => mergedMap.set(`${p.name.toLowerCase()}_${p.dobDay}_${p.dobMonth}_${p.dobYear}`, p));
+      cloudProfiles.forEach(p => mergedMap.set(`${p.name.toLowerCase()}_${p.dobDay}_${p.dobMonth}_${p.dobYear}`, p));
+
+      const mergedList = Array.from(mergedMap.values());
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mergedList));
+      return mergedList;
+    }
+    return await getSavedProfiles();
+  } catch (e) {
+    console.log('Error restoring Kundli profiles from cloud:', e);
+    return await getSavedProfiles();
   }
 }
 
@@ -62,8 +98,14 @@ export async function deleteKundaliProfile(id: string): Promise<SavedKundaliProf
   try {
     const existing = await getSavedProfiles();
     const updated = existing.filter(p => p.id !== id);
-    await AsyncStorage.getItem(STORAGE_KEY);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+    // Cloud Sync if user is logged in
+    const currentUser = await getUserProfile();
+    if (currentUser?.email) {
+      syncKundliProfilesToCloud(currentUser.email, updated).catch(e => console.log('Cloud sync error:', e));
+    }
+
     return updated;
   } catch (err) {
     console.log('Error deleting profile:', err);

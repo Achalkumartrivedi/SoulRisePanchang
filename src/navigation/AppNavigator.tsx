@@ -18,6 +18,7 @@ import { RashiphalScreen } from '../screens/RashiphalScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { RemindersScreen } from '../screens/RemindersScreen';
 import { LanguageSelectionScreen } from '../screens/LanguageSelectionScreen';
+import { OnboardingAuthScreen } from '../screens/OnboardingAuthScreen';
 
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
 import { useLanguage } from '../context/LanguageContext';
@@ -28,6 +29,7 @@ type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'REMINDERS' | 'RASHIPHAL' | 
 const CITY_STORAGE_KEY = 'SOULRISE_SELECTED_CITY';
 const GPS_STORAGE_KEY = 'SOULRISE_USE_GPS';
 const FIRST_LAUNCH_LANG_KEY = '@soulrise_lang_first_launch_done';
+const FIRST_LAUNCH_AUTH_KEY = '@soulrise_onboarding_auth_done';
 
 export const AppNavigator: React.FC = () => {
   const { t } = useLanguage();
@@ -43,6 +45,7 @@ export const AppNavigator: React.FC = () => {
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
   const [isLangModalVisible, setIsLangModalVisible] = useState(false);
   const [showFirstLaunchLangScreen, setShowFirstLaunchLangScreen] = useState<boolean | null>(null);
+  const [showFirstLaunchAuthScreen, setShowFirstLaunchAuthScreen] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -52,6 +55,12 @@ export const AppNavigator: React.FC = () => {
           setShowFirstLaunchLangScreen(true);
         } else {
           setShowFirstLaunchLangScreen(false);
+          const authDone = await AsyncStorage.getItem(FIRST_LAUNCH_AUTH_KEY);
+          if (authDone !== 'true') {
+            setShowFirstLaunchAuthScreen(true);
+          } else {
+            setShowFirstLaunchAuthScreen(false);
+          }
         }
 
         const savedCityJson = await AsyncStorage.getItem(CITY_STORAGE_KEY);
@@ -184,10 +193,38 @@ export const AppNavigator: React.FC = () => {
       console.log('Error saving first launch lang status:', e);
     }
     setShowFirstLaunchLangScreen(false);
+    setShowFirstLaunchAuthScreen(true);
+  };
+
+  const handleFirstLaunchAuthComplete = async () => {
+    try {
+      await AsyncStorage.setItem(FIRST_LAUNCH_AUTH_KEY, 'true');
+    } catch (e) {
+      console.log('Error saving first launch auth status:', e);
+    }
+    setShowFirstLaunchAuthScreen(false);
+  };
+
+  const handleFirstLaunchAuthSkip = async () => {
+    try {
+      await AsyncStorage.setItem(FIRST_LAUNCH_AUTH_KEY, 'true');
+    } catch (e) {
+      console.log('Error saving first launch auth skip status:', e);
+    }
+    setShowFirstLaunchAuthScreen(false);
   };
 
   if (showFirstLaunchLangScreen === true) {
     return <LanguageSelectionScreen onComplete={handleFirstLaunchLangComplete} />;
+  }
+
+  if (showFirstLaunchAuthScreen === true) {
+    return (
+      <OnboardingAuthScreen
+        onComplete={handleFirstLaunchAuthComplete}
+        onSkip={handleFirstLaunchAuthSkip}
+      />
+    );
   }
 
   return (

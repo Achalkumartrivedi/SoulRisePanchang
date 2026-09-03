@@ -18,7 +18,7 @@ import { CityLocation } from '../types/panchang';
 import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
 import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
-import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, SavedKundaliProfile } from '../utils/profileStorage';
+import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, restoreKundliProfilesFromCloud, SavedKundaliProfile } from '../utils/profileStorage';
 import { SoulPurposeModal } from './SoulPurposeModal';
 import { getUserProfile } from '../engine/userDatabase';
 import { AuthModal } from './AuthModal';
@@ -143,14 +143,16 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
         if (profile && profile.name) {
           setName(profile.name);
         }
+        if (profile?.email) {
+          const restored = await restoreKundliProfilesFromCloud(profile.email);
+          setSavedProfiles(restored);
+        } else {
+          const local = await getSavedProfiles();
+          setSavedProfiles(local);
+        }
       })();
     }
   }, [visible]);
-
-  // Load saved profiles from AsyncStorage on mount
-  useEffect(() => {
-    getSavedProfiles().then(setSavedProfiles);
-  }, []);
 
   // Live Free Geocoding API Search debouncer
   useEffect(() => {
