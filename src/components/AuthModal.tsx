@@ -10,7 +10,8 @@ import {
   ScrollView
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { saveUserProfile, loginGuestUser, UserProfile } from '../engine/userDatabase';
+import { saveUserProfile, loginOrRegisterEmailUser, UserProfile } from '../engine/userDatabase';
+import { restoreKundliProfilesFromCloud } from '../utils/profileStorage';
 
 interface AuthModalProps {
   visible: boolean;
@@ -19,110 +20,75 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSuccess }) => {
-  const [authMode, setAuthMode] = useState<'SELECT' | 'GUEST_REGISTER' | 'GUEST_LOGIN' | 'GOOGLE_EMAIL'>('SELECT');
+  const [authMode, setAuthMode] = useState<'SELECT' | 'EMAIL_FORM' | 'GOOGLE_EMAIL'>('SELECT');
 
-  // Registration Form State
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestPin, setGuestPin] = useState('');
-
-  // Existing Login Form State
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPin, setLoginPin] = useState('');
+  // Unified Email Form State
+  const [emailName, setEmailName] = useState('');
+  const [emailAddr, setEmailAddr] = useState('');
+  const [emailPin, setEmailPin] = useState('');
 
   // Google State
   const [googleEmail, setGoogleEmail] = useState('');
   const [googleName, setGoogleName] = useState('');
 
-  const handleGuestRegisterSubmit = async () => {
-    const nameTrimmed = guestName.trim();
-    const emailTrimmed = guestEmail.trim().toLowerCase();
-    const pinTrimmed = guestPin.trim();
+  const handleSmartEmailSubmit = async () => {
+    const cleanEmail = emailAddr.trim().toLowerCase();
+    const cleanPin = emailPin.trim();
+    const cleanName = emailName.trim();
 
-    if (!nameTrimmed) {
-      Alert.alert('⚠️ Name Required', 'Please enter your Full Name.');
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      Alert.alert('⚠️ Email Required', 'Please enter a valid email address.');
       return;
     }
 
-    if (!emailTrimmed || !emailTrimmed.includes('@')) {
-      Alert.alert('⚠️ Email Required', 'Please enter a valid email address so you can restore your data later.');
+    if (!cleanPin || cleanPin.length < 6) {
+      Alert.alert('⚠️ 6-Digit PIN Required', 'Please enter a 6-digit security PIN.');
       return;
     }
 
-    if (!pinTrimmed || pinTrimmed.length < 6) {
-      Alert.alert('⚠️ 6-Digit PIN Required', 'Please create a 6-digit security PIN to protect and sync your account.');
-      return;
-    }
-
-    const profile: UserProfile = {
-      id: `guest_${Date.now()}`,
-      name: nameTrimmed,
-      email: emailTrimmed,
-      pin6Digit: pinTrimmed,
-      authType: 'GUEST',
-      createdAtIso: new Date().toISOString()
-    };
-
-    await saveUserProfile(profile);
-    onSuccess(profile);
-    resetForm();
-  };
-
-  const handleGuestLoginSubmit = async () => {
-    const emailTrimmed = loginEmail.trim().toLowerCase();
-    const pinTrimmed = loginPin.trim();
-
-    if (!emailTrimmed || !emailTrimmed.includes('@')) {
-      Alert.alert('⚠️ Email Required', 'Please enter your registered email address.');
-      return;
-    }
-
-    if (!pinTrimmed || pinTrimmed.length < 6) {
-      Alert.alert('⚠️ 6-Digit PIN Required', 'Please enter your 6-digit security PIN.');
-      return;
-    }
-
-    const res = await loginGuestUser(emailTrimmed, pinTrimmed);
+    const res = await loginOrRegisterEmailUser(cleanEmail, cleanPin, cleanName);
     if (res.success && res.profile) {
+      await restoreKundliProfilesFromCloud(cleanEmail);
       onSuccess(res.profile);
-      resetForm();
+      resetAndClose();
     } else {
-      Alert.alert('❌ Login Failed', res.message || 'Incorrect email or PIN.');
+      Alert.alert('❌ Sign In Failed', res.message || 'Incorrect PIN or login error.');
     }
   };
 
   const handleGoogleSubmit = async () => {
     const trimmedName = googleName.trim() || 'Google User';
-    const trimmedEmail = googleEmail.trim();
+    const trimmedEmail = googleEmail.trim().toLowerCase();
 
     if (trimmedEmail && !trimmedEmail.includes('@')) {
       Alert.alert('⚠️ Invalid Email', 'Please enter a valid Google email address.');
       return;
     }
 
+    const emailToUse = trimmedEmail || 'google.user@gmail.com';
     const profile: UserProfile = {
       id: `google_${Date.now()}`,
       name: trimmedName,
-      email: trimmedEmail || 'user@gmail.com',
+      email: emailToUse,
       authType: 'GOOGLE',
       createdAtIso: new Date().toISOString(),
       avatarUrl: 'https://lh3.googleusercontent.com/a/default-user'
     };
 
     await saveUserProfile(profile);
+    await restoreKundliProfilesFromCloud(emailToUse);
     onSuccess(profile);
-    resetForm();
+    resetAndClose();
   };
 
-  const resetForm = () => {
-    setGuestName('');
-    setGuestEmail('');
-    setGuestPin('');
-    setLoginEmail('');
-    setLoginPin('');
+  const resetAndClose = () => {
+    setEmailName('');
+    setEmailAddr('');
+    setEmailPin('');
     setGoogleName('');
     setGoogleEmail('');
     setAuthMode('SELECT');
+    onClose();
   };
 
   return (
@@ -132,11 +98,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {authMode === 'SELECT' && '👤 Sign In to SoulRise Panchang'}
-              {authMode === 'GUEST_REGISTER' && '✍️ Create Guest Account (Name + Email + PIN)'}
-              {authMode === 'GUEST_LOGIN' && '🔑 Restore Guest Account (Email + PIN)'}
+              {authMode === 'EMAIL_FORM' && '✉️ Sign in with Email'}
               {authMode === 'GOOGLE_EMAIL' && '🌐 Google Account Sign In'}
             </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={resetAndClose} style={styles.closeBtn}>
               <Text style={styles.closeText}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -162,97 +127,54 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
                   onPress={() => setAuthMode('GOOGLE_EMAIL')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.googleIcon}>🔴</Text>
-                  <Text style={styles.googleBtnText}>Continue with Google</Text>
+                  <View style={styles.googleLogoBadge}>
+                    <Text style={{ color: '#4285F4', fontSize: 14, fontWeight: 'bold' }}>G</Text>
+                  </View>
+                  <Text style={styles.googleBtnText}>Sign in With Google</Text>
                 </TouchableOpacity>
 
-                {/* New Guest Sign Up */}
+                {/* Smart Unified Email Sign In */}
                 <TouchableOpacity
                   style={styles.guestBtn}
-                  onPress={() => setAuthMode('GUEST_REGISTER')}
+                  onPress={() => setAuthMode('EMAIL_FORM')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.guestIcon}>👤</Text>
-                  <Text style={styles.guestBtnText}>Register New Guest Profile (Email + 6-Digit PIN)</Text>
-                </TouchableOpacity>
-
-                {/* Existing Guest Login */}
-                <TouchableOpacity
-                  style={styles.restoreBtn}
-                  onPress={() => setAuthMode('GUEST_LOGIN')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.restoreBtnText}>🔑 Existing Guest? Re-login with Email & PIN</Text>
+                  <Text style={styles.guestIcon}>✉️</Text>
+                  <Text style={styles.guestBtnText}>Sign in with Email</Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {authMode === 'GUEST_REGISTER' && (
-              <View>
-                <Text style={styles.label}>Full Name:</Text>
+            {authMode === 'EMAIL_FORM' && (
+              <View style={styles.formContainer}>
+                <Text style={styles.label}>Email Address (Required):</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. Rahul Sharma"
-                  value={guestName}
-                  onChangeText={setGuestName}
-                  autoFocus
-                />
-
-                <Text style={styles.label}>Email Address (for backup & login sync):</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="rahul@gmail.com"
-                  value={guestEmail}
-                  onChangeText={setGuestEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-
-                <Text style={styles.label}>Create 6-Digit Security PIN / Password:</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter 6-digit PIN (e.g. 123456)"
-                  value={guestPin}
-                  onChangeText={setGuestPin}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  secureTextEntry
-                />
-
-                <View style={styles.btnRow}>
-                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
-                    <Text style={styles.cancelBtnText}>Back</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.submitBtn} onPress={handleGuestRegisterSubmit}>
-                    <Text style={styles.submitBtnText}>Create & Save ➔</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {authMode === 'GUEST_LOGIN' && (
-              <View>
-                <Text style={styles.label}>Registered Email Address:</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="rahul@gmail.com"
-                  value={loginEmail}
-                  onChangeText={setLoginEmail}
+                  placeholder="user@gmail.com"
+                  value={emailAddr}
+                  onChangeText={setEmailAddr}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoFocus
                 />
 
-                <Text style={styles.label}>6-Digit Security PIN / Password:</Text>
+                <Text style={styles.label}>6-Digit Security PIN / Password (Required):</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Enter 6-digit PIN"
-                  value={loginPin}
-                  onChangeText={setLoginPin}
+                  value={emailPin}
+                  onChangeText={setEmailPin}
                   keyboardType="number-pad"
                   maxLength={6}
                   secureTextEntry
+                />
+
+                <Text style={styles.label}>Full Name (Optional for new users):</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Rahul Sharma"
+                  value={emailName}
+                  onChangeText={setEmailName}
                 />
 
                 <View style={styles.btnRow}>
@@ -260,15 +182,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
                     <Text style={styles.cancelBtnText}>Back</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.submitBtn} onPress={handleGuestLoginSubmit}>
-                    <Text style={styles.submitBtnText}>Re-login & Sync ➔</Text>
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleSmartEmailSubmit}>
+                    <Text style={styles.submitBtnText}>Sign In / Sign Up ➔</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             )}
 
             {authMode === 'GOOGLE_EMAIL' && (
-              <View>
+              <View style={styles.formContainer}>
                 <Text style={styles.label}>Display Name:</Text>
                 <TextInput
                   style={styles.input}
@@ -278,7 +200,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
                   autoFocus
                 />
 
-                <Text style={styles.label}>Google Email Address:</Text>
+                <Text style={styles.label}>Google Email Address (Mobile Google Account):</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="user@gmail.com"
@@ -294,7 +216,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose, onSucces
                   </TouchableOpacity>
 
                   <TouchableOpacity style={styles.googleSubmitBtn} onPress={handleGoogleSubmit}>
-                    <Text style={styles.submitBtnText}>Complete Sign In ➔</Text>
+                    <Text style={styles.submitBtnText}>Sign In & Restore ➔</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -317,7 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
-    maxHeight: 580
+    maxHeight: 560
   },
   header: {
     backgroundColor: Colors.maroon,
@@ -328,7 +250,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
     flex: 1
   },
@@ -341,52 +263,60 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   warnBanner: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#FFF8E7',
     borderLeftWidth: 4,
-    borderLeftColor: '#FF6F00',
+    borderLeftColor: Colors.maroon,
     padding: 10,
     borderRadius: 6,
-    marginBottom: 14
+    marginBottom: 12
   },
   warnTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#E65100',
+    color: Colors.maroon,
     marginBottom: 2
   },
   warnText: {
     fontSize: 11,
-    color: Colors.textPrimary,
+    color: Colors.textSecondary,
     lineHeight: 16
   },
   desc: {
     fontSize: 12,
     color: Colors.textSecondary,
-    marginBottom: 16,
-    lineHeight: 17
+    marginBottom: 14,
+    lineHeight: 18
   },
   googleBtn: {
-    backgroundColor: '#4285F4',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#DDDDDD',
     paddingVertical: 12,
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10
+    marginBottom: 12,
+    elevation: 2
   },
-  googleIcon: {
-    fontSize: 15,
-    marginRight: 8
+  googleLogoBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0'
   },
   googleBtnText: {
-    color: '#FFFFFF',
+    color: '#3C4043',
     fontSize: 14,
     fontWeight: 'bold'
   },
   guestBtn: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: Colors.maroon,
+    backgroundColor: Colors.maroon,
     paddingVertical: 12,
     borderRadius: 10,
     flexDirection: 'row',
@@ -399,20 +329,12 @@ const styles = StyleSheet.create({
     marginRight: 8
   },
   guestBtnText: {
-    color: Colors.maroon,
-    fontSize: 12,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: 'bold'
   },
-  restoreBtn: {
-    backgroundColor: '#ECEFF1',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center'
-  },
-  restoreBtnText: {
-    color: '#37474F',
-    fontSize: 12,
-    fontWeight: 'bold'
+  formContainer: {
+    marginTop: 4
   },
   label: {
     fontSize: 12,
@@ -426,14 +348,15 @@ const styles = StyleSheet.create({
     borderColor: '#CCCCCC',
     borderRadius: 8,
     padding: 10,
-    fontSize: 13,
+    fontSize: 14,
     backgroundColor: '#FAFAFA',
+    color: Colors.textPrimary,
     marginBottom: 10
   },
   btnRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12
+    marginTop: 14
   },
   cancelBtn: {
     paddingVertical: 10,

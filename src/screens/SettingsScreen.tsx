@@ -374,13 +374,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   Member Since: {new Date(userProfile.createdAtIso).toLocaleDateString()}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={styles.changeProfileBtn}
-                onPress={() => setAuthModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.changeProfileText}>Switch User</Text>
-              </TouchableOpacity>
+
+              <View style={{ flexDirection: 'column', gap: 6 }}>
+                <TouchableOpacity
+                  style={styles.changeProfileBtn}
+                  onPress={() => setAuthModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.changeProfileText}>Switch User</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.changeProfileBtn, { backgroundColor: '#D32F2F', marginTop: 4 }]}
+                  onPress={() => {
+                    Alert.alert(
+                      '🚪 Confirm Log Out',
+                      'Are you sure you want to log out of your account? Local data will remain saved, but cloud sync requires signing back in.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Log Out',
+                          style: 'destructive',
+                          onPress: async () => {
+                            await clearUserProfile();
+                            setUserProfile(null);
+                            Alert.alert('✅ Logged Out', 'You have been successfully logged out.');
+                          }
+                        }
+                      ]
+                    );
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.changeProfileText, { color: '#FFFFFF' }]}>🚪 Log Out</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <TouchableOpacity
@@ -388,7 +416,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               onPress={() => setAuthModalVisible(true)}
               activeOpacity={0.8}
             >
-              <Text style={styles.signInBtnText}>🔑 Sign In (Google or Guest)</Text>
+              <Text style={styles.signInBtnText}>🔑 Sign In (Google or Email)</Text>
             </TouchableOpacity>
           )}
         </View>

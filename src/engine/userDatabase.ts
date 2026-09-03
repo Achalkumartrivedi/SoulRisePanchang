@@ -5,7 +5,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  pin6Digit?: string; // 6-digit PIN for guest login & sync
+  pin6Digit?: string; // 6-digit PIN for email/guest login & sync
   authType: 'GOOGLE' | 'GUEST';
   createdAtIso: string;
   avatarUrl?: string;
@@ -48,30 +48,63 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
   }
 }
 
-export async function loginGuestUser(email: string, pin: string): Promise<{ success: boolean; profile?: UserProfile; message?: string }> {
+/**
+ * Smart Unified Email Login & Signup Handler.
+ * Automatically logs in existing users or registers new users seamlessly!
+ */
+export async function loginOrRegisterEmailUser(
+  email: string,
+  pin: string,
+  name?: string
+): Promise<{ success: boolean; profile?: UserProfile; isNewUser?: boolean; message?: string }> {
   try {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPin = pin.trim();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, message: 'Please enter a valid email address.' };
+    }
+
+    if (!cleanPin || cleanPin.length < 6) {
+      return { success: false, message: 'Please enter a 6-digit PIN.' };
+    }
 
     const accountsJson = await AsyncStorage.getItem(ALL_ACCOUNTS_DATABASE_KEY);
     const accounts: UserProfile[] = accountsJson ? JSON.parse(accountsJson) : [];
 
     const existing = accounts.find(a => a.email.toLowerCase() === cleanEmail);
-    if (!existing) {
-      return { success: false, message: 'No account found with this email address. Please register as a new Guest user.' };
-    }
 
-    if (existing.authType === 'GUEST' && existing.pin6Digit && existing.pin6Digit !== cleanPin) {
-      return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN to restore your account.' };
-    }
+    if (existing) {
+      // User exists -> verify PIN
+      if (existing.pin6Digit && existing.pin6Digit !== cleanPin) {
+        return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN for this email account.' };
+      }
+      await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(existing));
+      syncUserToFirebaseCloud(existing).catch(err => console.log('Firebase sync error:', err));
+      return { success: true, profile: existing, isNewUser: false };
+    } else {
+      // New User -> Register
+      const userName = (name && name.trim()) ? name.trim() : cleanEmail.split('@')[0];
+      const newProfile: UserProfile = {
+        id: `guest_${Date.now()}`,
+        name: userName,
+        email: cleanEmail,
+        pin6Digit: cleanPin,
+        authType: 'GUEST',
+        createdAtIso: new Date().toISOString()
+      };
 
-    await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(existing));
-    syncUserToFirebaseCloud(existing).catch(err => console.log('Firebase background sync catch:', err));
-    return { success: true, profile: existing };
+      await saveUserProfile(newProfile);
+      return { success: true, profile: newProfile, isNewUser: true };
+    }
   } catch (e) {
-    console.log('Error logging in guest user:', e);
-    return { success: false, message: 'Login failed due to a database error.' };
+    console.log('Error in loginOrRegisterEmailUser:', e);
+    return { success: false, message: 'Sign in failed due to database error.' };
   }
+}
+
+export async function loginGuestUser(email: string, pin: string): Promise<{ success: boolean; profile?: UserProfile; message?: string }> {
+  return loginOrRegisterEmailUser(email, pin);
 }
 
 export async function clearUserProfile(): Promise<void> {

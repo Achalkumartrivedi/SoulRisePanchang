@@ -12,7 +12,7 @@ import {
   Alert
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { saveUserProfile, loginGuestUser, UserProfile } from '../engine/userDatabase';
+import { saveUserProfile, loginOrRegisterEmailUser, UserProfile } from '../engine/userDatabase';
 import { restoreKundliProfilesFromCloud } from '../utils/profileStorage';
 
 interface OnboardingAuthScreenProps {
@@ -21,19 +21,15 @@ interface OnboardingAuthScreenProps {
 }
 
 export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onComplete, onSkip }) => {
-  const [authMode, setAuthMode] = useState<'SELECT' | 'GUEST_REGISTER' | 'GUEST_LOGIN'>('SELECT');
+  const [authMode, setAuthMode] = useState<'SELECT' | 'EMAIL_FORM'>('SELECT');
   const [showGooglePicker, setShowGooglePicker] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  // Guest Registration State
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestPin, setGuestPin] = useState('');
-
-  // Re-login State
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPin, setLoginPin] = useState('');
+  // Unified Email Form State
+  const [emailName, setEmailName] = useState('');
+  const [emailAddr, setEmailAddr] = useState('');
+  const [emailPin, setEmailPin] = useState('');
 
   // Custom Google Account Input State inside Picker
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
@@ -62,60 +58,27 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
     onComplete();
   };
 
-  const handleGuestRegisterSubmit = async () => {
-    const nameTrimmed = guestName.trim();
-    const emailTrimmed = guestEmail.trim().toLowerCase();
-    const pinTrimmed = guestPin.trim();
+  const handleSmartEmailSubmit = async () => {
+    const cleanEmail = emailAddr.trim().toLowerCase();
+    const cleanPin = emailPin.trim();
+    const cleanName = emailName.trim();
 
-    if (!nameTrimmed) {
-      Alert.alert('⚠️ Name Required', 'Please enter your Full Name.');
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      Alert.alert('⚠️ Email Required', 'Please enter a valid email address.');
       return;
     }
 
-    if (!emailTrimmed || !emailTrimmed.includes('@')) {
-      Alert.alert('⚠️ Email Required', 'Please enter a valid email address to back up your Kundlis.');
+    if (!cleanPin || cleanPin.length < 6) {
+      Alert.alert('⚠️ 6-Digit PIN Required', 'Please enter a 6-digit security PIN.');
       return;
     }
 
-    if (!pinTrimmed || pinTrimmed.length < 6) {
-      Alert.alert('⚠️ 6-Digit PIN Required', 'Please create a 6-digit security PIN to protect and sync your account.');
-      return;
-    }
-
-    const profile: UserProfile = {
-      id: `guest_${Date.now()}`,
-      name: nameTrimmed,
-      email: emailTrimmed,
-      pin6Digit: pinTrimmed,
-      authType: 'GUEST',
-      createdAtIso: new Date().toISOString()
-    };
-
-    await saveUserProfile(profile);
-    await restoreKundliProfilesFromCloud(emailTrimmed);
-    onComplete();
-  };
-
-  const handleGuestLoginSubmit = async () => {
-    const emailTrimmed = loginEmail.trim().toLowerCase();
-    const pinTrimmed = loginPin.trim();
-
-    if (!emailTrimmed || !emailTrimmed.includes('@')) {
-      Alert.alert('⚠️ Email Required', 'Please enter your registered email address.');
-      return;
-    }
-
-    if (!pinTrimmed || pinTrimmed.length < 6) {
-      Alert.alert('⚠️ 6-Digit PIN Required', 'Please enter your 6-digit security PIN.');
-      return;
-    }
-
-    const res = await loginGuestUser(emailTrimmed, pinTrimmed);
+    const res = await loginOrRegisterEmailUser(cleanEmail, cleanPin, cleanName);
     if (res.success && res.profile) {
-      await restoreKundliProfilesFromCloud(emailTrimmed);
+      await restoreKundliProfilesFromCloud(cleanEmail);
       onComplete();
     } else {
-      Alert.alert('❌ Login Failed', res.message || 'Incorrect email or PIN.');
+      Alert.alert('❌ Sign In Failed', res.message || 'Incorrect PIN or login error.');
     }
   };
 
@@ -165,23 +128,14 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Button 2: Signup With Email */}
+            {/* Smart Unified Button: Sign in with Email */}
             <TouchableOpacity
               style={styles.emailSignupBtn}
-              onPress={() => setAuthMode('GUEST_REGISTER')}
+              onPress={() => setAuthMode('EMAIL_FORM')}
               activeOpacity={0.85}
             >
               <Text style={styles.emailIcon}>✉️</Text>
-              <Text style={styles.emailSignupBtnText}>Signup With Email</Text>
-            </TouchableOpacity>
-
-            {/* Button 3: Existing Account Re-login */}
-            <TouchableOpacity
-              style={styles.restoreBtn}
-              onPress={() => setAuthMode('GUEST_LOGIN')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.restoreBtnText}>🔑 Existing Account? Re-login with Email & PIN</Text>
+              <Text style={styles.emailSignupBtnText}>Sign in with Email</Text>
             </TouchableOpacity>
 
             {/* Bottom Skip Link */}
@@ -205,94 +159,41 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
           </View>
         )}
 
-        {authMode === 'GUEST_REGISTER' && (
+        {authMode === 'EMAIL_FORM' && (
           <View style={styles.cardContainer}>
-            <Text style={styles.modeTitle}>✉️ Signup With Email</Text>
+            <Text style={styles.modeTitle}>✉️ Sign in with Email</Text>
 
-            <Text style={styles.label}>Full Name:</Text>
+            <Text style={styles.label}>Email Address (Required):</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Rahul Sharma"
+              placeholder="user@gmail.com"
               placeholderTextColor="#999"
-              value={guestName}
-              onChangeText={setGuestName}
-              autoFocus
-            />
-
-            <Text style={styles.label}>Email Address (for Multi-Device Backup & Sync):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="rahul@gmail.com"
-              placeholderTextColor="#999"
-              value={guestEmail}
-              onChangeText={setGuestEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>Create 6-Digit Security PIN / Password:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 6-digit PIN (e.g. 123456)"
-              placeholderTextColor="#999"
-              value={guestPin}
-              onChangeText={setGuestPin}
-              keyboardType="number-pad"
-              maxLength={6}
-              secureTextEntry
-            />
-
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
-                <Text style={styles.cancelBtnText}>Back</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.submitBtn} onPress={handleGuestRegisterSubmit}>
-                <Text style={styles.submitBtnText}>Create Account & Sync ➔</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.termsFooter}>
-              <Text style={styles.termsFooterText}>
-                By Signing up, you agree to our{' '}
-                <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>
-                  Terms of Use
-                </Text>{' '}
-                and{' '}
-                <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>
-                  Privacy Policy
-                </Text>
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {authMode === 'GUEST_LOGIN' && (
-          <View style={styles.cardContainer}>
-            <Text style={styles.modeTitle}>🔑 Restore Existing Account</Text>
-
-            <Text style={styles.label}>Registered Email Address:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="rahul@gmail.com"
-              placeholderTextColor="#999"
-              value={loginEmail}
-              onChangeText={setLoginEmail}
+              value={emailAddr}
+              onChangeText={setEmailAddr}
               keyboardType="email-address"
               autoCapitalize="none"
               autoFocus
             />
 
-            <Text style={styles.label}>6-Digit Security PIN / Password:</Text>
+            <Text style={styles.label}>6-Digit Security PIN / Password (Required):</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter 6-digit PIN"
               placeholderTextColor="#999"
-              value={loginPin}
-              onChangeText={setLoginPin}
+              value={emailPin}
+              onChangeText={setEmailPin}
               keyboardType="number-pad"
               maxLength={6}
               secureTextEntry
+            />
+
+            <Text style={styles.label}>Full Name (Optional for new users):</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Rahul Sharma"
+              placeholderTextColor="#999"
+              value={emailName}
+              onChangeText={setEmailName}
             />
 
             <View style={styles.btnRow}>
@@ -300,8 +201,8 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
                 <Text style={styles.cancelBtnText}>Back</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleGuestLoginSubmit}>
-                <Text style={styles.submitBtnText}>Re-login & Restore ➔</Text>
+              <TouchableOpacity style={styles.submitBtn} onPress={handleSmartEmailSubmit}>
+                <Text style={styles.submitBtnText}>Sign In / Sign Up ➔</Text>
               </TouchableOpacity>
             </View>
 
@@ -614,19 +515,6 @@ const styles = StyleSheet.create({
   emailSignupBtnText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold'
-  },
-  restoreBtn: {
-    backgroundColor: '#FFF8E7',
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center'
-  },
-  restoreBtnText: {
-    color: Colors.maroon,
-    fontSize: 12,
     fontWeight: 'bold'
   },
   bottomSkipLink: {
