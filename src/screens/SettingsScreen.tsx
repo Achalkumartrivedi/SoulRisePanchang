@@ -52,6 +52,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -386,24 +388,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
                 <TouchableOpacity
                   style={[styles.changeProfileBtn, { backgroundColor: '#D32F2F', marginTop: 4 }]}
-                  onPress={() => {
-                    Alert.alert(
-                      '🚪 Confirm Log Out',
-                      'Are you sure you want to log out of your account? Local data will remain saved, but cloud sync requires signing back in.',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Log Out',
-                          style: 'destructive',
-                          onPress: async () => {
-                            await clearUserProfile();
-                            setUserProfile(null);
-                            Alert.alert('✅ Logged Out', 'You have been successfully logged out.');
-                          }
-                        }
-                      ]
-                    );
-                  }}
+                  onPress={() => setLogoutModalVisible(true)}
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.changeProfileText, { color: '#FFFFFF' }]}>🚪 Log Out</Text>
@@ -462,7 +447,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           <TouchableOpacity
             style={styles.deleteBtn}
-            onPress={handleDeleteAccountAndReset}
+            onPress={() => setDeleteModalVisible(true)}
             activeOpacity={0.8}
           >
             <Text style={styles.deleteBtnText}>⚠️ Delete Account & Erase All Data</Text>
@@ -529,6 +514,72 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 SoulRise Panchang is rated 3+ (Everyone). We do not knowingly collect personal data from children under 13.
               </Text>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 🚪 Custom Log Out Confirmation Modal */}
+      <Modal visible={logoutModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { padding: 20 }]}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors.maroon, marginBottom: 8, textAlign: 'center' }}>
+              🚪 Confirm Log Out
+            </Text>
+            <Text style={{ fontSize: 13, color: Colors.textSecondary, textAlign: 'center', lineHeight: 18, marginBottom: 20 }}>
+              Are you sure you want to log out of your account? Local data will remain saved on this device, but cloud sync requires signing back in.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#EEEEEE', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+                onPress={() => setLogoutModalVisible(false)}
+              >
+                <Text style={{ color: Colors.textPrimary, fontWeight: 'bold', fontSize: 14 }}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#D32F2F', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+                onPress={async () => {
+                  setLogoutModalVisible(false);
+                  await clearUserProfile();
+                  setUserProfile(null);
+                  Alert.alert('✅ Logged Out', 'You have been successfully logged out.');
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 }}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ⚠️ Custom Delete Account Confirmation Modal */}
+      <Modal visible={deleteModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { padding: 20, borderColor: '#C62828', borderWidth: 1.5 }]}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#C62828', marginBottom: 8, textAlign: 'center' }}>
+              ⚠️ Delete Account & Clear Data
+            </Text>
+            <Text style={{ fontSize: 13, color: Colors.textPrimary, textAlign: 'center', lineHeight: 18, marginBottom: 20 }}>
+              CAUTION: Deleting your account will permanently erase your user profile, saved Janam Kundli charts, and custom reminders from this device. Are you sure you want to proceed?
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#EEEEEE', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={{ color: Colors.textPrimary, fontWeight: 'bold', fontSize: 14 }}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ flex: 1.2, backgroundColor: '#B71C1C', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+                onPress={async () => {
+                  setDeleteModalVisible(false);
+                  await handleDeleteAccountAndReset();
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 13 }}>Delete Account</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

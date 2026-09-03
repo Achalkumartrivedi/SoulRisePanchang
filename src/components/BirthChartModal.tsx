@@ -115,6 +115,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [showHourModal, setShowHourModal] = useState(false);
   const [showMinuteModal, setShowMinuteModal] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [signInReqModalVisible, setSignInReqModalVisible] = useState(false);
 
   // Default Chart Style is NORTH (North Indian Diamond Style)
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH' | 'GLOBAL'>('NORTH');
@@ -192,24 +193,8 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     setKundali(result);
   };
 
-  const handleSaveProfile = async () => {
-    const currentProfile = await getUserProfile();
-    if (!currentProfile) {
-      Alert.alert(
-        '🔒 Sign In Required',
-        'You are currently not signed in!\n\nWithout creating a profile, your saved Kundli charts are stored locally and will be cleared if the app is uninstalled.\n\nPlease sign in or register as a Guest with a 6-digit PIN to save and sync your profile.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Sign In / Register ➔',
-            onPress: () => setAuthModalVisible(true)
-          }
-        ]
-      );
-      return;
-    }
-
-    const profileName = name.trim() || currentProfile.name || 'Achal';
+  const executeSaveProfile = async (customName?: string) => {
+    const profileName = customName || name.trim() || 'Achal';
     const updated = await saveKundaliProfile({
       name: profileName,
       dobDay,
@@ -224,6 +209,15 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     setSavedProfiles(updated);
     setSaveSuccessMsg(`Saved "${profileName}"! ✓`);
     setTimeout(() => setSaveSuccessMsg(''), 3000);
+  };
+
+  const handleSaveProfile = async () => {
+    const currentProfile = await getUserProfile();
+    if (!currentProfile) {
+      setSignInReqModalVisible(true);
+      return;
+    }
+    await executeSaveProfile(name.trim() || currentProfile.name);
   };
 
   const handleSelectProfile = (p: SavedKundaliProfile) => {
@@ -1000,6 +994,59 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* 🔒 Styled Sign In Required Modal */}
+      <Modal visible={signInReqModalVisible} animationType="fade" transparent>
+        <View style={styles.dropdownOverlay}>
+          <View style={[styles.dropdownModalCard, { padding: 20 }]}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: Colors.maroon, marginBottom: 10, textAlign: 'center' }}>
+              🔒 Sign In Required to Backup Profile
+            </Text>
+
+            <View style={{ backgroundColor: '#FFF8E7', borderLeftWidth: 4, borderLeftColor: Colors.maroon, padding: 12, borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: Colors.maroon, marginBottom: 4 }}>
+                ⚠️ Important Uninstallation Notice:
+              </Text>
+              <Text style={{ fontSize: 11, color: Colors.textSecondary, lineHeight: 16 }}>
+                Without creating a profile, your saved Janam Kundli charts are stored locally on this phone and will be permanently cleared if the app is uninstalled.
+              </Text>
+            </View>
+
+            <Text style={{ fontSize: 12, color: Colors.textPrimary, textAlign: 'center', lineHeight: 17, marginBottom: 18 }}>
+              Please sign in with Google or Email to sync and protect your profiles across all your devices!
+            </Text>
+
+            <View style={{ flexDirection: 'column', gap: 10 }}>
+              <TouchableOpacity
+                style={{ backgroundColor: Colors.maroon, paddingVertical: 13, borderRadius: 10, alignItems: 'center' }}
+                onPress={() => {
+                  setSignInReqModalVisible(false);
+                  setAuthModalVisible(true);
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 }}>🔑 Sign In / Sign Up Now ➔</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ backgroundColor: '#FAF5EE', borderWidth: 1, borderColor: '#FFE0B2', paddingVertical: 11, borderRadius: 10, alignItems: 'center' }}
+                onPress={() => {
+                  setSignInReqModalVisible(false);
+                  executeSaveProfile(name.trim() || 'Achal');
+                }}
+              >
+                <Text style={{ color: Colors.maroon, fontWeight: 'bold', fontSize: 13 }}>Save Locally Only ➔</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ paddingVertical: 8, alignItems: 'center' }}
+                onPress={() => setSignInReqModalVisible(false)}
+              >
+                <Text style={{ color: Colors.textMuted, fontWeight: 'bold', fontSize: 12 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* Auth Modal Triggered when user attempts to save profile without sign in */}
