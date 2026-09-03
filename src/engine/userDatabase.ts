@@ -77,7 +77,7 @@ export async function loginOrRegisterEmailUser(
     if (existing) {
       // User exists -> verify PIN
       if (existing.pin6Digit && existing.pin6Digit !== cleanPin) {
-        return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN for this email account.' };
+        return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN or tap "Forgot PIN?" to reset it.' };
       }
       await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(existing));
       syncUserToFirebaseCloud(existing).catch(err => console.log('Firebase sync error:', err));
@@ -100,6 +100,43 @@ export async function loginOrRegisterEmailUser(
   } catch (e) {
     console.log('Error in loginOrRegisterEmailUser:', e);
     return { success: false, message: 'Sign in failed due to database error.' };
+  }
+}
+
+/**
+ * Reset 6-digit Security PIN for an email account and sync to Firebase Cloud
+ */
+export async function resetUserPin(email: string, newPin: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPin = newPin.trim();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, message: 'Please enter your registered email address.' };
+    }
+
+    if (!cleanPin || cleanPin.length < 6) {
+      return { success: false, message: 'Please enter a new 6-digit PIN.' };
+    }
+
+    const accountsJson = await AsyncStorage.getItem(ALL_ACCOUNTS_DATABASE_KEY);
+    const accounts: UserProfile[] = accountsJson ? JSON.parse(accountsJson) : [];
+    const index = accounts.findIndex(a => a.email.toLowerCase() === cleanEmail);
+
+    if (index < 0) {
+      return { success: false, message: 'No account found with this email address.' };
+    }
+
+    accounts[index].pin6Digit = cleanPin;
+    await AsyncStorage.setItem(ALL_ACCOUNTS_DATABASE_KEY, JSON.stringify(accounts));
+    await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(accounts[index]));
+
+    // Sync reset PIN to Firebase
+    syncUserToFirebaseCloud(accounts[index]).catch(e => console.log('Firebase sync reset PIN error:', e));
+    return { success: true, message: 'Your 6-digit Security PIN has been reset successfully!' };
+  } catch (e) {
+    console.log('Error resetting user PIN:', e);
+    return { success: false, message: 'Failed to reset PIN.' };
   }
 }
 

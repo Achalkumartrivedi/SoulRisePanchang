@@ -12,7 +12,7 @@ import {
   Alert
 } from 'react-native';
 import { Colors } from '../theme/colors';
-import { saveUserProfile, loginOrRegisterEmailUser, UserProfile } from '../engine/userDatabase';
+import { saveUserProfile, loginOrRegisterEmailUser, resetUserPin, UserProfile } from '../engine/userDatabase';
 import { restoreKundliProfilesFromCloud } from '../utils/profileStorage';
 
 interface OnboardingAuthScreenProps {
@@ -21,7 +21,7 @@ interface OnboardingAuthScreenProps {
 }
 
 export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onComplete, onSkip }) => {
-  const [authMode, setAuthMode] = useState<'SELECT' | 'EMAIL_FORM'>('SELECT');
+  const [authMode, setAuthMode] = useState<'SELECT' | 'EMAIL_FORM' | 'FORGOT_PIN'>('SELECT');
   const [showGooglePicker, setShowGooglePicker] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -30,6 +30,10 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
   const [emailName, setEmailName] = useState('');
   const [emailAddr, setEmailAddr] = useState('');
   const [emailPin, setEmailPin] = useState('');
+
+  // Forgot PIN Reset State
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [newPin, setNewPin] = useState('');
 
   // Custom Google Account Input State inside Picker
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
@@ -79,6 +83,18 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
       onComplete();
     } else {
       Alert.alert('❌ Sign In Failed', res.message || 'Incorrect PIN or login error.');
+    }
+  };
+
+  const handleResetPinSubmit = async () => {
+    const res = await resetUserPin(forgotEmail, newPin);
+    if (res.success) {
+      Alert.alert('✅ PIN Reset Successful', res.message);
+      setEmailAddr(forgotEmail);
+      setEmailPin(newPin);
+      setAuthMode('EMAIL_FORM');
+    } else {
+      Alert.alert('⚠️ Reset Failed', res.message || 'Unable to reset PIN.');
     }
   };
 
@@ -175,7 +191,17 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               autoFocus
             />
 
-            <Text style={styles.label}>6-Digit Security PIN / Password (Required):</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+              <Text style={styles.label}>6-Digit Security PIN / Password (Required):</Text>
+              <TouchableOpacity onPress={() => {
+                setForgotEmail(emailAddr);
+                setAuthMode('FORGOT_PIN');
+              }}>
+                <Text style={{ fontSize: 11, color: Colors.maroon, fontWeight: 'bold', textDecorationLine: 'underline' }}>
+                  Forgot PIN?
+                </Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.input}
               placeholder="Enter 6-digit PIN"
@@ -217,6 +243,49 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
                   Privacy Policy
                 </Text>
               </Text>
+            </View>
+          </View>
+        )}
+
+        {authMode === 'FORGOT_PIN' && (
+          <View style={styles.cardContainer}>
+            <Text style={styles.modeTitle}>🔑 Reset Security PIN / Password</Text>
+            <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 12, lineHeight: 16 }}>
+              Enter your registered email address and create a new 6-digit security PIN to recover your account:
+            </Text>
+
+            <Text style={styles.label}>Registered Email Address:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="user@gmail.com"
+              placeholderTextColor="#999"
+              value={forgotEmail}
+              onChangeText={setForgotEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoFocus
+            />
+
+            <Text style={styles.label}>Enter New 6-Digit PIN:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter new 6-digit PIN"
+              placeholderTextColor="#999"
+              value={newPin}
+              onChangeText={setNewPin}
+              keyboardType="number-pad"
+              maxLength={6}
+              secureTextEntry
+            />
+
+            <View style={styles.btnRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('EMAIL_FORM')}>
+                <Text style={styles.cancelBtnText}>Back</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.submitBtn} onPress={handleResetPinSubmit}>
+                <Text style={styles.submitBtnText}>Reset PIN & Sign In ➔</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
