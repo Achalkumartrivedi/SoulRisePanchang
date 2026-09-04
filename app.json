@@ -2,7 +2,7 @@
   "expo": {
     "name": "SoulRise Panchang",
     "slug": "soulrise-panchang",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -20,7 +20,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FF6F00"
       },
-      "package": "com.soulrise.panchang"
+      "package": "com.soulrise.panchang",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
