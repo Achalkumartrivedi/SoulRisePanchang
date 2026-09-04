@@ -74,23 +74,23 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const { language } = useLanguage();
   const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
 
-  // Achal Ground-Truth Benchmark Test Default Values
-  const [name, setName] = useState('Achal');
-  const [dobDay, setDobDay] = useState('13');
-  const [dobMonth, setDobMonth] = useState('02');
-  const [dobYear, setDobYear] = useState('1989');
-  const [tobHour, setTobHour] = useState('00');
-  const [tobMinute, setTobMinute] = useState('05');
+  // Clean Default Input Values for New Downloads / Users
+  const [name, setName] = useState('');
+  const [dobDay, setDobDay] = useState('01');
+  const [dobMonth, setDobMonth] = useState('01');
+  const [dobYear, setDobYear] = useState('2000');
+  const [tobHour, setTobHour] = useState('06');
+  const [tobMinute, setTobMinute] = useState('00');
 
-  // Active Location State (Default Surat, Gujarat per user test benchmark)
+  // Active Location State (Default to selectedCity prop or New Delhi)
   const [activeLocation, setActiveLocation] = useState<{
     cityName: string;
     lat: number;
     lng: number;
   }>({
-    cityName: 'Surat, Gujarat, India',
-    lat: 21.1702,
-    lng: 72.8311
+    cityName: selectedCity?.name || 'New Delhi, India',
+    lat: selectedCity?.latitude || 28.6139,
+    lng: selectedCity?.longitude || 77.2090
   });
 
   // Saved Kundali Profiles State
@@ -124,18 +124,8 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
   const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'GLOBAL'>('PARTICULARS');
 
-  // Kundali Result State
-  const [kundali, setKundali] = useState<KundaliResult | null>(() => {
-    return calculateBirthKundali(
-      'Achal',
-      new Date(1989, 1, 13),
-      0,
-      5,
-      'Surat, Gujarat, India',
-      21.1702,
-      72.8311
-    );
-  });
+  // Kundali Result State (Null by default, generated ONLY when user clicks 'Birth Kundli Generate')
+  const [kundali, setKundali] = useState<KundaliResult | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -174,15 +164,15 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   }, [placeSearchQuery]);
 
   const handleGenerate = () => {
-    const day = parseInt(dobDay, 10) || 13;
-    const month = (parseInt(dobMonth, 10) || 2) - 1;
-    const year = parseInt(dobYear, 10) || 1989;
+    const day = parseInt(dobDay, 10) || 1;
+    const month = (parseInt(dobMonth, 10) || 1) - 1;
+    const year = parseInt(dobYear, 10) || 2000;
     const h = parseInt(tobHour, 10) || 0;
-    const m = parseInt(tobMinute, 10) || 5;
+    const m = parseInt(tobMinute, 10) || 0;
 
     const dob = new Date(year, month, day);
     const result = calculateBirthKundali(
-      name || 'Achal',
+      name.trim() || 'User',
       dob,
       h,
       m,
@@ -194,7 +184,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   };
 
   const executeSaveProfile = async (customName?: string) => {
-    const profileName = customName || name.trim() || 'Achal';
+    const profileName = customName || name.trim() || 'User';
     const updated = await saveKundaliProfile({
       name: profileName,
       dobDay,
