@@ -8,7 +8,8 @@ import {
   ScrollView,
   TextInput,
   TouchableWithoutFeedback,
-  ActivityIndicator
+  ActivityIndicator,
+  SafeAreaView
 } from 'react-native';
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
@@ -18,8 +19,9 @@ import { CityLocation } from '../types/panchang';
 import { ASTROLOGY_LOCALIZATION } from '../i18n/astrologyTerms';
 import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
 import { NorthIndianTriangleChart } from './NorthIndianTriangleChart';
-import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, restoreKundliProfilesFromCloud, SavedKundaliProfile } from '../utils/profileStorage';
+import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, restoreKundliProfilesFromCloud, SavedKundaliProfile, getActiveProfile, setActiveProfileId } from '../utils/profileStorage';
 import { SoulPurposeModal } from './SoulPurposeModal';
+import { AstrologyInterpretationsView } from './AstrologyInterpretationsView';
 import { getUserProfile } from '../engine/userDatabase';
 import { AuthModal } from './AuthModal';
 import { Alert } from 'react-native';
@@ -28,6 +30,7 @@ interface BirthChartModalProps {
   visible: boolean;
   onClose: () => void;
   selectedCity: CityLocation;
+  onOpenLalKitab?: (profile: { dob: string; tob: string; city: string; lat?: number; lon?: number }) => void;
 }
 
 const MONTHS_LIST = [
@@ -69,7 +72,8 @@ const getNumericTithiNumber = (tithiStr: string): number => {
 export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   visible,
   onClose,
-  selectedCity
+  selectedCity,
+  onOpenLalKitab
 }) => {
   const { language } = useLanguage();
   const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
@@ -120,9 +124,12 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   // Default Chart Style is NORTH (North Indian Diamond Style)
   const [chartStyle, setChartStyle] = useState<'NORTH' | 'SOUTH' | 'GLOBAL'>('NORTH');
 
+  // Input Form visibility state (hidden by default if user has saved profiles)
+  const [showForm, setShowForm] = useState<boolean>(false);
+
   // Active Tab for Divisional & Global Charts
   const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
-  const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'GLOBAL'>('PARTICULARS');
+  const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'INTERPRETATIONS' | 'GLOBAL'>('PARTICULARS');
 
   // Kundali Result State (Null by default, generated ONLY when user clicks 'Birth Kundli Generate')
   const [kundali, setKundali] = useState<KundaliResult | null>(null);
@@ -131,15 +138,53 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     if (visible) {
       (async () => {
         const profile = await getUserProfile();
-        if (profile && profile.name) {
-          setName(profile.name);
-        }
+        let loadedProfiles: SavedKundaliProfile[] = [];
         if (profile?.email) {
-          const restored = await restoreKundliProfilesFromCloud(profile.email);
-          setSavedProfiles(restored);
+          loadedProfiles = await restoreKundliProfilesFromCloud(profile.email);
         } else {
-          const local = await getSavedProfiles();
-          setSavedProfiles(local);
+          loadedProfiles = await getSavedProfiles();
+        }
+        setSavedProfiles(loadedProfiles);
+
+        const activeP = await getActiveProfile();
+        if (activeP) {
+          setShowForm(false);
+          setName(activeP.name);
+          setDobDay(activeP.dobDay);
+          setDobMonth(activeP.dobMonth);
+          setDobYear(activeP.dobYear);
+          setTobHour(activeP.tobHour);
+          setTobMinute(activeP.tobMinute);
+          setActiveLocation({
+            cityName: activeP.cityName,
+            lat: activeP.lat,
+            lng: activeP.lng
+          });
+          const day = parseInt(activeP.dobDay, 10) || 1;
+          const month = (parseInt(activeP.dobMonth, 10) || 1) - 1;
+          const year = parseInt(activeP.dobYear, 10) || 1990;
+          const h = parseInt(activeP.tobHour, 10) || 0;
+          const m = parseInt(activeP.tobMinute, 10) || 0;
+          const result = calculateBirthKundali(activeP.name, new Date(year, month, day), h, m, activeP.cityName, activeP.lat, activeP.lng);
+          setKundali(result);
+        } else {
+          setShowForm(true);
+          if (profile && profile.name) {
+            setName(profile.name);
+          }
+          if (!kundali) {
+            const benchmarkDate = new Date(1989, 1, 13);
+            const defaultKundali = calculateBirthKundali(
+              'User',
+              benchmarkDate,
+              0,
+              5,
+              'Surat, Gujarat, India',
+              21.1702,
+              72.8311
+            );
+            setKundali(defaultKundali);
+          }
         }
       })();
     }
@@ -163,16 +208,17 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     return () => clearTimeout(timer);
   }, [placeSearchQuery]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const day = parseInt(dobDay, 10) || 1;
     const month = (parseInt(dobMonth, 10) || 1) - 1;
     const year = parseInt(dobYear, 10) || 2000;
     const h = parseInt(tobHour, 10) || 0;
     const m = parseInt(tobMinute, 10) || 0;
 
+    const profileName = name.trim() || 'User';
     const dob = new Date(year, month, day);
     const result = calculateBirthKundali(
-      name.trim() || 'User',
+      profileName,
       dob,
       h,
       m,
@@ -183,8 +229,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
     setKundali(result);
   };
 
-  const executeSaveProfile = async (customName?: string) => {
-    const profileName = customName || name.trim() || 'User';
+  const executeSaveProfile = async (profileName: string) => {
     const updated = await saveKundaliProfile({
       name: profileName,
       dobDay,
@@ -231,7 +276,9 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 
     const result = calculateBirthKundali(p.name, new Date(year, month, day), h, m, p.cityName, p.lat, p.lng);
     setKundali(result);
+    setActiveProfileId(p.id);
     setShowSavedProfilesModal(false);
+    setShowForm(false);
   };
 
   const handleDeleteProfile = async (id: string) => {
@@ -242,310 +289,383 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const activeChart: KundaliDivisionalChart | undefined = kundali?.divisionalCharts[activeChartKey];
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalCard}>
-              {/* Header Bar */}
-              <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>{loc.birthChartTitle}</Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                  <Text style={styles.closeBtnText}>✕</Text>
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <SafeAreaView style={styles.fullScreenContainer}>
+        {/* Header Bar */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{loc.birthChartTitle}</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <Text style={styles.closeBtnText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Top Control Bar: Load Profile + Add New */}
+        <View style={styles.topControlRow}>
+          <TouchableOpacity
+            style={styles.loadProfileBtn}
+            onPress={() => setShowSavedProfilesModal(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.loadProfileBtnText}>
+              👤 Load Saved Profile ({savedProfiles.length}) ▼
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.addNewBtn, showForm && styles.addNewBtnActive]}
+            onPress={() => setShowForm(!showForm)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.addNewBtnText, showForm && styles.addNewBtnTextActive]}>
+              {showForm ? '✕ Hide Form' : '➕ Add New Profile'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Active Profile Info Banner (when form is hidden) */}
+          {!showForm && kundali && (
+            <View style={styles.activeProfileCard}>
+              <View style={styles.activeProfileTop}>
+                <Text style={styles.activeProfileName}>👤 Selected Profile: {name || 'User'}</Text>
+                <TouchableOpacity onPress={() => setShowForm(true)} style={styles.editProfileBtn}>
+                  <Text style={styles.editProfileText}>✏️ Edit Profile</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.activeProfileDetails}>
+                🗓️ DOB: {dobDay}/{dobMonth}/{dobYear} • ⏰ TOB: {tobHour}:{tobMinute} • 📍 {activeLocation.cityName}
+              </Text>
+            </View>
+          )}
+
+          {/* 1. Birth Details Form Card */}
+          {showForm && (
+            <View style={styles.formCard}>
+              <Text style={styles.formSectionTitle}>{loc.birthDetailsInput}</Text>
+
+              {/* Name Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{loc.fullName}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter name"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
+
+              {/* Date of Birth (DOB) Dropdowns */}
+              <Text style={styles.inputLabel}>{loc.dobLabel}</Text>
+              <View style={styles.dropdownRow}>
+                <TouchableOpacity
+                  style={[styles.dropdownField, styles.col3]}
+                  onPress={() => setShowDayModal(true)}
+                >
+                  <Text style={styles.dropdownValText}>Day: {dobDay}</Text>
+                  <Text style={styles.fieldArrow}>▼</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.dropdownField, styles.col3]}
+                  onPress={() => setShowMonthModal(true)}
+                >
+                  <Text style={styles.dropdownValText}>{MONTHS_LIST[parseInt(dobMonth, 10) - 1] || 'Month'}</Text>
+                  <Text style={styles.fieldArrow}>▼</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.dropdownField, styles.col3]}
+                  onPress={() => setShowYearModal(true)}
+                >
+                  <Text style={styles.dropdownValText}>Year: {dobYear}</Text>
+                  <Text style={styles.fieldArrow}>▼</Text>
                 </TouchableOpacity>
               </View>
 
-              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* 1. Birth Details Form Card */}
-                <View style={styles.formCard}>
-                  
-                  {/* Saved Kundali Profiles Dropdown Picker */}
+              {/* Time of Birth (TOB) Dropdowns */}
+              <Text style={styles.inputLabel}>{loc.tobLabel}</Text>
+              <View style={styles.dropdownRow}>
+                <TouchableOpacity
+                  style={[styles.dropdownField, styles.col2]}
+                  onPress={() => setShowHourModal(true)}
+                >
+                  <Text style={styles.dropdownValText}>Hour: {tobHour} : 00</Text>
+                  <Text style={styles.fieldArrow}>▼</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.dropdownField, styles.col2]}
+                  onPress={() => setShowMinuteModal(true)}
+                >
+                  <Text style={styles.dropdownValText}>Min: {tobMinute}</Text>
+                  <Text style={styles.fieldArrow}>▼</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Free Global Location Picker Dropdown */}
+              <Text style={styles.inputLabel}>Global Location of Birth (Lat & Lng Search)</Text>
+              <TouchableOpacity
+                style={styles.dropdownBtn}
+                onPress={() => setShowLocationModal(true)}
+                activeOpacity={0.8}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.dropdownCityName}>📍 {activeLocation.cityName}</Text>
+                  <Text style={styles.dropdownCitySub}>
+                    Lat: {activeLocation.lat.toFixed(4)}° • Lng: {activeLocation.lng.toFixed(4)}°
+                  </Text>
+                </View>
+                <Text style={styles.dropdownArrow}>🔍 Search Place ▼</Text>
+              </TouchableOpacity>
+
+              {/* Action Buttons Row: Generate + Save */}
+              <View style={styles.actionBtnRow}>
+                <TouchableOpacity style={[styles.actionBtn, styles.generateBtn]} onPress={handleGenerate} activeOpacity={0.8}>
+                  <Text style={styles.generateBtnText}>✨ Generate & Save Birth Chart</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={handleSaveProfile} activeOpacity={0.8}>
+                  <Text style={styles.saveBtnText}>💾 Save Profile</Text>
+                </TouchableOpacity>
+              </View>
+
+              {saveSuccessMsg ? (
+                <Text style={styles.saveSuccessText}>{saveSuccessMsg}</Text>
+              ) : null}
+            </View>
+          )}
+
+          {/* 2. Kundali Results Container */}
+          {kundali && (
+            <View style={styles.resultsContainer}>
+
+              {/* Direct Lal Kitab & Career Audit Shortcut Button */}
+              {onOpenLalKitab && (
+                <TouchableOpacity
+                  style={styles.lalKitabBannerBtn}
+                  onPress={() => {
+                    onClose();
+                    onOpenLalKitab({
+                      dob: `${dobDay.padStart(2, '0')}/${dobMonth.padStart(2, '0')}/${dobYear}`,
+                      tob: `${tobHour.padStart(2, '0')}:${tobMinute.padStart(2, '0')}`,
+                      city: activeLocation.cityName,
+                      lat: activeLocation.lat,
+                      lon: activeLocation.lng
+                    });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.lalKitabBannerTitle}>📕 Lal Kitab & BNN Career Report</Text>
+                  <Text style={styles.lalKitabBannerSub}>Analyze Saturn Trine Career Timeline & Remedies for {name || 'this Chart'} ▶</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Direct Vedic Predictions & Soul Purpose Banner Button */}
+              <TouchableOpacity
+                style={[styles.lalKitabBannerBtn, { backgroundColor: '#4A0E17', borderColor: '#FFD700', marginTop: 8 }]}
+                onPress={() => setActiveDetailSection('INTERPRETATIONS')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.lalKitabBannerTitle, { color: '#FFD700' }]}>🌟 Vedic Predictions, Soul Purpose & Nakshatra Synergy</Text>
+                <Text style={[styles.lalKitabBannerSub, { color: '#FFE0B2' }]}>Surya Atma Tattva, Leo Sovereign Matrix & 3-Tier Nakshatra Pada Synergy ▶</Text>
+              </TouchableOpacity>
+
+              {/* Divisional & Global Chart Switcher Tabs */}
+              <Text style={styles.sectionHeaderTitle}>{loc.divisionalChartsTitle}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartTabsScroll}>
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'D1' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('D1')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'D1' && styles.chartTabTextActive]}>{loc.d1Lagna}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'MOON' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('MOON')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'MOON' && styles.chartTabTextActive]}>{loc.chandraMoon}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'SUN' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('SUN')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'SUN' && styles.chartTabTextActive]}>{loc.suryaSun}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'D2' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('D2')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'D2' && styles.chartTabTextActive]}>{loc.d2Hora}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'D9' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('D9')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'D9' && styles.chartTabTextActive]}>{loc.d9Navamsha}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'D10' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('D10')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'D10' && styles.chartTabTextActive]}>{loc.d10Dashamsha}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'WESTERN' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('WESTERN')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'WESTERN' && styles.chartTabTextActive]}>{loc.westernNatal}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'RUSSIAN' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('RUSSIAN')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'RUSSIAN' && styles.chartTabTextActive]}>{loc.russianCosmogram}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'THAI' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('THAI')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'THAI' && styles.chartTabTextActive]}>{loc.thaiSuryayatra}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.chartTabBtn, activeChartKey === 'INDONESIAN' && styles.chartTabBtnActive]}
+                  onPress={() => setActiveChartKey('INDONESIAN')}
+                >
+                  <Text style={[styles.chartTabText, activeChartKey === 'INDONESIAN' && styles.chartTabTextActive]}>{loc.indonesianPawukon}</Text>
+                </TouchableOpacity>
+              </ScrollView>
+
+              {/* Chart Graphic Box */}
+              {activeChart && (
+                <View style={styles.chartGraphicBox}>
+                  <View style={styles.chartGraphicHeaderRow}>
+                    <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
+
+                    {/* Chart Style Switcher (North Indian Default / South / Global) */}
+                    <View style={styles.styleToggleBar}>
+                      <TouchableOpacity
+                        style={[styles.styleBtn, chartStyle === 'NORTH' && styles.styleBtnActive]}
+                        onPress={() => setChartStyle('NORTH')}
+                      >
+                        <Text style={[styles.styleBtnText, chartStyle === 'NORTH' && styles.styleBtnTextActive]}>🏛️ North</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.styleBtn, chartStyle === 'SOUTH' && styles.styleBtnActive]}
+                        onPress={() => setChartStyle('SOUTH')}
+                      >
+                        <Text style={[styles.styleBtnText, chartStyle === 'SOUTH' && styles.styleBtnTextActive]}>☸️ South</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.styleBtn, chartStyle === 'GLOBAL' && styles.styleBtnActive]}
+                        onPress={() => setChartStyle('GLOBAL')}
+                      >
+                        <Text style={[styles.styleBtnText, chartStyle === 'GLOBAL' && styles.styleBtnTextActive]}>🌍 Global</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <Text style={styles.chartGraphicSub}>
+                    Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style' : chartStyle === 'SOUTH' ? 'South Indian Fixed Rashi Style' : 'Global Grid'}
+                  </Text>
+
+                  {/* Visual Chart Graphic */}
+                  {chartStyle === 'NORTH' ? (
+                    <NorthIndianTriangleChart houses={activeChart.houses} size={300} />
+                  ) : (
+                    <View style={chartStyle === 'SOUTH' ? styles.southFixedGrid : styles.diamondGrid}>
+                      {activeChart.houses.map(h => (
+                        <View
+                          key={h.houseNumber}
+                          style={[
+                            styles.houseBox,
+                            chartStyle === 'SOUTH' && styles.southHouseBox
+                          ]}
+                        >
+                          <View style={styles.houseHeaderRow}>
+                            <Text style={[styles.houseNumText, chartStyle === 'SOUTH' && styles.southHouseNumText]}>
+                              {chartStyle === 'SOUTH' ? `Rashi ${h.houseNumber}` : `H${h.houseNumber}`}
+                            </Text>
+                            <Text style={styles.houseRashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
+                          </View>
+                          <Text style={styles.housePlanetsText} numberOfLines={2}>
+                            {h.planets.length > 0 ? h.planets.join(', ') : '—'}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* 3. Deep Analysis Section Switcher */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                <View style={styles.detailSectionSwitcher}>
                   <TouchableOpacity
-                    style={styles.savedProfilesBtn}
-                    onPress={() => setShowSavedProfilesModal(true)}
-                    activeOpacity={0.8}
+                    style={[styles.detailSwitchBtn, activeDetailSection === 'PARTICULARS' && styles.detailSwitchBtnActive]}
+                    onPress={() => setActiveDetailSection('PARTICULARS')}
                   >
-                    <Text style={styles.savedProfilesBtnText}>
-                      👤 Load Saved Profile ({savedProfiles.length}) ▼
+                    <Text style={[styles.detailSwitchText, activeDetailSection === 'PARTICULARS' && styles.detailSwitchTextActive]}>
+                      📋 Birth Panchang
                     </Text>
                   </TouchableOpacity>
 
-                  <Text style={styles.formSectionTitle}>{loc.birthDetailsInput}</Text>
-
-                  {/* Name Input */}
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>{loc.fullName}</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Enter name"
-                      placeholderTextColor={Colors.textMuted}
-                    />
-                  </View>
-
-                  {/* Date of Birth (DOB) Dropdowns */}
-                  <Text style={styles.inputLabel}>{loc.dobLabel}</Text>
-                  <View style={styles.dropdownRow}>
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col3]}
-                      onPress={() => setShowDayModal(true)}
-                    >
-                      <Text style={styles.dropdownValText}>Day: {dobDay}</Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col3]}
-                      onPress={() => setShowMonthModal(true)}
-                    >
-                      <Text style={styles.dropdownValText}>{MONTHS_LIST[parseInt(dobMonth, 10) - 1] || 'Month'}</Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col3]}
-                      onPress={() => setShowYearModal(true)}
-                    >
-                      <Text style={styles.dropdownValText}>Year: {dobYear}</Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Time of Birth (TOB) Dropdowns */}
-                  <Text style={styles.inputLabel}>{loc.tobLabel}</Text>
-                  <View style={styles.dropdownRow}>
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col2]}
-                      onPress={() => setShowHourModal(true)}
-                    >
-                      <Text style={styles.dropdownValText}>Hour: {tobHour} : 00</Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.dropdownField, styles.col2]}
-                      onPress={() => setShowMinuteModal(true)}
-                    >
-                      <Text style={styles.dropdownValText}>Min: {tobMinute}</Text>
-                      <Text style={styles.fieldArrow}>▼</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Free Global Location Picker Dropdown */}
-                  <Text style={styles.inputLabel}>Global Location of Birth (Lat & Lng Search)</Text>
                   <TouchableOpacity
-                    style={styles.dropdownBtn}
-                    onPress={() => setShowLocationModal(true)}
-                    activeOpacity={0.8}
+                    style={[styles.detailSwitchBtn, activeDetailSection === 'PLANETS' && styles.detailSwitchBtnActive]}
+                    onPress={() => setActiveDetailSection('PLANETS')}
                   >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.dropdownCityName}>📍 {activeLocation.cityName}</Text>
-                      <Text style={styles.dropdownCitySub}>
-                        Lat: {activeLocation.lat.toFixed(4)}° • Lng: {activeLocation.lng.toFixed(4)}°
-                      </Text>
-                    </View>
-                    <Text style={styles.dropdownArrow}>🔍 Search Place ▼</Text>
+                    <Text style={[styles.detailSwitchText, activeDetailSection === 'PLANETS' && styles.detailSwitchTextActive]}>
+                      🪐 Planet and Degree
+                    </Text>
                   </TouchableOpacity>
 
-                  {/* Action Buttons Row: Generate + Save */}
-                  <View style={styles.actionBtnRow}>
-                    <TouchableOpacity style={[styles.actionBtn, styles.generateBtn]} onPress={handleGenerate} activeOpacity={0.8}>
-                      <Text style={styles.generateBtnText}>{loc.generateBtn}</Text>
-                    </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.detailSwitchBtn, activeDetailSection === 'HOUSES' && styles.detailSwitchBtnActive]}
+                    onPress={() => setActiveDetailSection('HOUSES')}
+                  >
+                    <Text style={[styles.detailSwitchText, activeDetailSection === 'HOUSES' && styles.detailSwitchTextActive]}>
+                      🏠 12 House Analysis
+                    </Text>
+                  </TouchableOpacity>
 
-                    <TouchableOpacity style={[styles.actionBtn, styles.saveBtn]} onPress={handleSaveProfile} activeOpacity={0.8}>
-                      <Text style={styles.saveBtnText}>💾 Save Profile</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    style={[styles.detailSwitchBtn, activeDetailSection === 'INTERPRETATIONS' && styles.detailSwitchBtnActive]}
+                    onPress={() => setActiveDetailSection('INTERPRETATIONS')}
+                  >
+                    <Text style={[styles.detailSwitchText, activeDetailSection === 'INTERPRETATIONS' && styles.detailSwitchTextActive]}>
+                      📜 Astrological Predictions (Vedic & Lal Kitab)
+                    </Text>
+                  </TouchableOpacity>
 
-                  {saveSuccessMsg ? (
-                    <Text style={styles.saveSuccessText}>{saveSuccessMsg}</Text>
-                  ) : null}
+                  <TouchableOpacity
+                    style={[styles.detailSwitchBtn, activeDetailSection === 'GLOBAL' && styles.detailSwitchBtnActive]}
+                    onPress={() => setActiveDetailSection('GLOBAL')}
+                  >
+                    <Text style={[styles.detailSwitchText, activeDetailSection === 'GLOBAL' && styles.detailSwitchTextActive]}>
+                      🌌 Western and Global
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+              </ScrollView>
 
-                {/* 2. Kundali Results Container */}
-                {kundali && (
-                  <View style={styles.resultsContainer}>
-
-                    {/* Divisional & Global Chart Switcher Tabs */}
-                    <Text style={styles.sectionHeaderTitle}>{loc.divisionalChartsTitle}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartTabsScroll}>
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'D1' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('D1')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D1' && styles.chartTabTextActive]}>{loc.d1Lagna}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'MOON' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('MOON')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'MOON' && styles.chartTabTextActive]}>{loc.chandraMoon}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'SUN' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('SUN')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'SUN' && styles.chartTabTextActive]}>{loc.suryaSun}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'D2' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('D2')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D2' && styles.chartTabTextActive]}>{loc.d2Hora}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'D9' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('D9')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D9' && styles.chartTabTextActive]}>{loc.d9Navamsha}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'D10' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('D10')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'D10' && styles.chartTabTextActive]}>{loc.d10Dashamsha}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'WESTERN' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('WESTERN')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'WESTERN' && styles.chartTabTextActive]}>{loc.westernNatal}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'RUSSIAN' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('RUSSIAN')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'RUSSIAN' && styles.chartTabTextActive]}>{loc.russianCosmogram}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'THAI' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('THAI')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'THAI' && styles.chartTabTextActive]}>{loc.thaiSuryayatra}</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.chartTabBtn, activeChartKey === 'INDONESIAN' && styles.chartTabBtnActive]}
-                        onPress={() => setActiveChartKey('INDONESIAN')}
-                      >
-                        <Text style={[styles.chartTabText, activeChartKey === 'INDONESIAN' && styles.chartTabTextActive]}>{loc.indonesianPawukon}</Text>
-                      </TouchableOpacity>
-                    </ScrollView>
-
-                    {/* Chart Graphic Box */}
-                    {activeChart && (
-                      <View style={styles.chartGraphicBox}>
-                        <View style={styles.chartGraphicHeaderRow}>
-                          <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
-
-                          {/* Chart Style Switcher (North Indian Default / South / Global) */}
-                          <View style={styles.styleToggleBar}>
-                            <TouchableOpacity
-                              style={[styles.styleBtn, chartStyle === 'NORTH' && styles.styleBtnActive]}
-                              onPress={() => setChartStyle('NORTH')}
-                            >
-                              <Text style={[styles.styleBtnText, chartStyle === 'NORTH' && styles.styleBtnTextActive]}>🏛️ North</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[styles.styleBtn, chartStyle === 'SOUTH' && styles.styleBtnActive]}
-                              onPress={() => setChartStyle('SOUTH')}
-                            >
-                              <Text style={[styles.styleBtnText, chartStyle === 'SOUTH' && styles.styleBtnTextActive]}>☸️ South</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[styles.styleBtn, chartStyle === 'GLOBAL' && styles.styleBtnActive]}
-                              onPress={() => setChartStyle('GLOBAL')}
-                            >
-                              <Text style={[styles.styleBtnText, chartStyle === 'GLOBAL' && styles.styleBtnTextActive]}>🌍 Global</Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-
-                        <Text style={styles.chartGraphicSub}>
-                          Ascendant (Lagna): {kundali.lagnaRashi} • Degree: {kundali.lagnaDegree} • Style: {chartStyle === 'NORTH' ? 'North Indian Diamond Style' : chartStyle === 'SOUTH' ? 'South Indian Fixed Rashi Style' : 'Global Grid'}
-                        </Text>
-
-                        {/* Visual Chart Graphic (North Indian Authentic Diamond-Triangle vs South Fixed Rashi Grid vs Global Grid) */}
-                        {chartStyle === 'NORTH' ? (
-                          <NorthIndianTriangleChart houses={activeChart.houses} size={300} />
-                        ) : (
-                          <View style={chartStyle === 'SOUTH' ? styles.southFixedGrid : styles.diamondGrid}>
-                            {activeChart.houses.map(h => (
-                              <View
-                                key={h.houseNumber}
-                                style={[
-                                  styles.houseBox,
-                                  chartStyle === 'SOUTH' && styles.southHouseBox
-                                ]}
-                              >
-                                <View style={styles.houseHeaderRow}>
-                                  <Text style={[styles.houseNumText, chartStyle === 'SOUTH' && styles.southHouseNumText]}>
-                                    {chartStyle === 'SOUTH' ? `Rashi ${h.houseNumber}` : `H${h.houseNumber}`}
-                                  </Text>
-                                  <Text style={styles.houseRashiText} numberOfLines={1}>{h.rashiName.split(' ')[0]}</Text>
-                                </View>
-                                <Text style={styles.housePlanetsText} numberOfLines={2}>
-                                  {h.planets.length > 0 ? h.planets.join(', ') : '—'}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                      </View>
+                    {/* Detail Section 0: Astrological Predictions & Rules (Vedic & Lal Kitab) */}
+                    {activeDetailSection === 'INTERPRETATIONS' && (
+                      <AstrologyInterpretationsView kundali={kundali} />
                     )}
-
-                    {/* 3. Deep Analysis Section Switcher */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-                      <View style={styles.detailSectionSwitcher}>
-                        <TouchableOpacity
-                          style={[styles.detailSwitchBtn, activeDetailSection === 'PARTICULARS' && styles.detailSwitchBtnActive]}
-                          onPress={() => setActiveDetailSection('PARTICULARS')}
-                        >
-                          <Text style={[styles.detailSwitchText, activeDetailSection === 'PARTICULARS' && styles.detailSwitchTextActive]}>
-                            {loc.birthPanchangTab}
-                          </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[styles.detailSwitchBtn, activeDetailSection === 'PLANETS' && styles.detailSwitchBtnActive]}
-                          onPress={() => setActiveDetailSection('PLANETS')}
-                        >
-                          <Text style={[styles.detailSwitchText, activeDetailSection === 'PLANETS' && styles.detailSwitchTextActive]}>
-                            {loc.planetaryDegreesTab}
-                          </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[styles.detailSwitchBtn, activeDetailSection === 'HOUSES' && styles.detailSwitchBtnActive]}
-                          onPress={() => setActiveDetailSection('HOUSES')}
-                        >
-                          <Text style={[styles.detailSwitchText, activeDetailSection === 'HOUSES' && styles.detailSwitchTextActive]}>
-                            {loc.houseAnalysisTab}
-                          </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={[styles.detailSwitchBtn, activeDetailSection === 'GLOBAL' && styles.detailSwitchBtnActive]}
-                          onPress={() => setActiveDetailSection('GLOBAL')}
-                        >
-                          <Text style={[styles.detailSwitchText, activeDetailSection === 'GLOBAL' && styles.detailSwitchTextActive]}>
-                            {loc.westernAspectsTab}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </ScrollView>
 
                     {/* Detail Section 1: Avakahada Chakra / Particulars */}
                     {activeDetailSection === 'PARTICULARS' && (
@@ -686,10 +806,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </View>
                 )}
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+            </SafeAreaView>
 
       {/* Soul Purpose Modal */}
       {kundali && (
@@ -1057,27 +1174,37 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 };
 
 const styles = StyleSheet.create({
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: Colors.creamBg,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalCard: {
+    flex: 1,
     backgroundColor: Colors.creamBg,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '92%',
     padding: 16,
-    elevation: 12,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    backgroundColor: Colors.cardBg,
+  },
+  backBtn: {
+    paddingRight: 10,
+  },
+  backBtnText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.maroon,
   },
   headerTitle: {
     fontSize: 16,
@@ -1099,8 +1226,90 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.textMuted,
   },
+  topControlRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: '#FFF8E7',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFE0B2',
+  },
+  loadProfileBtn: {
+    flex: 1,
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadProfileBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  addNewBtn: {
+    backgroundColor: Colors.maroon,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addNewBtnActive: {
+    backgroundColor: '#C62828',
+  },
+  addNewBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  addNewBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  activeProfileCard: {
+    backgroundColor: '#FAF5EE',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    padding: 12,
+    marginBottom: 10,
+  },
+  activeProfileTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  activeProfileName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  editProfileBtn: {
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FFB74D',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  editProfileText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  activeProfileDetails: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 40,
+    paddingHorizontal: 14,
+    paddingTop: 10,
   },
   formCard: {
     backgroundColor: Colors.cardBg,
@@ -1385,27 +1594,33 @@ const styles = StyleSheet.create({
   // Deep Analysis Switcher
   detailSectionSwitcher: {
     flexDirection: 'row',
-    backgroundColor: '#E0E0E0',
-    borderRadius: 12,
-    padding: 3,
-    gap: 4,
+    paddingVertical: 4,
+    gap: 10,
   },
   detailSwitchBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   detailSwitchBtnActive: {
     backgroundColor: Colors.maroon,
+    borderColor: '#FFD700',
+    borderWidth: 1.5,
+    elevation: 3,
   },
   detailSwitchText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.textSecondary,
+    color: Colors.maroon,
+    paddingHorizontal: 4,
   },
   detailSwitchTextActive: {
-    color: '#FFFFFF',
+    color: '#FFD700',
   },
 
   // Detail Cards
@@ -1764,5 +1979,29 @@ const styles = StyleSheet.create({
   },
   deleteProfileText: {
     fontSize: 12,
+  },
+  lalKitabBannerBtn: {
+    backgroundColor: '#800000',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    shadowColor: '#800000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  lalKitabBannerTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  lalKitabBannerSub: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    marginTop: 4,
+    opacity: 0.95,
   },
 });

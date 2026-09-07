@@ -17,6 +17,52 @@ export interface SavedKundaliProfile {
 }
 
 const STORAGE_KEY = '@soulrise_saved_kundali_profiles_v1';
+const ACTIVE_PROFILE_KEY = '@soulrise_active_selected_profile_v1';
+
+/**
+ * Get active selected profile ID
+ */
+export async function getActiveProfileId(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(ACTIVE_PROFILE_KEY);
+  } catch (err) {
+    console.log('Error getting active profile ID:', err);
+    return null;
+  }
+}
+
+/**
+ * Set active selected profile ID
+ */
+export async function setActiveProfileId(id: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(ACTIVE_PROFILE_KEY, id);
+  } catch (err) {
+    console.log('Error setting active profile ID:', err);
+  }
+}
+
+/**
+ * Get the full active SavedKundaliProfile (or null if none saved)
+ */
+export async function getActiveProfile(): Promise<SavedKundaliProfile | null> {
+  try {
+    const profiles = await getSavedProfiles();
+    if (profiles.length === 0) return null;
+
+    const activeId = await getActiveProfileId();
+    if (activeId) {
+      const matched = profiles.find(p => p.id === activeId);
+      if (matched) return matched;
+    }
+
+    // Default to first saved profile if no active ID or ID not found
+    return profiles[0];
+  } catch (err) {
+    console.log('Error fetching active profile:', err);
+    return null;
+  }
+}
 
 /**
  * Get all saved Kundali profiles from local storage
@@ -50,6 +96,7 @@ export async function saveKundaliProfile(profile: Omit<SavedKundaliProfile, 'id'
     const updated = [newProfile, ...filtered];
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    await setActiveProfileId(newId);
 
     // Cloud Sync if user is logged in
     const currentUser = await getUserProfile();
@@ -82,6 +129,13 @@ export async function restoreKundliProfilesFromCloud(userEmail: string): Promise
 
       const mergedList = Array.from(mergedMap.values());
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mergedList));
+
+      // Ensure active profile remains set
+      const currentActiveId = await getActiveProfileId();
+      if (!currentActiveId && mergedList.length > 0) {
+        await setActiveProfileId(mergedList[0].id);
+      }
+
       return mergedList;
     }
     return await getSavedProfiles();
@@ -99,6 +153,16 @@ export async function deleteKundaliProfile(id: string): Promise<SavedKundaliProf
     const existing = await getSavedProfiles();
     const updated = existing.filter(p => p.id !== id);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+    // If deleted profile was active, set next available profile as active
+    const activeId = await getActiveProfileId();
+    if (activeId === id) {
+      if (updated.length > 0) {
+        await setActiveProfileId(updated[0].id);
+      } else {
+        await AsyncStorage.removeItem(ACTIVE_PROFILE_KEY);
+      }
+    }
 
     // Cloud Sync if user is logged in
     const currentUser = await getUserProfile();

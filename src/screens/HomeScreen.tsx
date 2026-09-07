@@ -10,6 +10,8 @@ import { ChoghadiyaGrid } from '../components/ChoghadiyaGrid';
 import { GocharKundaliCard } from '../components/GocharKundaliCard';
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
 import { BirthChartModal } from '../components/BirthChartModal';
+import { JainCalendarModal } from '../components/JainCalendarModal';
+import { LalKitabModal } from '../components/LalKitabModal';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
@@ -39,9 +41,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { language, t } = useLanguage();
 
   // Default active section on app open is LIMBS (Panchangam 5 Sacred Limbs), nullable so re-click collapses it!
-  const [activeSection, setActiveSection] = useState<SectionKey | null>('LIMBS');
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null);
   const [showLangModal, setShowLangModal] = useState(false);
   const [showBirthChartModal, setShowBirthChartModal] = useState(false);
+  const [showJainCalendarModal, setShowJainCalendarModal] = useState(false);
+  const [showLalKitabModal, setShowLalKitabModal] = useState(false);
+  const [lalKitabPayload, setLalKitabPayload] = useState<{
+    dob?: string;
+    tob?: string;
+    city?: string;
+    lat?: number;
+    lon?: number;
+  }>({});
+
+  const handleOpenLalKitabFromChart = (profile: { dob: string; tob: string; city: string; lat?: number; lon?: number }) => {
+    setLalKitabPayload(profile);
+    setShowBirthChartModal(false);
+    setShowLalKitabModal(true);
+  };
 
   const tithiInPaksha = (((panchang.tithi.number || 1) - 1) % 15) + 1;
   const locHeroTithi = getLocalizedTithi(tithiInPaksha, language);
@@ -232,18 +249,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             )}
           </View>
 
-          {/* Section 5: Birth Chart Generator (Janam Kundali) */}
-          <View style={styles.featureCardContainer}>
-            <TouchableOpacity
-              style={styles.featureHeader}
-              onPress={() => setShowBirthChartModal(true)}
-              activeOpacity={0.8}
-            >
+          {/* Section 5: Kundli - Birth Chart Details */}
+          <TouchableOpacity
+            style={styles.featureCardContainer}
+            onPress={() => setShowBirthChartModal(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.featureHeader}>
               <View style={styles.featureHeaderLeft}>
                 <Text style={styles.featureIcon}>🔮</Text>
                 <View>
                   <View style={styles.titleRow}>
-                    <Text style={styles.featureTitle}>Birth Chart Generator (Kundali)</Text>
+                    <Text style={styles.featureTitle}>Kundli - Birth Chart Details</Text>
                   </View>
                   <Text style={styles.featureSub}>
                     D1, Moon, Sun, D2, D9 & D10 Charts, Avakahada & Planets
@@ -251,10 +268,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </View>
               </View>
               <Text style={styles.expandArrow}>▶</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
 
-          {/* Section 6 (Future Expansion): Western Astrology */}
+          {/* ☸️ Section 5.5: Jain Calendar & Panchang (જૈન પંચાંગ અને કૅલેન્ડર) */}
+          <TouchableOpacity
+            style={[styles.featureCardContainer, { backgroundColor: '#FFF8E7', borderColor: '#FFE082', borderWidth: 1.5 }]}
+            onPress={() => setShowJainCalendarModal(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.featureHeader}>
+              <View style={styles.featureHeaderLeft}>
+                <Text style={styles.featureIcon}>☸️</Text>
+                <View>
+                  <View style={styles.titleRow}>
+                    <Text style={[styles.featureTitle, { color: '#800000', fontWeight: 'bold' }]}>
+                      જૈન પંચાંગ અને કૅલેન્ડર (Jain Calendar)
+                    </Text>
+                    <View style={[styles.comingSoonBadge, { backgroundColor: '#800000' }]}>
+                      <Text style={[styles.comingSoonText, { color: '#FFE082' }]}>જૈન તિથિ</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.featureSub, { color: '#5D4037' }]}>
+                    વીર નિર્વાણ સંવત ૨૫૫૧ • પચ્ચક્ખાણ સમયો • જૈન પર્વ અને નિયમ
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.expandArrow, { color: '#800000' }]}>➔</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Section 6 (Future Expansion): Western Astrology - Kept in code, hidden from screen */}
+          {/*
           <View style={styles.featureCardContainer}>
             <TouchableOpacity
               style={styles.featureHeaderDisabled}
@@ -276,29 +321,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
             </TouchableOpacity>
           </View>
+          */}
 
-          {/* Section 7 (Future Expansion): Lal Kitab Astro */}
-          <View style={styles.featureCardContainer}>
-            <TouchableOpacity
-              style={styles.featureHeaderDisabled}
-              activeOpacity={0.9}
-            >
+          {/* Section 7: AI Kundli Details */}
+          <TouchableOpacity
+            style={[styles.featureCardContainer, { backgroundColor: '#FFF5F5', borderColor: '#FEB2B2', borderWidth: 1.5 }]}
+            onPress={() => setShowLalKitabModal(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.featureHeader}>
               <View style={styles.featureHeaderLeft}>
-                <Text style={styles.featureIcon}>📜</Text>
+                <Text style={styles.featureIcon}>📕</Text>
                 <View>
                   <View style={styles.titleRow}>
-                    <Text style={styles.featureTitleMuted}>Lal Kitab Remedies & Predictions</Text>
-                    <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonText}>{t('comingSoon')}</Text>
+                    <Text style={[styles.featureTitle, { color: '#9B2C2C', fontWeight: 'bold' }]}>
+                      {showHindiScript ? 'AI Kundli Details' : 'AI Kundli Details'}
+                    </Text>
+                    <View style={[styles.comingSoonBadge, { backgroundColor: '#DD6B20' }]}>
+                      <Text style={[styles.comingSoonText, { color: '#FFFFFF' }]}>LIVE</Text>
                     </View>
                   </View>
-                  <Text style={styles.featureSubMuted}>
-                    Unique planetary remedies, totke & Varshphal charts
+                  <Text style={[styles.featureSub, { color: '#742A2A' }]}>
+                    Saturn 1-5-9 Trine Timeline, Ketu Breaks & Remedies
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
-          </View>
+              <Text style={[styles.expandArrow, { color: '#9B2C2C' }]}>➔</Text>
+            </View>
+          </TouchableOpacity>
 
         </View>
       </ScrollView>
@@ -309,11 +359,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setShowLangModal(false)}
       />
 
+      {/* Lal Kitab & Career Kundli Modal */}
+      <LalKitabModal
+        visible={showLalKitabModal}
+        onClose={() => setShowLalKitabModal(false)}
+        defaultCity={selectedCity?.name}
+        initialDob={lalKitabPayload.dob}
+        initialTob={lalKitabPayload.tob}
+        initialCity={lalKitabPayload.city}
+        initialLat={lalKitabPayload.lat}
+        initialLon={lalKitabPayload.lon}
+      />
+
       {/* Birth Chart Generator (Janam Kundali) Modal */}
       <BirthChartModal
         visible={showBirthChartModal}
         onClose={() => setShowBirthChartModal(false)}
         selectedCity={selectedCity}
+      />
+
+      {/* ☸️ Jain Calendar Modal (જૈન પંચાંગ અને કૅલેન્ડર) */}
+      <JainCalendarModal
+        visible={showJainCalendarModal}
+        onClose={() => setShowJainCalendarModal(false)}
+        selectedCity={selectedCity}
+        panchang={panchang}
       />
     </View>
   );
@@ -416,7 +486,6 @@ const styles = StyleSheet.create({
   featureCardContainer: {
     marginBottom: 12,
     borderRadius: 16,
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.cardBg,
@@ -428,6 +497,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     backgroundColor: '#FAF5EE',
+    borderRadius: 16,
   },
   featureHeaderActive: {
     backgroundColor: Colors.maroon,

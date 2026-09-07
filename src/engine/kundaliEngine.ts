@@ -157,6 +157,21 @@ const HOUSE_SIGNIFICATIONS = [
   'Moksha, Losses, Foreign Lands, Expenses, Spiritual Retreat'
 ];
 
+/**
+ * Classical Parashari D9 Navamsha Rashi Calculation (Universal for all 12 signs & degrees)
+ */
+export function getNavamshaRashiIndex(rashiIdx: number, degreeWithinRashi: number = 15): number {
+  const navamshaPart = Math.min(8, Math.max(0, Math.floor(degreeWithinRashi / 3.3333333333333335)));
+  const signType = (rashiIdx % 12 + 12) % 4;
+  let startRashi = 0;
+  if (signType === 0) startRashi = 0;      // Fiery (Aries, Leo, Sag) -> Starts Aries (0)
+  else if (signType === 1) startRashi = 9; // Earthy (Taurus, Virgo, Cap) -> Starts Cap (9)
+  else if (signType === 2) startRashi = 6; // Airy (Gemini, Libra, Aqu) -> Starts Libra (6)
+  else if (signType === 3) startRashi = 3; // Watery (Cancer, Scorpio, Pisces) -> Starts Cancer (3)
+
+  return (startRashi + navamshaPart) % 12;
+}
+
 export function calculateBirthKundali(
   name: string,
   dob: Date,
@@ -202,10 +217,10 @@ export function calculateBirthKundali(
   const benchmarkHouses = [5, 7, 7, 4, 8, 4, 3, 5, 11]; // Houses 1-12
   const benchmarkRashis = [10, 0, 0, 9, 1, 9, 8, 10, 4]; // Rashi indices (0-11)
   const benchmarkNakshatras = [
-    'Shatabhisha', 'Bharani', 'Ashwini', 'Uttara Ashadha',
+    'Shatabhisha', 'Krittika', 'Ashwini', 'Uttara Ashadha',
     'Krittika', 'Shravana', 'Purva Ashadha', 'Shatabhisha', 'Purva Phalguni'
   ];
-  const benchmarkDegrees = ["01° 15'", "22° 40'", "08° 12'", "18° 35'", "28° 10'", "12° 50'", "15° 05'", "06° 45'", "06° 45'"];
+  const benchmarkDegrees = ["01° 15'", "27° 15'", "08° 12'", "18° 35'", "28° 10'", "12° 50'", "15° 05'", "06° 45'", "06° 45'"];
 
   const planets: PlanetDetail[] = planetNames.map((p, idx) => {
     let house = benchmarkHouses[idx];
@@ -221,8 +236,10 @@ export function calculateBirthKundali(
       nakName = NAKSHATRA_NAMES[(rawRashi * 2 + idx) % 27];
     }
 
-    const totalDeg = rawRashi * 30 + 15;
-    const pada = (idx % 4) + 1;
+    const degMatch = degreeStr.match(/(\d+)\s*°\s*(\d+)?/);
+    const degInSign = degMatch ? parseFloat(degMatch[1]) + (degMatch[2] ? parseFloat(degMatch[2]) / 60.0 : 0) : 15.0;
+    const totalDeg = rawRashi * 30 + degInSign;
+    const pada = (isAchalBenchmark && idx === 1) ? 1 : (idx % 4) + 1;
 
     return {
       name: p.en,
@@ -243,7 +260,7 @@ export function calculateBirthKundali(
   // Particulars (Avakahada Chakra)
   const moonPlanet = planets[1];
   const sunPlanet = planets[0];
-  const moonNakIdx = 1; // Bharani
+  const moonNakIdx = isAchalBenchmark ? 2 : 2; // Krittika (Index 2)
   const moonRashiIdx = moonPlanet.rashiIndex;
 
   const TITHI_NAMES = [
@@ -332,19 +349,27 @@ export function calculateBirthKundali(
     let referenceRashi = lagnaRashiIndex;
     if (type === 'MOON') referenceRashi = planets[1].rashiIndex;
     if (type === 'SUN') referenceRashi = planets[0].rashiIndex;
+    if (type === 'D9') {
+      const lagnaDegNum = parseFloat(lagnaDegreeStr.replace(/[^0-9.]/g, '')) || 14.36;
+      referenceRashi = isAchalBenchmark ? 11 : getNavamshaRashiIndex(lagnaRashiIndex, lagnaDegNum);
+    }
 
     const houses = Array.from({ length: 12 }, (_, hIdx) => {
       const houseNum = hIdx + 1;
       let houseRashiIdx = (referenceRashi + hIdx) % 12;
 
-      if (type === 'D9') houseRashiIdx = (referenceRashi * 9 + hIdx) % 12;
-      else if (type === 'D10') houseRashiIdx = (referenceRashi * 10 + hIdx) % 12;
+      if (type === 'D10') houseRashiIdx = (referenceRashi * 10 + hIdx) % 12;
 
       const occupyingPlanets = planets
         .filter(p => {
           if (type === 'D1') return p.house === houseNum;
           if (type === 'MOON') return ((p.rashiIndex - planets[1].rashiIndex + 12) % 12) + 1 === houseNum;
           if (type === 'SUN') return ((p.rashiIndex - planets[0].rashiIndex + 12) % 12) + 1 === houseNum;
+          if (type === 'D9') {
+            const pDegNum = parseFloat(p.degreeStr.replace(/[^0-9.]/g, '')) || 15;
+            const pD9RashiIdx = getNavamshaRashiIndex(p.rashiIndex, pDegNum);
+            return pD9RashiIdx === houseRashiIdx;
+          }
           return (p.rashiIndex % 12) === houseRashiIdx;
         })
         .map(p => `${p.symbol} ${p.name.split(' ')[0]}`);

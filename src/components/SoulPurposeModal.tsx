@@ -13,6 +13,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithiSoulPurpose } from '../data/tithiSoulPurposeData';
 import { KundaliResult } from '../engine/kundaliEngine';
 import { evaluatePersonalShoonya } from '../utils/shoonyaEvaluator';
+import { evaluateLeoSunSoulPurpose } from '../engine/leoSoulPurposeEngine';
+import { evaluateVedicRules } from '../engine/vedicAstrologyRules';
 
 interface SoulPurposeModalProps {
   visible: boolean;
@@ -30,10 +32,20 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
   kundali
 }) => {
   const { language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'PURPOSE' | 'SHOONYA' | 'EPIGENETICS' | 'DEITY'>('PURPOSE');
+  const [activeTab, setActiveTab] = useState<'PURPOSE' | 'LEO_SUN' | 'SHOONYA' | 'EPIGENETICS' | 'DEITY'>('PURPOSE');
 
   const info = getLocalizedTithiSoulPurpose(tithiNumber, language);
   const shoonyaAnalysis = evaluatePersonalShoonya(kundali, tithiNumber, language);
+  const leoSunPurpose = evaluateLeoSunSoulPurpose(kundali);
+  const vedicReport = evaluateVedicRules(kundali);
+
+  const getText = (textMap?: Record<string, any>, fallback: string = ''): string => {
+    if (!textMap) return fallback;
+    if (textMap[language]) return textMap[language];
+    if (language === 'hinglish') return textMap['hi'] || textMap['en'] || fallback;
+    if (language === 'mr') return textMap['hi'] || textMap['en'] || fallback;
+    return textMap['en'] || textMap['hi'] || fallback;
+  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -46,7 +58,7 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
               <View style={styles.headerRow}>
                 <View style={styles.titleBadge}>
                   <Text style={styles.headerIcon}>✨</Text>
-                  <Text style={styles.headerTitle}>Soul Purpose & Tithi Secrets</Text>
+                  <Text style={styles.headerTitle}>Soul Purpose on Earth</Text>
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
                   <Text style={styles.closeBtnText}>✕</Text>
@@ -73,45 +85,104 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                   <Text style={styles.groupMeaningText}>💡 {info.groupMeaning}</Text>
                 </View>
 
-                {/* Sub-Tab Navigation Bar */}
-                <View style={styles.tabNavRow}>
-                  <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'PURPOSE' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('PURPOSE')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'PURPOSE' && styles.tabTextActive]}>🌟 Purpose</Text>
-                  </TouchableOpacity>
+                {/* Main Tab Navigation Bar */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                  <View style={styles.tabNavRow}>
+                    <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'PURPOSE' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('PURPOSE')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'PURPOSE' && styles.tabTextActive]}>✨ Tithi Secrets</Text>
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'SHOONYA' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('SHOONYA')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'SHOONYA' && styles.tabTextActive]}>🔥 Shoonya</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'LEO_SUN' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('LEO_SUN')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'LEO_SUN' && styles.tabTextActive]}>☀️ Sun - The Soul Secret</Text>
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'EPIGENETICS' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('EPIGENETICS')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'EPIGENETICS' && styles.tabTextActive]}>🧬 Epigenetics</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'SHOONYA' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('SHOONYA')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'SHOONYA' && styles.tabTextActive]}>🌸 Tithi Shoonya</Text>
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.tabBtn, activeTab === 'DEITY' && styles.tabBtnActive]}
-                    onPress={() => setActiveTab('DEITY')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'DEITY' && styles.tabTextActive]}>🕉️ Deities</Text>
-                  </TouchableOpacity>
-                </View>
+                    <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'EPIGENETICS' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('EPIGENETICS')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'EPIGENETICS' && styles.tabTextActive]}>🧬 Epigenetics</Text>
+                    </TouchableOpacity>
 
-                {/* Tab 1: Soul Purpose & Western Lunation Phase */}
+                    <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'DEITY' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('DEITY')}
+                    >
+                      <Text style={[styles.tabText, activeTab === 'DEITY' && styles.tabTextActive]}>🏛️ Deities</Text>
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+
+                {/* Tab 1: Tithi Soul Purpose & Western Lunation Phase */}
                 {activeTab === 'PURPOSE' && (
                   <View style={styles.detailCard}>
                     <Text style={styles.purposeTitle}>{info.soulPurposeTitle}</Text>
                     <Text style={styles.purposeBody}>{info.soulPurposeSummary}</Text>
 
+                    {/* Inherent Personality Traits */}
+                    {info.personalityTraits ? (
+                      <View style={{ marginTop: 6, marginBottom: 12 }}>
+                        <Text style={[styles.sectionHeader, { color: Colors.maroon }]}>🧠 Personality Traits & Mind Matrix:</Text>
+                        <Text style={styles.traitsBody}>{info.personalityTraits}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* Core Strengths & Powers (Green Checkmarks) */}
+                    {info.strengths && info.strengths.length > 0 ? (
+                      <View style={{ marginTop: 4, marginBottom: 12 }}>
+                        <Text style={[styles.sectionHeader, { color: '#2E7D32' }]}>✨ Core Strengths & Blessings:</Text>
+                        {info.strengths.map((str, idx) => (
+                          <View key={idx} style={styles.bulletRow}>
+                            <Text style={styles.greenCheck}>✓</Text>
+                            <Text style={styles.bulletText}>{str}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {/* Shadow Challenges & Growth Points */}
+                    {info.challenges && info.challenges.length > 0 ? (
+                      <View style={{ marginTop: 4, marginBottom: 12 }}>
+                        <Text style={[styles.sectionHeader, { color: '#C62828' }]}>⚠️ Shadow Challenges & Growth Areas:</Text>
+                        {info.challenges.map((ch, idx) => (
+                          <View key={idx} style={styles.bulletRow}>
+                            <Text style={styles.redAlert}>•</Text>
+                            <Text style={styles.bulletText}>{ch}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {/* Higher Spiritual Guidance */}
+                    {info.spiritualGuidance ? (
+                      <View style={[styles.epigeneticBox, { marginTop: 6, backgroundColor: '#FAF5EE', borderColor: '#FFE0B2' }]}>
+                        <Text style={[styles.epigeneticTitle, { color: Colors.maroon }]}>🕊️ Higher Spiritual Guidance:</Text>
+                        <Text style={styles.epigeneticBody}>{info.spiritualGuidance}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* Recommended Rituals & Remedies */}
+                    {info.recommendedRituals ? (
+                      <View style={[styles.epigeneticBox, { marginTop: 4, backgroundColor: '#FFF8E1', borderColor: '#FFE082' }]}>
+                        <Text style={[styles.epigeneticTitle, { color: '#E65100' }]}>🪔 Recommended Rituals & Remedies:</Text>
+                        <Text style={styles.epigeneticBody}>{info.recommendedRituals}</Text>
+                      </View>
+                    ) : null}
+
                     {/* Rudhyar Soli-Lunar Western Lunation Phase Synthesis */}
-                    <View style={styles.lunationCardBox}>
+                    <View style={[styles.lunationCardBox, { marginTop: 8 }]}>
                       <Text style={styles.lunationCardTitle}>🌙 Western Soli-Lunar Phase (Dane Rudhyar Synthesis)</Text>
                       <Text style={styles.lunationPhaseName}>Phase: {info.westernLunationPhase}</Text>
                       <Text style={styles.lunationPhaseDesc}>{info.westernPhaseDescription}</Text>
@@ -123,6 +194,71 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                         "Vedic & Western lunation synthesis reveals that your Janma Tithi establishes the foundational baseline of your emotional body, mind, and soul mission on Earth."
                       </Text>
                     </View>
+                  </View>
+                )}
+
+                {/* Tab 2: Solar & Leo Sovereign Purpose (Lunar Astro Matrix) */}
+                {activeTab === 'LEO_SUN' && (
+                  <View style={styles.detailCard}>
+                    <Text style={styles.sectionHeader}>{getText(leoSunPurpose.generalDossier.title)}</Text>
+                    <Text style={[styles.traitsBody, { fontWeight: '600', color: Colors.maroon }]}>
+                      {getText(leoSunPurpose.generalDossier.subtitle)}
+                    </Text>
+
+                    {/* General Sun Overview */}
+                    <View style={styles.epigeneticBox}>
+                      <Text style={styles.epigeneticTitle}>☀️ Surya as Naisargika Atmakaraka:</Text>
+                      <Text style={styles.epigeneticBody}>{getText(leoSunPurpose.generalDossier.whatIsSun)}</Text>
+                      
+                      <Text style={[styles.epigeneticTitle, { marginTop: 8 }]}>🦁 The Cosmic Throne of Leo:</Text>
+                      <Text style={styles.epigeneticBody}>{getText(leoSunPurpose.generalDossier.significanceOfLeo)}</Text>
+                      
+                      <Text style={[styles.epigeneticTitle, { marginTop: 8, color: Colors.maroon }]}>👑 Core Sovereign Principle:</Text>
+                      <Text style={styles.epigeneticBody}>{getText(leoSunPurpose.generalDossier.corePrinciple)}</Text>
+                    </View>
+
+                    {/* What Soul Craves */}
+                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#B71C1C' }]}>
+                      👑 {getText(leoSunPurpose.leoHouseDetail.title)}
+                    </Text>
+                    <View style={styles.bulletRow}>
+                      <Text style={styles.greenCheck}>•</Text>
+                      <Text style={styles.bulletText}>{getText(leoSunPurpose.leoHouseDetail.atmaIccha)}</Text>
+                    </View>
+                    <View style={styles.bulletRow}>
+                      <Text style={styles.greenCheck}>•</Text>
+                      <Text style={styles.bulletText}>{getText(leoSunPurpose.leoHouseDetail.karmicDrive)}</Text>
+                    </View>
+
+                    {/* How to Achieve It */}
+                    <Text style={[styles.sectionHeader, { marginTop: 14, color: '#1B5E20' }]}>
+                      ⚙️ {getText(leoSunPurpose.sunHouseDetail.title)}
+                    </Text>
+                    <View style={styles.bulletRow}>
+                      <Text style={styles.greenCheck}>•</Text>
+                      <Text style={styles.bulletText}>{getText(leoSunPurpose.sunHouseDetail.actionMechanism)}</Text>
+                    </View>
+
+                    {/* Synthesis Matrix */}
+                    <View style={[styles.epigeneticBox, { marginTop: 14, backgroundColor: '#FFF8E1', borderColor: '#FFE082', borderWidth: 1 }]}>
+                      <Text style={[styles.epigeneticTitle, { color: '#B71C1C' }]}>✨ Solar Soul Synthesis Matrix:</Text>
+                      <Text style={[styles.epigeneticBody, { color: '#3E2723', fontWeight: '500' }]}>
+                        {getText(leoSunPurpose.synthesisSummary)}
+                      </Text>
+                    </View>
+
+                    {/* Additional Vedic Rules & Atmakaraka Alignments */}
+                    {vedicReport.soulPurpose.length > 0 && (
+                      <View style={{ marginTop: 14 }}>
+                        <Text style={[styles.sectionHeader, { color: Colors.maroon }]}>📜 Additional Chart Placements & Atmakaraka Alignments:</Text>
+                        {vedicReport.soulPurpose.map(rule => (
+                          <View key={rule.id} style={[styles.epigeneticBox, { marginTop: 6, backgroundColor: '#FAF5EE' }]}>
+                            <Text style={styles.epigeneticTitle}>{getText(rule.title, 'Soul Purpose')}</Text>
+                            <Text style={styles.epigeneticBody}>{getText(rule.description)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -403,25 +539,31 @@ const styles = StyleSheet.create({
   },
   tabNavRow: {
     flexDirection: 'row',
-    backgroundColor: '#E0E0E0',
-    borderRadius: 12,
-    padding: 3,
-    marginBottom: 14,
-    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    gap: 10,
   },
   tabBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tabBtnActive: {
     backgroundColor: Colors.maroon,
+    borderColor: '#FFD700',
+    borderWidth: 1.5,
+    elevation: 3,
   },
   tabText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.textSecondary,
+    color: Colors.maroon,
+    paddingHorizontal: 4,
   },
   tabTextActive: {
     color: '#FFD700',

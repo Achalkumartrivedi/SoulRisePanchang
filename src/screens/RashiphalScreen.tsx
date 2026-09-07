@@ -14,7 +14,7 @@ import { Colors } from '../theme/colors';
 import { RashiDetail } from '../types/panchang';
 import { RASHIPHAL_DATA, getRashiById } from '../engine/rashiphalRepository';
 import { useLanguage } from '../context/LanguageContext';
-import { getSavedProfiles, SavedKundaliProfile } from '../utils/profileStorage';
+import { getSavedProfiles, getActiveProfile, setActiveProfileId, SavedKundaliProfile } from '../utils/profileStorage';
 import { calculateBirthKundali } from '../engine/kundaliEngine';
 import { BirthChartModal } from '../components/BirthChartModal';
 import { DEFAULT_CITIES } from '../data/cities';
@@ -60,8 +60,11 @@ export const RashiphalScreen: React.FC = () => {
           if (pref.isSet !== undefined) setIsSignSet(pref.isSet);
         }
 
-        // If saved profiles exist, automatically load the first profile (e.g. Achal)
-        if (profiles.length > 0) {
+        // Load persistent active profile if present
+        const activeP = await getActiveProfile();
+        if (activeP) {
+          loadProfileHoroscope(activeP);
+        } else if (profiles.length > 0) {
           loadProfileHoroscope(profiles[0]);
         }
       } catch (e) {
@@ -73,6 +76,7 @@ export const RashiphalScreen: React.FC = () => {
   const loadProfileHoroscope = (profile: SavedKundaliProfile) => {
     try {
       setActiveProfile(profile);
+      setActiveProfileId(profile.id);
       const dobDate = new Date(
         parseInt(profile.dobYear, 10),
         parseInt(profile.dobMonth, 10) - 1,
