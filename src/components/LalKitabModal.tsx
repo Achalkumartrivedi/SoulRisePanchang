@@ -20,7 +20,7 @@ import { calculateBirthKundali } from '../engine/kundaliEngine';
 import { evaluateLalKitabRules } from '../engine/lalKitabAstrologyRules';
 import { calculateBnnSaturnTimeline, BnnSaturnTimelineResult } from '../engine/bnnSaturnTimelineEngine';
 
-function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: string, lang: string): LalKitabResponseData {
+function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: string, lang: string, latVal?: number, lonVal?: number): LalKitabResponseData {
   const parts = dobStr.split('/');
   const d = parseInt(parts[0], 10) || 13;
   const m = parseInt(parts[1], 10) || 2;
@@ -31,7 +31,9 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
   const min = parseInt(tParts[1], 10) || 5;
 
   const birthDate = new Date(y, m - 1, d);
-  const kundali = calculateBirthKundali('User', birthDate, h, min, cityName || 'Surat', 21.17, 72.83);
+  const finalLat = latVal !== undefined ? latVal : 21.17;
+  const finalLon = lonVal !== undefined ? lonVal : 72.83;
+  const kundali = calculateBirthKundali('User', birthDate, h, min, cityName || 'Surat', finalLat, finalLon);
   const lalReport = evaluateLalKitabRules(kundali);
   const bnnTimeline = calculateBnnSaturnTimeline(kundali, lang);
 
@@ -64,11 +66,7 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
     return `🪐 ${title} (${p.ageRangeStr})\n   📍 ${p.rashiName}, House ${p.house}, ${p.degreeStr}\n   ${interp}`;
   });
 
-  const destinationCareer = isHi
-    ? 'उच्च प्रशासनिक अधिकारी (Government Officer), आईटी/सॉफ्टवेयर डायरेक्टर (IT Director), वित्तीय विश्लेषक (Financial Lead), या ज्योतिष/वैदिक अनुसंधान निदेशक।'
-    : isGu
-    ? 'ઉચ્ચ વહીવટી અધિકારી, આઈટી ડાયરેક્ટર, ફાઇનાન્સિયલ એનાલિસ્ટ અથવા સંશોધન નિયામક.'
-    : 'Senior Administrative Officer, IT/Software Director, Financial Strategy Lead, or Vedic Astrological Researcher.';
+  const destinationCareer = bnnTimeline.destinationCareerSummary[lang] || bnnTimeline.destinationCareerSummary['hi'] || bnnTimeline.destinationCareerSummary['en'];
 
   const ketuBreaks = bnnTimeline.hasKetuFirst
     ? [
@@ -79,20 +77,16 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
           ? 'उपाय: कार्यस्थल पर शांति बनाए रखें और काले-सफेद कुत्ते को रोटी खिलाएं।'
           : 'Remedy: Feed black-and-white dogs and maintain peaceful workplace relationships.'
       ]
-    : [
-        isHi
-          ? 'केतु-राहु अक्ष: बड़े कॉर्पोरेट या समूहों में अनावश्यक बहस व अहंकार के टकराव से बचें।'
-          : 'Ketu-Rahu Axis: Avoid unnecessary corporate politics and ego clashes for smooth progress.',
-        isHi
-          ? 'उपाय: कार्यस्थल पर सहकर्मियों के प्रति मधुर व्यवहार रखें।'
-          : 'Remedy: Maintain clean interpersonal relationships at work.'
-      ];
+    : [];
+
+  const ascSignIdx = kundali.lagnaRashiIndex + 1;
+  const ascSignName = RASHI_NAMES_HI[ascSignIdx] || kundali.lagnaRashi;
 
   const fullReportText = isHi
     ? `# 📕 विस्तृत लाल किताब एवं AI कुण्डली रिपोर्ट\n\n` +
       `### 🌅 जन्म विवरण (Birth Particulars)\n` +
       `- **तिथि:** ${dobStr} • **समय:** ${tobStr} • **स्थान:** ${cityName}\n` +
-      `- **लग्न राशि:** तुला (Ascendant)\n\n` +
+      `- **लग्न राशि:** ${ascSignName}\n\n` +
       `### 🪐 शनि नंदी नाड़ी स्थिति (Saturn Nadi Base)\n` +
       `- **शनि स्थान:** भाव ${bnnTimeline.saturnBase.house} • ${bnnTimeline.saturnBase.rashiName} (${bnnTimeline.saturnBase.degreeStr})\n` +
       `- **नक्षत्र:** ${bnnTimeline.saturnBase.nakshatraName} (पद ${bnnTimeline.saturnBase.pada})\n\n` +
@@ -105,7 +99,7 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
     : `# 📕 Full AI Kundli & Lal Kitab Audit Report\n\n` +
       `### 🌅 Birth Particulars\n` +
       `- **DOB:** ${dobStr} • **TOB:** ${tobStr} • **Location:** ${cityName}\n` +
-      `- **Ascendant Sign:** Libra\n\n` +
+      `- **Ascendant Sign:** ${ascSignName}\n\n` +
       `### 🪐 Saturn Nadi Base Position\n` +
       `- **Saturn:** House ${bnnTimeline.saturnBase.house} • ${bnnTimeline.saturnBase.rashiName} (${bnnTimeline.saturnBase.degreeStr})\n` +
       `- **Nakshatra:** ${bnnTimeline.saturnBase.nakshatraName} (Pada ${bnnTimeline.saturnBase.pada})\n\n` +
@@ -117,7 +111,7 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
       lalReport.debts.map(d => `#### ${d.name['en']}\n- **Cause:** ${d.cause['en']}\n- **Impact:** ${d.impact['en']}\n- **Specific Remedy:** ${d.remedy['en']}`).join('\n\n');
 
   return {
-    ascendant_sign: 7,
+    ascendant_sign: ascSignIdx,
     houses: housesMap,
     longitudes: {},
     lal_kitab_rules: formattedRules,
@@ -128,13 +122,18 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
     bnn_timeline: bnnTimeline,
     saturn_nadi_career_analysis: {
       saturn_house: satHouse,
-      saturn_longitude: 248.17,
-      trine_planets: [
-        { planet: 'Chandra', longitude: 27.25, delta_longitude: 139, house: 4, rel_house_from_saturn: 5, domain: 'Mind & Peace' },
-        { planet: 'Mangala', longitude: 8.2, delta_longitude: 120, house: 3, rel_house_from_saturn: 5, domain: 'Action & Power' }
-      ],
+      saturn_longitude: bnnTimeline.saturnBase.totalDegrees,
+      trine_planets: bnnTimeline.step1IdentifiedPlanets.map(p => ({
+        planet: p.name,
+        longitude: p.signDegree,
+        delta_longitude: 0,
+        house: p.house,
+        rel_house_from_saturn: p.house === satHouse ? 1 : p.house === bnnTimeline.trineHouses.h5 ? 5 : 9,
+        domain: p.relation
+      })),
       chronological_phases: chronologicalPhases,
       destination_career: destinationCareer,
+      destination_career_planets: bnnTimeline.destinationCareerPlanets,
       ketu_interception_break: ketuBreaks
     },
     report: fullReportText
@@ -188,6 +187,44 @@ const LOADING_STEPS_EN = [
   '✨ Almost ready! Finalizing your report...'
 ];
 
+function getShortBnnPlanetText(dp: any): string {
+  const pRawName = String(dp.name || dp.planet || '');
+  const houseNum = dp.house || '';
+  const rashiRaw = String(dp.rashiName || dp.sign || '');
+  const degRaw = String(dp.degreeStr || (dp.signDegree !== undefined ? `${dp.signDegree.toFixed(2)}°` : (dp.sign_degree !== undefined ? `${dp.sign_degree}°` : '')));
+
+  let symbol = '🪐';
+  let shortName = pRawName;
+  if (pRawName.includes('Shukra') || pRawName.includes('Venus')) { symbol = '💎'; shortName = 'Shukra (Ve)'; }
+  else if (pRawName.includes('Budha') || pRawName.includes('Mercury')) { symbol = '🟢'; shortName = 'Budha (Me)'; }
+  else if (pRawName.includes('Surya') || pRawName.includes('Sun')) { symbol = '☀️'; shortName = 'Surya (Su)'; }
+  else if (pRawName.includes('Chandra') || pRawName.includes('Moon')) { symbol = '🌙'; shortName = 'Chandra (Mo)'; }
+  else if (pRawName.includes('Mangala') || pRawName.includes('Mars')) { symbol = '🔴'; shortName = 'Mangala (Ma)'; }
+  else if (pRawName.includes('Brihaspati') || pRawName.includes('Jupiter')) { symbol = '🟡'; shortName = 'Brihaspati (Ju)'; }
+  else if (pRawName.includes('Shani') || pRawName.includes('Saturn')) { symbol = '🪐'; shortName = 'Shani (Sa)'; }
+  else if (pRawName.includes('Rahu')) { symbol = '🚀'; shortName = 'Rahu (Ra)'; }
+  else if (pRawName.includes('Ketu')) { symbol = '🛑'; shortName = 'Ketu (Ke)'; }
+
+  let shortRashi = rashiRaw;
+  if (rashiRaw.includes('Capricorn') || rashiRaw.includes('Makara') || rashiRaw.includes('मकर')) shortRashi = 'Makar (Cap.)';
+  else if (rashiRaw.includes('Aries') || rashiRaw.includes('Mesha') || rashiRaw.includes('मेष')) shortRashi = 'Mesha (Ari.)';
+  else if (rashiRaw.includes('Taurus') || rashiRaw.includes('Vrishabha') || rashiRaw.includes('वृषभ')) shortRashi = 'Vrishabh (Tau.)';
+  else if (rashiRaw.includes('Gemini') || rashiRaw.includes('Mithuna') || rashiRaw.includes('मिथुन')) shortRashi = 'Mithun (Gem.)';
+  else if (rashiRaw.includes('Cancer') || rashiRaw.includes('Karka') || rashiRaw.includes('कर्क')) shortRashi = 'Karka (Can.)';
+  else if (rashiRaw.includes('Leo') || rashiRaw.includes('Simha') || rashiRaw.includes('सिंह')) shortRashi = 'Simha (Leo)';
+  else if (rashiRaw.includes('Virgo') || rashiRaw.includes('Kanya') || rashiRaw.includes('कन्या')) shortRashi = 'Kanya (Vir.)';
+  else if (rashiRaw.includes('Libra') || rashiRaw.includes('Tula') || rashiRaw.includes('तुला')) shortRashi = 'Tula (Lib.)';
+  else if (rashiRaw.includes('Scorpio') || rashiRaw.includes('Vrishchika') || rashiRaw.includes('वृश्चिक')) shortRashi = 'Vrischika (Sco.)';
+  else if (rashiRaw.includes('Sagittarius') || rashiRaw.includes('Dhanu') || rashiRaw.includes('धनु')) shortRashi = 'Dhanu (Sag.)';
+  else if (rashiRaw.includes('Aquarius') || rashiRaw.includes('Kumbha') || rashiRaw.includes('कुंभ')) shortRashi = 'Kumbh (Aqu.)';
+  else if (rashiRaw.includes('Pisces') || rashiRaw.includes('Meena') || rashiRaw.includes('मीन')) shortRashi = 'Meen (Pis.)';
+
+  const cleanDeg = degRaw.replace(/Exact Degree:\s*/i, '').split('(')[0].trim();
+  const degFormatted = cleanDeg ? `Deg ${cleanDeg}` : '';
+
+  return `${symbol} ${shortName} - H${houseNum}, ${shortRashi}${degFormatted ? ' - ' + degFormatted : ''}`;
+}
+
 export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   visible,
   onClose,
@@ -218,7 +255,7 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [result, setResult] = useState<LalKitabResponseData | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'BNN_CAREER' | 'REMEDIES' | 'DEBTS' | 'REPORT'>('BNN_CAREER');
+  const [activeTab, setActiveTab] = useState<'BNN_CAREER' | 'REMEDIES' | 'DEBTS'>('BNN_CAREER');
 
   const stepsList = isHi ? LOADING_STEPS_HI : LOADING_STEPS_EN;
 
@@ -227,7 +264,7 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
     setErrorMsg('');
     try {
       const data = await fetchLalKitabAnalysis({ dob: dobVal, tob: tobVal, city: cityVal, lat: latVal, lon: lonVal, tz: tzVal, lang: language });
-      const localFallback = buildLocalLalKitabFallback(dobVal, tobVal, cityVal, language);
+      const localFallback = buildLocalLalKitabFallback(dobVal, tobVal, cityVal, language, latVal, lonVal);
       setResult({
         ...localFallback,
         ...data,
@@ -235,11 +272,11 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
         debts: data.debts || localFallback.debts,
         pukka_ghar_summary: data.pukka_ghar_summary || localFallback.pukka_ghar_summary,
         aspects: data.aspects || localFallback.aspects,
-        bnn_timeline: localFallback.bnn_timeline
+        bnn_timeline: data.bnn_timeline || localFallback.bnn_timeline
       });
     } catch (err: any) {
       console.warn('Backend fetch failed, using local Lal Kitab fallback engine:', err);
-      const fallbackData = buildLocalLalKitabFallback(dobVal, tobVal, cityVal, language);
+      const fallbackData = buildLocalLalKitabFallback(dobVal, tobVal, cityVal, language, latVal, lonVal);
       setResult(fallbackData);
     } finally {
       setLoading(false);
@@ -517,87 +554,44 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                         📜 {isHi ? 'पूर्वज ऋण ऑडिट' : language === 'gu' ? 'પૂર્વજ ઋણ' : 'Ancestral Debts'}
                       </Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.tabBtn, activeTab === 'REPORT' && styles.tabBtnActive]}
-                      onPress={() => setActiveTab('REPORT')}
-                    >
-                      <Text style={[styles.tabBtnText, activeTab === 'REPORT' && styles.tabBtnTextActive]}>
-                        📑 {isHi ? 'विस्तृत रिपोर्ट' : language === 'gu' ? 'વિગતવાર રિપોર્ટ' : 'Full Audit Report'}
-                      </Text>
-                    </TouchableOpacity>
                   </View>
                 </ScrollView>
 
-                {/* Single Unified Tab: Career by BNN (Steps 1, 2, 3 + Ketu + Combinations + Significations) */}
+                {/* Single Unified Tab: Career by BNN */}
                 {activeTab === 'BNN_CAREER' && (
                   <View style={styles.card}>
                     <Text style={styles.cardHeader}>💼 Bhrigu Nandi Nadi (BNN) Saturn Career Analysis</Text>
 
-                    {/* Saturn Base Position & Trine Info Banner */}
+                    {/* Birth Chart Placement Banner */}
                     {result.bnn_timeline?.saturnBase && (
                       <View style={styles.saturnBaseCard}>
                         <Text style={styles.saturnBaseTitle}>
-                          🪐 Shani (Saturn) Base: House {result.bnn_timeline.saturnBase.house} • {result.bnn_timeline.saturnBase.rashiName} ({result.bnn_timeline.saturnBase.degreeStr})
+                          🌅 Birth Chart Placement
                         </Text>
                         <Text style={styles.saturnBaseSub}>
-                          📐 Trine Houses (1-5-9): House {result.bnn_timeline.trineHouses.h1}, House {result.bnn_timeline.trineHouses.h5}, House {result.bnn_timeline.trineHouses.h9} • 🎯 Destination 2nd House: House {result.bnn_timeline.trineHouses.h2Destination}
+                          • Lagna (Ascendant): {result.bnn_timeline?.lagnaRashi || RASHI_NAMES_HI[result.ascendant_sign] || result.ascendant_sign}{'\n'}
+                          • Saturn (Shani — Karma Karaka): House {result.bnn_timeline.saturnBase.house} ({result.bnn_timeline.saturnBase.rashiName}) at {result.bnn_timeline.saturnBase.degreeStr}{'\n'}
+                          • Trine Houses (1-5-9): House {result.bnn_timeline.trineHouses.h1}, House {result.bnn_timeline.trineHouses.h5}, House {result.bnn_timeline.trineHouses.h9}{'\n'}
+                          • 2nd House Ahead of Saturn: House {result.bnn_timeline.trineHouses.h2Destination}
                         </Text>
                       </View>
                     )}
 
-                    {/* Identified Planets (Conjunct + 1, 5, 9 Trine Positions) */}
+                    {/* Chronological Career Phase Timeline */}
                     <View style={styles.bnnStepSection}>
                       <Text style={styles.bnnStepHeader}>
-                        📌 Trine Planetary Contacts (1, 5, 9 Positions from Saturn)
-                      </Text>
-                      <Text style={styles.bnnStepSub}>
-                        {isHi
-                          ? 'शनि से 1 (युति), 5 एवं 9 (त्रिकोण) भावों में स्थित ग्रहीय संपर्क:'
-                          : 'Planets placed in Saturn\'s 1st (conjunction), 5th, and 9th (trine) houses:'}
-                      </Text>
-                      {result.bnn_timeline?.step1IdentifiedPlanets && result.bnn_timeline.step1IdentifiedPlanets.length > 0 ? (
-                        result.bnn_timeline.step1IdentifiedPlanets.map((p: any, idx: number) => (
-                          <View key={idx} style={styles.step1PlanetCard}>
-                            <Text style={styles.step1PlanetTitle}>
-                              {p.symbol} {p.name} ({p.hindiName})
-                            </Text>
-                            <Text style={styles.step1PlanetSub}>
-                              📍 House {p.house} • {p.rashiName} • Exact Degree: {p.degreeStr} (Sign Deg: {p.signDegree.toFixed(2)}°) • Position: {p.relation}
-                            </Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={styles.bnnInterpText}>No direct trine planets found; evaluating 2nd house destination planets.</Text>
-                      )}
-                    </View>
-
-                    {/* Chronological Career Timeline */}
-                    <View style={styles.bnnStepSection}>
-                      <Text style={styles.bnnStepHeader}>
-                        ⚡ Chronological Career Phase Timeline
-                      </Text>
-                      <Text style={styles.bnnStepSub}>
-                        {isHi
-                          ? 'भृगु नंदी नाड़ी नियमानुसार ग्रहों के अंश के बढ़ते क्रम में आपका चरणबद्ध करियर कालखंड:'
-                          : 'Phase-wise career timeline arranged in ascending degree order:'}
+                        ⚡ Phase-Wise Career Timeline (Ascending Degree Order)
                       </Text>
 
-                      {/* Special Ketu First Alert Banner */}
-                      {result.bnn_timeline?.hasKetuFirst && (
-                        <View style={styles.ketuAlertBanner}>
-                          <Text style={styles.ketuAlertTitle}>
-                            🛑 {isHi ? 'विशेष BNN नियम: केतु का अंश सबसे कम (Lowest Degree Ketu)' : 'Special BNN Rule: Ketu Has Lowest Degree'}
-                          </Text>
-                          <Text style={styles.ketuAlertText}>
-                            {result.bnn_timeline.ketuInterceptionDetails
-                              ? (result.bnn_timeline.ketuInterceptionDetails[language] || result.bnn_timeline.ketuInterceptionDetails['hi'] || result.bnn_timeline.ketuInterceptionDetails['en'])
-                              : (isHi
-                                  ? 'आपकी कुण्डली में शनि के 1-5-9 त्रिकोण में केतु का अंश सबसे कम (6.75°) है! यह प्रारंभिक करियर (आयु 18-24 वर्ष) में प्रथम ब्रेक/असंतोष देता है। इसके तुरंत बाद आप केतु के विशिष्ट क्षेत्रों में सफल होते हैं: वैज्ञानिक अनुसंधान, डेटा रिकवरी व बैकएंड सॉफ्टवेयर, वैकल्पिक चिकित्सा या ज्योतिष शोध।'
-                                  : 'Ketu has the LOWEST DEGREE in Saturn\'s 1-5-9 trine (6.75°)! Early career break (Age 18-24), followed by transition into Ketu fields: Scientific Research, Spiritual Healing, Data Recovery, Software/Backend Analysis, or Niche Astrological Research.')}
+                      {/* Visual Sequence Chain Banner */}
+                      {result.bnn_timeline?.phases && result.bnn_timeline.phases.length > 0 && (
+                        <View style={{ backgroundColor: '#FFF5F5', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#FEB2B2', marginBottom: 12 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#9B2C2C', textAlign: 'center' }}>
+                            {result.bnn_timeline.phases.map((p: any, i: number) => `[Phase ${i + 1}: ${p.planetName.split(' ')[0]} (${p.degreeInSign.toFixed(2)}°)]`).join(' ➔ ')}
                           </Text>
                         </View>
                       )}
+
 
                       {/* Dynamic BNN Phase Cards */}
                       {result.bnn_timeline?.phases && result.bnn_timeline.phases.length > 0 ? (
@@ -634,82 +628,60 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                       )}
                     </View>
 
-                    {/* Destined Lifetime Profession */}
-                    <View style={styles.bnnStepSection}>
-                      <Text style={styles.bnnStepHeader}>
-                        🏆 Destined Lifetime Career (2nd House from Saturn)
-                      </Text>
-                      <Text style={styles.bnnStepSub}>
-                        {isHi
-                          ? 'शनि से द्वितीय भाव (2nd House from Saturn) में स्थित ग्रहों से तय होने वाला आपका मुख्य करियर लक्ष्य:'
-                          : 'Planets in the 2nd house ahead of Saturn dictate your ultimate lifetime career:'}
-                      </Text>
+                    {/* Destined Lifetime Profession (Only displayed if 2nd House ahead of Saturn has planets AND a non-empty summary) */}
+                    {(() => {
+                      const destPlanets = (result.bnn_timeline?.destinationCareerPlanets && result.bnn_timeline.destinationCareerPlanets.length > 0)
+                        ? result.bnn_timeline.destinationCareerPlanets.filter((p: any) => p && (p.name || p.planet))
+                        : (result.saturn_nadi_career_analysis?.destination_career_planets && result.saturn_nadi_career_analysis.destination_career_planets.length > 0)
+                          ? result.saturn_nadi_career_analysis.destination_career_planets.filter((p: any) => p && (p.name || p.planet))
+                          : [];
 
-                      <View style={styles.destinationBox}>
-                        <Text style={styles.destinationText}>
-                          {result.bnn_timeline?.destinationCareerSummary
-                            ? (result.bnn_timeline.destinationCareerSummary[language] || result.bnn_timeline.destinationCareerSummary['hi'] || result.bnn_timeline.destinationCareerSummary['en'])
-                            : result.saturn_nadi_career_analysis?.destination_career}
-                        </Text>
-                      </View>
+                      const rawSummary = result.bnn_timeline?.destinationCareerSummary
+                        ? (result.bnn_timeline.destinationCareerSummary[language] || result.bnn_timeline.destinationCareerSummary['hi'] || result.bnn_timeline.destinationCareerSummary['en'] || '')
+                        : (result.saturn_nadi_career_analysis?.destination_career || '');
 
-                      {result.bnn_timeline?.destinationCareerPlanets && result.bnn_timeline.destinationCareerPlanets.length > 0 && (
-                        <View style={{ marginTop: 10 }}>
-                          <Text style={styles.sectionSubHeader}>
-                            🎯 Planets in 2nd House from Saturn (House {result.bnn_timeline.trineHouses.h2Destination}):
+                      const summaryText = typeof rawSummary === 'string' ? rawSummary.trim() : '';
+
+                      if (destPlanets.length === 0 || summaryText.length === 0) {
+                        return null; // 100% HIDDEN - NO BLANK FIELD OR EMPTY CARD RENDERED AT ALL
+                      }
+
+                      const h2DestNum = result.bnn_timeline?.trineHouses?.h2Destination || destPlanets[0]?.house || '';
+
+                      return (
+                        <View style={styles.bnnStepSection}>
+                          <Text style={styles.bnnStepHeader}>
+                            🏆 Destined Lifetime Career (2nd House from Saturn)
                           </Text>
-                          {result.bnn_timeline.destinationCareerPlanets.map((dp: any, idx: number) => (
-                            <View key={idx} style={styles.trineItemRow}>
-                              <Text style={styles.trinePlanetName}>🪐 {dp.name} (House {dp.house}, {dp.rashiName}):</Text>
-                              <Text style={styles.trineDomainText}>Exact Degree: {dp.degreeStr} ({dp.signDegree ? dp.signDegree.toFixed(2) : ''}°)</Text>
-                            </View>
-                          ))}
+                          <Text style={styles.bnnStepSub}>
+                            {isHi
+                              ? 'शनि से द्वितीय भाव (2nd House from Saturn) में स्थित ग्रहों से तय होने वाला आपका मुख्य करियर लक्ष्य:'
+                              : 'Planets in the 2nd house ahead of Saturn dictate your ultimate lifetime career:'}
+                          </Text>
+
+                          <View style={styles.destinationBox}>
+                            <Text style={styles.destinationText}>{summaryText}</Text>
+                          </View>
+
+                          <View style={{ marginTop: 10 }}>
+                            <Text style={styles.sectionSubHeader}>
+                              🎯 Planets in 2nd House from Saturn (House {h2DestNum}):
+                            </Text>
+                            {destPlanets.map((dp: any, idx: number) => (
+                              <View key={idx} style={styles.trineItemRow}>
+                                <Text style={styles.trinePlanetShortText}>
+                                  {getShortBnnPlanetText(dp)}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
                         </View>
-                      )}
-                    </View>
+                      );
+                    })()}
 
-                    {/* Ketu Interception & Break Analysis */}
-                    <View style={styles.bnnStepSection}>
-                      <Text style={styles.bnnStepHeader}>🛑 Ketu Career Interception & Break Details</Text>
-                      {result.saturn_nadi_career_analysis?.ketu_interception_break?.map((breakItem: string, idx: number) => (
-                        <View key={idx} style={styles.breakItem}>
-                          <Text style={styles.warningIcon}>⚠️</Text>
-                          <Text style={styles.breakText}>{breakItem}</Text>
-                        </View>
-                      ))}
-                    </View>
 
-                    {/* Multi-Planet BNN Combination Matrix */}
-                    {result.bnn_timeline?.multiPlanetCombinations && result.bnn_timeline.multiPlanetCombinations.length > 0 && (
-                      <View style={styles.bnnStepSection}>
-                        <Text style={styles.bnnStepHeader}>🔮 BNN Multi-Planet Combination Matrix</Text>
-                        {result.bnn_timeline.multiPlanetCombinations.map((comboItem: any, idx: number) => {
-                          const comboDesc = comboItem.description[language] || comboItem.description['hi'] || comboItem.description['en'];
-                          return (
-                            <View key={idx} style={styles.comboCard}>
-                              <Text style={styles.comboTitle}>{comboItem.combo}</Text>
-                              <Text style={styles.comboDesc}>{comboDesc}</Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    )}
 
-                    {/* Planetary Career Significations Reference Table */}
-                    {result.bnn_timeline?.planetSignifications && (
-                      <View style={styles.bnnStepSection}>
-                        <Text style={styles.bnnStepHeader}>📚 Planet-by-Planet Career Significations Reference</Text>
-                        {result.bnn_timeline.planetSignifications.map((pSig: any, idx: number) => {
-                          const domainStr = pSig.domain[language] || pSig.domain['hi'] || pSig.domain['en'];
-                          return (
-                            <View key={idx} style={styles.significationCard}>
-                              <Text style={styles.significationTitle}>{pSig.symbol} {pSig.name}</Text>
-                              <Text style={styles.significationText}>{domainStr}</Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    )}
+
                   </View>
                 )}
 
@@ -717,21 +689,40 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                 {activeTab === 'REMEDIES' && (
                   <View style={styles.card}>
                     <Text style={styles.cardHeader}>🔮 Lal Kitab Planetary Analysis & Specific Totke</Text>
-                    {result.applied_rules_detailed && result.applied_rules_detailed.length > 0 ? (
-                      result.applied_rules_detailed.map((rule: any, idx: number) => {
-                        const title = rule.title[language] || rule.title['hi'] || rule.title['en'];
-                        const desc = rule.description[language] || rule.description['hi'] || rule.description['en'];
-                        const maternal = rule.maternalImpact ? (rule.maternalImpact[language] || rule.maternalImpact['hi'] || rule.maternalImpact['en']) : '';
-                        const remediesList = rule.remedies[language] || rule.remedies['hi'] || rule.remedies['en'] || [];
+                    {(() => {
+                      const rules = result.applied_rules_detailed || [];
+
+                      if (!rules || rules.length === 0) {
+                        return <Text style={styles.cardSubText}>No planetary remedies detected.</Text>;
+                      }
+
+                      return rules.map((rule: any, idx: number) => {
+                        const title = rule.title?.[language] || rule.title?.['hi'] || rule.title?.['en'] || '';
+                        const desc = rule.description?.[language] || rule.description?.['hi'] || rule.description?.['en'] || '';
+                        const maternal = rule.maternalImpact
+                          ? (rule.maternalImpact[language] || rule.maternalImpact['hi'] || rule.maternalImpact['en'])
+                          : '';
+
+                        const rawRemedies = (rule.remedies?.[language] && rule.remedies[language].length > 0)
+                          ? rule.remedies[language]
+                          : ((language === 'hinglish' || language === 'mr') && rule.remedies?.['hi'] && rule.remedies['hi'].length > 0)
+                            ? rule.remedies['hi']
+                            : (rule.remedies?.['hi'] && rule.remedies['hi'].length > 0)
+                              ? rule.remedies['hi']
+                              : (rule.remedies?.['en'] || []);
+
+                        const remediesList = rawRemedies.map((item: string) => item.replace(/^[•\s]+/, '').trim());
 
                         return (
-                          <View key={idx} style={styles.detailedRuleCard}>
+                          <View key={rule.id || idx} style={styles.detailedRuleCard}>
                             <Text style={styles.ruleCardTitle}>{title}</Text>
                             <Text style={styles.ruleCardDesc}>{desc}</Text>
                             {maternal ? <Text style={styles.maternalText}>{maternal}</Text> : null}
                             {remediesList.length > 0 && (
                               <View style={styles.totkeBox}>
-                                <Text style={styles.totkeHeader}>💡 Lal Kitab Totke & Upay:</Text>
+                                <Text style={styles.totkeHeader}>
+                                  💡 {isHi ? 'लाल किताब टोटके एवं अचूक उपाय:' : language === 'gu' ? 'લાલ કિતાબ તોટકા અને ઉપાયો:' : 'Lal Kitab Totke & Upay:'}
+                                </Text>
                                 {remediesList.map((totke: string, tIdx: number) => (
                                   <Text key={tIdx} style={styles.totkeItem}>• {totke}</Text>
                                 ))}
@@ -739,14 +730,8 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                             )}
                           </View>
                         );
-                      })
-                    ) : (
-                      result.lal_kitab_rules?.map((rule: string, idx: number) => (
-                        <View key={idx} style={styles.remedyBox}>
-                          <Text style={styles.remedyText}>{rule}</Text>
-                        </View>
-                      ))
-                    )}
+                      });
+                    })()}
                   </View>
                 )}
 
@@ -760,49 +745,53 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                         : 'According to Lal Kitab, here is your ancestral debt audit and joint family remedies:'}
                     </Text>
 
-                    {result.debts && result.debts.length > 0 ? (
-                      result.debts.map((debt: any, idx: number) => {
-                        const dName = debt.name[language] || debt.name['hi'] || debt.name['en'];
-                        const dCause = debt.cause[language] || debt.cause['hi'] || debt.cause['en'];
-                        const dImpact = debt.impact[language] || debt.impact['hi'] || debt.impact['en'];
-                        const dRemedy = debt.remedy[language] || debt.remedy['hi'] || debt.remedy['en'];
+                    {(() => {
+                      const activeDebts = (result.debts || []).filter((d: any) => d.isApplicable !== false);
+                      if (activeDebts.length > 0) {
+                        return activeDebts.map((debt: any, idx: number) => {
+                          const dName = debt.name[language] || debt.name['hi'] || debt.name['en'];
+                          const dCause = debt.cause[language] || debt.cause['hi'] || debt.cause['en'];
+                          const dImpact = debt.impact[language] || debt.impact['hi'] || debt.impact['en'];
+                          const dRemedy = debt.remedy[language] || debt.remedy['hi'] || debt.remedy['en'];
 
-                        return (
-                          <View key={idx} style={[styles.debtCard, debt.isApplicable && styles.debtCardActive]}>
-                            <View style={styles.debtHeaderRow}>
-                              <Text style={styles.debtTitle}>{dName}</Text>
-                              {debt.isApplicable ? (
+                          return (
+                            <View key={idx} style={[styles.debtCard, styles.debtCardActive]}>
+                              <View style={styles.debtHeaderRow}>
+                                <Text style={styles.debtTitle}>{dName}</Text>
                                 <View style={styles.activeDebtBadge}>
                                   <Text style={styles.activeDebtBadgeText}>{isHi ? 'सक्रिय ऋण' : 'Active Debt'}</Text>
                                 </View>
-                              ) : null}
+                              </View>
+                              <Text style={styles.debtFieldText}>
+                                <Text style={{ fontWeight: 'bold' }}>{isHi ? 'कारण: ' : 'Cause: '}</Text>{dCause}
+                              </Text>
+                              <Text style={styles.debtFieldText}>
+                                <Text style={{ fontWeight: 'bold' }}>{isHi ? 'प्रभाव: ' : 'Impact: '}</Text>{dImpact}
+                              </Text>
+                              <View style={styles.debtRemedyBox}>
+                                <Text style={styles.debtRemedyHeader}>🙏 {isHi ? 'सिद्ध पारिवारिक उपाय:' : 'Collective Remedy:'}</Text>
+                                <Text style={styles.debtRemedyText}>{dRemedy}</Text>
+                              </View>
                             </View>
-                            <Text style={styles.debtFieldText}>
-                              <Text style={{ fontWeight: 'bold' }}>{isHi ? 'कारण: ' : 'Cause: '}</Text>{dCause}
-                            </Text>
-                            <Text style={styles.debtFieldText}>
-                              <Text style={{ fontWeight: 'bold' }}>{isHi ? 'प्रभाव: ' : 'Impact: '}</Text>{dImpact}
-                            </Text>
-                            <View style={styles.debtRemedyBox}>
-                              <Text style={styles.debtRemedyHeader}>🙏 {isHi ? 'सिद्ध पारिवारिक उपाय:' : 'Collective Remedy:'}</Text>
-                              <Text style={styles.debtRemedyText}>{dRemedy}</Text>
-                            </View>
-                          </View>
-                        );
-                      })
-                    ) : (
-                      <Text style={styles.reportText}>No ancestral debts detected.</Text>
-                    )}
+                          );
+                        });
+                      }
+                      return (
+                        <View style={{ backgroundColor: '#F0FDF4', borderRadius: 12, padding: 18, borderWidth: 1, borderColor: '#BBF7D0', marginTop: 12, alignItems: 'center' }}>
+                          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#15803D', textAlign: 'center', marginBottom: 8 }}>
+                            ✨ {isHi ? 'आपकी कुंडली पूर्णतः पितृ व पूर्वज ऋणों से मुक्त है' : 'Your Kundli is Ancestral Debt Free'}
+                          </Text>
+                          <Text style={{ fontSize: 13, color: '#166534', textAlign: 'center', lineHeight: 18 }}>
+                            {isHi
+                              ? 'लाल किताब विश्लेषण के अनुसार आपके जन्मांक में कोई भी सक्रिय पितृ या पूर्वज ऋण (Rina) उपस्थित नहीं है। आपका वंश ईश्वरीय कृपा व सौहार्द से परिपूर्ण है।'
+                              : 'According to Lal Kitab analysis, there are no active ancestral debts or karmic Rina obligations in your horoscope. Your lineage is blessed with divine harmony.'}
+                          </Text>
+                        </View>
+                      );
+                    })()}
                   </View>
                 )}
 
-                {/* Tab 4: Full Detailed Audit Report */}
-                {activeTab === 'REPORT' && (
-                  <View style={styles.card}>
-                    <Text style={styles.cardHeader}>📑 Full AI Career & Lal Kitab Audit Synthesis</Text>
-                    <Text style={styles.reportText}>{result.report}</Text>
-                  </View>
-                )}
               </View>
             )}
           </ScrollView>
@@ -1273,8 +1262,15 @@ const styles = StyleSheet.create({
   trineItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    paddingLeft: 4
+    marginBottom: 6,
+    paddingLeft: 4,
+    flexWrap: 'wrap'
+  },
+  trinePlanetShortText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+    flexWrap: 'wrap'
   },
   trinePlanetName: {
     fontSize: 11,

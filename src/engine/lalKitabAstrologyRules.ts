@@ -3456,7 +3456,6 @@ export const LAL_KITAB_RULES_REGISTRY: LalKitabRule[] = [
 ];
 
 export function calculateLalKitabDebts(kundali: KundaliResult): LalKitabDebt[] {
-  const debts: LalKitabDebt[] = [];
   const pMap: Record<string, number> = {};
   kundali.planets.forEach(p => {
     pMap[p.name.split(' ')[0]] = p.house;
@@ -3464,26 +3463,95 @@ export function calculateLalKitabDebts(kundali: KundaliResult): LalKitabDebt[] {
 
   const satHouse = pMap['Saturn'] || pMap['Shani'];
   const moonHouse = pMap['Moon'] || pMap['Chandra'];
+  const sunHouse = pMap['Sun'] || pMap['Surya'];
+  const jupHouse = pMap['Jupiter'] || pMap['Brihaspati'];
+  const venHouse = pMap['Venus'] || pMap['Shukra'];
+  const marsHouse = pMap['Mars'] || pMap['Mangala'];
+  const rahuHouse = pMap['Rahu'];
+  const ketuHouse = pMap['Ketu'];
+  const mercHouse = pMap['Mercury'] || pMap['Budha'];
 
-  debts.push({
-    id: 'pru_father_debt',
-    name: { en: 'Pitru Rin (Father Debt)', hi: 'पितृ ऋण (पिता का ऋण)', gu: 'પિતૃ ઋણ' },
-    cause: { en: 'Affliction to Sun/Jupiter in ancestral houses.', hi: 'सूर्य या गुरु का कष्टग्रस्त होना।', gu: 'સૂર્ય કે ગુરુ પર અશુભ અસર.' },
-    impact: { en: 'Causes unexpected delays in career and reputation loss.', hi: 'करियर और प्रतिष्ठा में अकारण बाधाएं।', gu: 'કારકિર્દીમાં વિલંબ.' },
-    remedy: { en: 'Collect equal money from family members and donate at a temple.', hi: 'परिवार के सभी सदस्यों से बराबर धन इकट्ठा कर धार्मिक स्थान पर दान करें।', gu: 'પરિવારના સભ્યો પાસેથી સરખા પૈસા એકઠા કરી દાન કરો.' },
-    isApplicable: !!(satHouse && [9, 10, 11].includes(satHouse))
-  });
+  const allDebts: LalKitabDebt[] = [];
 
-  debts.push({
-    id: 'matru_rin',
-    name: { en: 'Matru Rin (Mother Debt)', hi: 'मातृ ऋण (माता का ऋण)', gu: 'માતૃ ઋણ' },
-    cause: { en: 'Affliction to Moon/4th house.', hi: 'चंद्रमा या चतुर्थ भाव पर अशुभर दृष्टि।', gu: 'ચંદ્ર કે ચોથા ભાવ પર અશુભ અસર.' },
-    impact: { en: 'Mental anxiety and instability in liquid wealth.', hi: 'मानसिक अशांति और धन हानि।', gu: 'માનસિક અશાંતિ.' },
-    remedy: { en: 'Collect silver coins from all family members and throw in flowing river.', hi: 'सभी परिजनों से चांदी के सिक्के लेकर नदी में प्रवाहित करें।', gu: 'ચાંદીના સિક્કા વહેતા પાણીમાં પધરાવો.' },
-    isApplicable: !!(moonHouse && [6, 8, 12].includes(moonHouse))
-  });
+  // 1. Pitru Rin (Father Debt)
+  const isPitruRin = !!((satHouse && [9, 10, 11].includes(satHouse)) || (rahuHouse && [9, 5].includes(rahuHouse) && sunHouse && [9, 10, 11].includes(sunHouse)));
+  if (isPitruRin) {
+    allDebts.push({
+      id: 'pitru_rin',
+      name: { en: 'Pitru Rin (Father Debt)', hi: 'पितृ ऋण (पिता का ऋण)', gu: 'પિતૃ ઋણ' },
+      cause: { en: 'Affliction to Sun/Jupiter or ancestral 9th/10th house in past lineage.', hi: 'पूर्वजों के समय सूर्य या गुरु भाव पर राहु/शनि का प्रभाव।', gu: 'સૂર્ય કે ગુરુ પર અશુભ અસર.' },
+      impact: { en: 'Causes unexpected delays in career elevation, obstacles in state honors, and friction with elders.', hi: 'करियर में अकारण विलंब, पदोन्नति में बाधा और पिता या अधिकारियों से तनाव।', gu: 'કારકિર્દીમાં વિલંબ અને માન-સન્માનની હાનિ.' },
+      remedy: { en: 'Collect equal money from all blood family members and donate at a sacred temple.', hi: 'परिवार के सभी सदस्यों से बराबर धन इकट्ठा करके धार्मिक स्थान पर दान करें।', gu: 'પરિવારના સભ્યો પાસેથી સરખા પૈસા એકઠા કરી દાન કરો.' },
+      isApplicable: true
+    });
+  }
 
-  return debts;
+  // 2. Matru Rin (Mother Debt)
+  const isMatruRin = !!((moonHouse && [6, 8, 12].includes(moonHouse)) || (ketuHouse && ketuHouse === 4));
+  if (isMatruRin) {
+    allDebts.push({
+      id: 'matru_rin',
+      name: { en: 'Matru Rin (Mother Debt)', hi: 'मातृ ऋण (माता का ऋण)', gu: 'માતૃ ઋણ' },
+      cause: { en: 'Affliction to Moon or 4th house of domestic peace in family lineage.', hi: 'चंद्रमा या चतुर्थ भाव (मातृ भाव) का कष्टग्रस्त होना।', gu: 'ચંદ્ર કે ચોથા ભાવ પર અશુભ અસર.' },
+      impact: { en: 'Mental anxiety, emotional stress, instability in liquid wealth, and mother’s health fluctuations.', hi: 'मानसिक अशांति, भावनात्मक तनाव, तरल धन में अस्थिरता और माता के स्वास्थ्य में उतार-चढ़ाव।', gu: 'માનસિક અશાંતિ અને નાણાકીય પ્રવાહમાં અવરોધ.' },
+      remedy: { en: 'Collect equal silver coins from all family members and float them together into a flowing river.', hi: 'परिवार के सभी सदस्यों से बराबर मात्रा में चांदी के सिक्के लेकर एक साथ बहते जल में प्रवाहित करें।', gu: 'ચાંદીના સિક્કા પરિવાર પાસેથી લઈને નદીમાં પધરાવવો.' },
+      isApplicable: true
+    });
+  }
+
+  // 3. Stree Rin (Wife / Partner Debt)
+  const isStreeRin = !!((venHouse && [6, 8].includes(venHouse)) || (rahuHouse && rahuHouse === 7));
+  if (isStreeRin) {
+    allDebts.push({
+      id: 'stree_rin',
+      name: { en: 'Stree Rin (Wife / Partner Debt)', hi: 'स्त्री ऋण (पत्नी व दांपत्य का ऋण)', gu: 'સ્ત્રી ઋણ' },
+      cause: { en: 'Disrespect to female members or affliction to Venus in family lineage.', hi: 'पूर्वजों के समय स्त्रियों का अनादर या शुक्र का पीड़ित होना।', gu: 'સ્ત્રીઓ પ્રત્યે અનાદર કે શુક્ર અશુભ થવો.' },
+      impact: { en: 'Marital misunderstandings, loss of luxury assets, and obstacles in happy domestic events.', hi: 'वैवाहिक जीवन में अनबन, भौतिक सुखों में कमी और शुभ कार्यों में बाधा।', gu: 'દામ્પત્ય જીવનમાં તણાવ અને સુખની હાનિ.' },
+      remedy: { en: 'Collect equal money from family members and feed 100 white cows with fodder or donate at a Gaushala.', hi: 'परिवार के सभी सदस्यों से बराबर धन जुटाकर गौशाला में गौ-सेवा करें या 100 गायों को हरा चारा खिलाएं।', gu: 'ગૌશાળામાં ગાયોને ચારો ખવડાવવો.' },
+      isApplicable: true
+    });
+  }
+
+  // 4. Bhratri Rin (Brother / Sibling Debt)
+  const isBhratriRin = !!((marsHouse && [4, 8].includes(marsHouse)) || (mercHouse && mercHouse === 3));
+  if (isBhratriRin) {
+    allDebts.push({
+      id: 'bhratri_rin',
+      name: { en: 'Bhratri Rin (Brother / Sibling Debt)', hi: 'भ्रातृ ऋण (भाई व स्वजन का ऋण)', gu: 'ભ્રાતૃ ઋણ' },
+      cause: { en: 'Conflict with brothers or affliction to Mars in lineage history.', hi: 'भाइयों के साथ विवाद या मंगल का पीड़ित होना।', gu: 'ભાઈઓ સાથે વિવાદ કે મંગળ પર અશુભ અસર.' },
+      impact: { en: 'Lack of physical stamina, disputes with siblings, and real estate litigation.', hi: 'साहस में कमी, भाइयों से मतभेद और जमीन-जायदाद में अड़चनें।', gu: 'ભાઈઓ સાથે વિવાદ અને જમીન-જાયદાતમાં અવરોધ.' },
+      remedy: { en: 'Collect equal money from family members and donate red lentils (Masoor Dal) or sweet food at a temple.', hi: 'परिवार के सभी सदस्यों से बराबर धन इकट्ठा कर मंदिर में लाल मसूर की दाल या मीठा भोजन दान करें।', gu: 'મંદિરમાં લાલ મસૂર દાળનું દાન કરવું.' },
+      isApplicable: true
+    });
+  }
+
+  // 5. Dev Rin (Divine / Deity Debt)
+  const isDevRin = !!((jupHouse && [6, 10].includes(jupHouse)) || (rahuHouse && rahuHouse === 5));
+  if (isDevRin) {
+    allDebts.push({
+      id: 'dev_rin',
+      name: { en: 'Dev Rin (Divine / Deity Debt)', hi: 'देव ऋण (ईश्वरीय व गुरु का ऋण)', gu: 'દેવ ઋણ' },
+      cause: { en: 'Breaking religious vows or affliction to Jupiter in lineage history.', hi: 'धार्मिक संकल्प तोड़ना या गुरु ग्रह का पीड़ित होना।', gu: 'ધાર્મિક સંકલ્પ ભંગ કરવો.' },
+      impact: { en: 'Lack of spiritual peace, obstacles in higher education, and progeny worries.', hi: 'मानसिक व आध्यात्मिक शांति की कमी, उच्च शिक्षा में बाधा और संतान चिंता।', gu: 'આધ્યાત્મિક શાંતિની હાનિ અને સંતાન ચિંતા.' },
+      remedy: { en: 'Collect equal money from family members and donate yellow chana dal or construct a drinking water facility at a place of worship.', hi: 'परिवार के सदस्यों से बराबर धन एकत्रित कर धार्मिक स्थान पर चने की दाल दान करें या जल पीने की व्यवस्था करवाएं।', gu: 'ધાર્મિક સ્થાન પર ચણાની દાળનું દાન કરવું.' },
+      isApplicable: true
+    });
+  }
+
+  // 6. Pitru-Sarp Rin (Ancestral Serpent Debt)
+  const isSarpRin = !!((rahuHouse && [5, 9].includes(rahuHouse)) || (ketuHouse && [5, 9].includes(ketuHouse)));
+  if (isSarpRin) {
+    allDebts.push({
+      id: 'pitru_sarp_rin',
+      name: { en: 'Pitru-Sarp Rin (Ancestral Serpent Debt)', hi: 'पितृ-सर्प ऋण (नाग व पूर्वज ऋण)', gu: 'પિતૃ-સર્પ ઋણ' },
+      cause: { en: 'Rahu/Ketu placement in 5th or 9th ancestral houses.', hi: 'पंचम या नवम भाव में राहु/केतु की स्थिति।', gu: '૫મા કે ૯મા ભાવમાં રાહુ/કેતુ.' },
+      impact: { en: 'Sudden unexpected career hurdles, lineage growth blockage, and repeated setbacks.', hi: 'करियर में अचानक रुकावटें, वंश वृद्धि में विलंब और बार-बार मिलने वाली असफलताएं।', gu: 'કારકિર્દીમાં અચાનક અવરોધ.' },
+      remedy: { en: 'Collect equal small silver snakes from all blood family members and float them together into a flowing river.', hi: 'परिवार के सभी सदस्यों से बराबर संख्या में चांदी के छोटे नाग-नागिन बनवाकर नदी में प्रवाहित करें।', gu: 'ચાંદીના નાગ-નાગિન નદીમાં પધરાવવો.' },
+      isApplicable: true
+    });
+  }
+
+  return allDebts;
 }
 
 export function evaluateLalKitabRules(kundali: KundaliResult) {
