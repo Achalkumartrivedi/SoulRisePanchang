@@ -39,6 +39,7 @@ export interface BnnSaturnTimelineResult {
     nakshatraName: string;
     pada: number;
   };
+  lagnaRashi: string;
   trineHouses: { h1: number; h5: number; h9: number; h2Destination: number };
   trinePlanetsCount: number;
   step1IdentifiedPlanets: BnnIdentifiedPlanet[];
@@ -179,7 +180,7 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
     (p.house === h1 || p.house === h5 || p.house === h9)
   );
 
-  // Special Fallback: If no planets in 1-5-9 trine, include planets in 2nd house from Saturn
+  // Fallback: If no planets in 1-5-9 trine, include planets in 2nd house from Saturn
   let used2ndHouseAsFallback = false;
   if (trinePlanets.length === 0) {
     trinePlanets = kundali.planets.filter(p => 
@@ -223,7 +224,10 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
   const isKetuFirst = !!(firstPlanet && (firstPlanet.name.includes('Ketu')));
 
   // Destination Career Planets (Planets in 2nd House from Saturn)
-  const destPlanets = kundali.planets.filter(p => p.house === h2Dest);
+  const destPlanets = kundali.planets.filter(p => 
+    !(p.name.includes('Saturn') || p.name.includes('Shani')) &&
+    p.house === h2Dest
+  );
   destPlanets.sort((a, b) => (a.totalDegrees % 30) - (b.totalDegrees % 30));
 
   const destPlanetDetails = destPlanets.map(p => ({
@@ -234,26 +238,45 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
     signDegree: p.totalDegrees % 30
   }));
 
-  // Build Destination Career Summary based on 2nd House from Saturn
-  let destSummaryEn = 'Senior IT/Software Director, Executive Management, Financial Analyst, or Astrology Research Leader.';
-  let destSummaryHi = 'उच्च प्रशासनिक अधिकारी (Government/Executive), सॉफ्टवेयर/आईटी निदेशक (IT Director), वित्तीय विश्लेषक, या ज्योतिष अनुसंधान निदेशक।';
-  let destSummaryGu = 'ઉચ્ચ વહીવટી અધિકારી, સોફ્ટવેર/આઈટી ડાયરેક્ટર, ફાઇનાન્સિયલ એનાલિસ્ટ અથવા સંશોધન નિયામક.';
+  // Dynamically build Destination Career Summary based on planets in 2nd House from Saturn
+  let destSummaryEn = '';
+  let destSummaryHi = '';
+  let destSummaryGu = '';
 
-  const hasMercuryIn2nd = destPlanets.some(p => p.name.includes('Budha') || p.name.includes('Mercury'));
-  const hasVenusIn2nd = destPlanets.some(p => p.name.includes('Shukra') || p.name.includes('Venus'));
+  if (destPlanets.length > 0) {
+    const summaryPartsEn = destPlanets.map(p => {
+      const name = p.name.toLowerCase();
+      if (name.includes('sun') || name.includes('surya')) return 'Government Services, Civil Services (IAS/IPS) & Executive Leadership (Sun)';
+      if (name.includes('moon') || name.includes('chandra')) return 'Public Relations, Hospitality, Travel & Media (Moon)';
+      if (name.includes('mars') || name.includes('mangala')) return 'Technical Systems Engineering, Real Estate & Defense (Mars)';
+      if (name.includes('mercury') || name.includes('budha')) return 'Senior Tech Architect, Software Engineering & Data Analytics (Mercury)';
+      if (name.includes('jupiter') || name.includes('brihaspati')) return 'Higher Education, Judiciary, Financial Advisory & Executive Mentorship (Jupiter)';
+      if (name.includes('venus') || name.includes('shukra')) return 'Corporate Wealth Accumulation, High Finance & Luxury Asset Management (Venus)';
+      if (name.includes('rahu')) return 'Information Technology (IT), AI, Foreign MNCs & Digital Innovation (Rahu)';
+      if (name.includes('ketu')) return 'Scientific Research, Software Backend Analysis & Niche Analytics (Ketu)';
+      return p.name;
+    });
 
-  if (hasMercuryIn2nd && hasVenusIn2nd) {
-    destSummaryEn = '⭐ Senior Tech Architect & Software Engineering Lead (Mercury) + Corporate Wealth Accumulation, High Finance & Luxury Asset Management (Venus).';
-    destSummaryHi = '⭐ वरिष्ठ सॉफ्टवेयर आर्किटेक्ट व टेक लीडर (बुध) + कॉर्पोरेट वित्तीय प्रबंधन, अचल संपत्ति एवं उच्च समृद्धि (शुक्र)।';
-    destSummaryGu = '⭐ સિનિયર સોફ્ટવેર આર્કિટેક્ટ અને ટેક લીડર (બુધ) + કોર્પોરેટ ફાઇનાન્સ અને નાણાકીય સમૃદ્ધિ (શુક્ર).';
-  } else if (hasMercuryIn2nd) {
-    destSummaryEn = 'Software Engineering Lead, Tech Architect, Financial Analyst, Trading Expert, or Data System Specialist.';
-    destSummaryHi = 'सॉफ्टवेयर आर्किटेक्ट, सीनियर टेक लीडर, वित्तीय विश्लेषक, डेटा सिस्टम विशेषज्ञ एवं अनुसंधान सलाहकार।';
-    destSummaryGu = 'સોફ્ટવેર આર્કિટેક્ટ, ટેક લીડર, ફાઇનાન્સિયલ એનાલિસ્ટ અને ડેટા સિસ્ટમ નિષ્ણાત.';
-  } else if (hasVenusIn2nd) {
-    destSummaryEn = 'Corporate Finance Director, Luxury Asset Management, High Banking & Commercial Partnerships.';
-    destSummaryHi = 'कॉर्पोरेट वित्त निदेशक, अचल संपत्ति प्रबंधन, उच्च बैंकिंग एवं व्यावसायिक साझेदारी।';
-    destSummaryGu = 'કોર્પોરેટ ફાઇનાન્સ ડાયરેક્ટર, લક્ઝરી પ્રોપર્ટી મેનેજમેન્ટ અને બેંકિંગ.';
+    const summaryPartsHi = destPlanets.map(p => {
+      const name = p.name.toLowerCase();
+      if (name.includes('sun') || name.includes('surya')) return 'सरकारी प्रशासनिक सेवाएं व उच्च कार्यकारी पद (सूर्य)';
+      if (name.includes('moon') || name.includes('chandra')) return 'जनसंपर्क, आतिथ्य, मीडिया व यात्रा उद्योग (चंद्रमा)';
+      if (name.includes('mars') || name.includes('mangala')) return 'तकनीकी इंजीनियरिंग, रियल एस्टेट व रक्षा (मंगल)';
+      if (name.includes('mercury') || name.includes('budha')) return 'वरिष्ठ सॉफ्टवेयर आर्किटेक्ट व डेटा एनालिटिक्स (बुध)';
+      if (name.includes('jupiter') || name.includes('brihaspati')) return 'उच्च शिक्षा, न्यायपालिका, वित्तीय परामर्श व गुरु पद (गुरु)';
+      if (name.includes('venus') || name.includes('shukra')) return 'कॉर्पोरेट वित्तीय प्रबंधन व उच्च समृद्धि (शुक्र)';
+      if (name.includes('rahu')) return 'सूचना प्रौद्योगिकी (IT), AI व विदेशी बहुराष्ट्रीय कंपनियां (राहु)';
+      if (name.includes('ketu')) return 'वैज्ञानिक अनुसंधान व बैकएंड सॉफ्टवेयर (केतु)';
+      return p.hindiName || p.name;
+    });
+
+    destSummaryEn = summaryPartsEn.join(' + ');
+    destSummaryHi = summaryPartsHi.join(' + ');
+    destSummaryGu = summaryPartsEn.join(' + ');
+  } else {
+    destSummaryEn = '';
+    destSummaryHi = '';
+    destSummaryGu = '';
   }
 
   const destinationCareerSummary = {
@@ -262,30 +285,87 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
     gu: destSummaryGu
   };
 
-  const ketuInterceptionDetails = {
-    en: `🛑 Ketu Circuit Breaker & Career Pivot (BNN Rule): Ketu is in Saturn's 1-5-9 trine with the LOWEST DEGREE (6.75°). This causes an early career break or interruption right at the start of your professional life (Age 18-24). Immediately following this initial break, your career redirects into Ketu-governed specialized domains: Scientific Research, Spiritual Healing, Alternative Medicine, Data Recovery, Software/Backend Analysis, or Niche Astrological Research. Career then transitions smoothly into Mars (8.2°) engineering/software logic and Moon (27.25°) public relations/travel.`,
-    hi: `🛑 केतु सर्किट ब्रेकर व करियर परिवर्तन (BNN नियम): भृगु नंदी नाड़ी नियमानुसार केतु शनि के 1-5-9 त्रिकोण भाव में न्यूनतम अंश (6.75°) पर स्थित है। यह व्यावसायिक जीवन की शुरुआत में ही (आयु 18-24 वर्ष) प्रथम ब्रेक या असंतोष प्रदान करता है। इस ब्रेक के तुरंत बाद आपका करियर केतु के विशिष्ट क्षेत्रों में मुड़ता है: वैज्ञानिक अनुसंधान (Scientific Research), आध्यात्मिक चिकित्सा (Spiritual Healing), वैकल्पिक चिकित्सा (Alternative Medicine), डेटा रिकवरी व बैकएंड एनालिसिस (Data Recovery & Software Backend Analysis), या ज्योतिष व अनुसंधान अध्ययन। तत्पश्चात करियर मंगल (8.2°) तकनीकी क्षमता एवं चंद्रमा (27.25°) जनसंपर्क व यात्रा में आगे बढ़ता है।`,
-    gu: `🛑 કેતુ સર્કિટ બ્રેકર અને કારકિર્દી પરિવર્તન (BNN નિયમ): શનિના ૧-૫-૯ ત્રિકોણમાં કેતુ ન્યૂનતમ અંશ (૬.૭૫°) પર છે. આ શરૂઆતમાં જ (ઉંમર ૧૮-૨૪) કારકિર્દી બ્રેક આપે છે. ત્યારબાદ કેતુ ક્ષેત્રોમાં મોટી સફળતા મળે છે: વૈજ્ઞાનિક સંશોધન, આધ્યાત્મિક ચિકિત્સા, ડેટા રિકવરી, સોફ્ટવેર અને જ્યોતિષ સંશોધન.`
-  };
+  let ketuInterceptionDetails: Record<string, string> = { en: '', hi: '', gu: '' };
+  if (isKetuFirst && firstPlanet) {
+    const kDeg = (firstPlanet.totalDegrees % 30).toFixed(2);
+    ketuInterceptionDetails = {
+      en: `🛑 Ketu Circuit Breaker & Career Pivot (BNN Rule): Ketu is in Saturn's trine (House ${firstPlanet.house}, ${firstPlanet.rashiName}) with the LOWEST DEGREE (${firstPlanet.degreeStr}, ${kDeg}°). This causes an early career break or interruption right at the start of your professional life (Age 18-24). Immediately following this initial break, your career redirects into Ketu-governed specialized domains: Scientific Research, Spiritual Healing, Alternative Medicine, Data Recovery, Software/Backend Analysis, or Niche Astrological Research.`,
+      hi: `🛑 केतु सर्किट ब्रेकर व करियर परिवर्तन (BNN नियम): केतु शनि के त्रिकोण भाव (भाव ${firstPlanet.house}, ${firstPlanet.rashiName}) में न्यूनतम अंश (${firstPlanet.degreeStr}, ${kDeg}°) पर है। यह व्यावसायिक जीवन की शुरुआत में ही (आयु 18-24 वर्ष) प्रथम ब्रेक प्रदान करता है। इस ब्रेक के तुरंत बाद आपका करियर केतु के विशिष्ट क्षेत्रों में मुड़ता है: वैज्ञानिक अनुसंधान, आध्यात्मिक चिकित्सा, डेटा रिकवरी व बैकएंड सॉफ्टवेयर, या ज्योतिष अनुसंधान।`,
+      gu: `🛑 કેતુ સર્કિટ બ્રેકર (BNN નિયમ): કેતુ શનિના ત્રિકોણમાં ન્યૂનતમ અંશ (${firstPlanet.degreeStr}) પર છે. આ શરૂઆતમાં જ બ્રેક આપે છે અને ત્યારબાદ સંશોધન ક્ષેત્રે સફળતા આપે છે.`
+    };
+  }
 
-  const multiPlanetCombinations = [
-    {
-      combo: '🟢 Mercury + 💎 Venus (2nd House from Saturn)',
+  // Dynamically generate multiPlanetCombinations based on actual planets in this profile
+  const multiPlanetCombinations: { combo: string; description: Record<string, string> }[] = [];
+
+  // 1. Destination Cluster (Planets in 2nd House from Saturn)
+  if (destPlanets.length > 0) {
+    const comboTitle = destPlanets.map(p => {
+      const sym = PLANET_SYMBOLS[p.name.split(' ')[0]] || '🪐';
+      const mainName = p.name.split(' ')[0];
+      return `${sym} ${mainName}`;
+    }).join(' + ') + ` (2nd House from Saturn - House ${h2Dest})`;
+
+    const destDomainsEn = destPlanets.map(p => {
+      const sig = PLANET_CAREER_SIGNIFICATIONS.find(s => s.name.toLowerCase().includes(p.name.split(' ')[0].toLowerCase()));
+      return sig ? sig.domain.en : p.name;
+    }).join(' / ');
+
+    const destDomainsHi = destPlanets.map(p => {
+      const sig = PLANET_CAREER_SIGNIFICATIONS.find(s => s.name.toLowerCase().includes(p.name.split(' ')[0].toLowerCase()));
+      return sig ? sig.domain.hi : p.hindiName;
+    }).join(' / ');
+
+    const destDomainsGu = destPlanets.map(p => {
+      const sig = PLANET_CAREER_SIGNIFICATIONS.find(s => s.name.toLowerCase().includes(p.name.split(' ')[0].toLowerCase()));
+      return sig ? sig.domain.gu : p.name;
+    }).join(' / ');
+
+    multiPlanetCombinations.push({
+      combo: comboTitle,
       description: {
-        en: 'Software Engineering Architecture & Digital Fintech E-Commerce / High Financial Auditing & Corporate Wealth Leadership.',
-        hi: 'सॉफ्टवेयर इंजीनियरिंग आर्किटेक्चर, डिजिटल फिनटेक, ई-कॉमर्स, कॉर्पोरेट वित्तीय प्रबंधन व उच्च ऑडिटिंग।',
-        gu: 'સોફ્ટવેર આર્કિટેક્ચર, ડિજિટલ ફાઇનાન્સ, ઈ-કોમર્સ અને કોર્પોરેટ ફાઇનાન્સ લીડરશીપ.'
+        en: `Destination Career Synergy: ${destDomainsEn}`,
+        hi: `अंतिम करियर लक्ष्य ग्रहीय योग: ${destDomainsHi}`,
+        gu: `મુખ્ય કારકિર્દી સંયોજન: ${destDomainsGu}`
       }
-    },
-    {
-      combo: '🪐 Saturn (H3) -> 🛑 Ketu (H11) + 🔴 Mars (H7) + 🌙 Moon (H7)',
+    });
+  }
+
+  // 2. Saturn Trine Sequence Combination (Planets in 1-5-9 Trine)
+  if (trinePlanets.length > 0) {
+    const trineChainStr = `🪐 Saturn (H${satHouse}) ➔ ` + trinePlanets.map(p => {
+      const sym = PLANET_SYMBOLS[p.name.split(' ')[0]] || '🪐';
+      const mainName = p.name.split(' ')[0];
+      return `${sym} ${mainName} (H${p.house})`;
+    }).join(' ➔ ');
+
+    const trineDescEn = `BNN Trine Sequence (${trinePlanets.length} planets): ` + trinePlanets.map(p => {
+      const mainName = p.name.split(' ')[0];
+      const degInSign = (p.totalDegrees % 30).toFixed(2);
+      return `${mainName} (${degInSign}°)`;
+    }).join(' ➔ ');
+
+    const trineDescHi = `BNN त्रिकोण क्रम (${trinePlanets.length} ग्रह): ` + trinePlanets.map(p => {
+      const mainName = p.hindiName || p.name.split(' ')[0];
+      const degInSign = (p.totalDegrees % 30).toFixed(2);
+      return `${mainName} (${degInSign}°)`;
+    }).join(' ➔ ');
+
+    const trineDescGu = `BNN ત્રિકોણ ક્રમ: ` + trinePlanets.map(p => {
+      const mainName = p.name.split(' ')[0];
+      const degInSign = (p.totalDegrees % 30).toFixed(2);
+      return `${mainName} (${degInSign}°)`;
+    }).join(' ➔ ');
+
+    multiPlanetCombinations.push({
+      combo: trineChainStr,
       description: {
-        en: 'BNN Trine Sequence: Early Research/Software Break (Ketu 6.75°) ➔ Technical Systems Engineering (Mars 8.2°) ➔ Global Public Relations & Travel (Moon 27.25°).',
-        hi: 'BNN त्रिकोण क्रम: प्रारंभिक अनुसंधान/सॉफ्टवेयर ब्रेक (केतु 6.75°) ➔ तकनीकी सिस्टम इंजीनियरिंग (मंगल 8.2°) ➔ वैश्विक जनसंपर्क व यात्राएं (चंद्र 27.25°)।',
-        gu: 'BNN ક્રમ: શરૂઆતી સંશોધન બ્રેક (કેતુ ૬.૭૫°) ➔ ટેકનિકલ સિસ્ટમ ઇજનેરી (મંગળ ૮.૨°) ➔ ગ્લોબલ પ્રવાસ અને લોકસંપર્ક (ચંદ્ર ૨૭.૨૫°).'
+        en: trineDescEn,
+        hi: trineDescHi,
+        gu: trineDescGu
       }
-    }
-  ];
+    });
+  }
 
   const phases: BnnTimelinePhase[] = [];
 
@@ -467,6 +547,7 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
 
   return {
     saturnBase,
+    lagnaRashi: kundali.lagnaRashi,
     trineHouses,
     trinePlanetsCount: trinePlanets.length,
     step1IdentifiedPlanets,

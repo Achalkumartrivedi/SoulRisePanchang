@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Modal, ScrollView, Platform, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { Festival, FestivalCategory } from '../types/panchang';
 import { FESTIVALS, getLocalizedFestivalTitle } from '../engine/festivalRepository';
@@ -167,10 +168,13 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
     return g.country.toLowerCase().includes(q) || g.festivals.some(f => f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q));
   });
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding }]}>
         <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('festivalsTitle')}</Text>
         <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('festivalsSub')}</Text>
 

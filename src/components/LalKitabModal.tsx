@@ -12,6 +12,7 @@ import {
   StatusBar,
   TouchableWithoutFeedback
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
 import { fetchLalKitabAnalysis, LalKitabResponseData } from '../services/lalKitabService';
@@ -19,6 +20,19 @@ import { getSavedProfiles, deleteKundaliProfile, getActiveProfile, setActiveProf
 import { calculateBirthKundali } from '../engine/kundaliEngine';
 import { evaluateLalKitabRules } from '../engine/lalKitabAstrologyRules';
 import { calculateBnnSaturnTimeline, BnnSaturnTimelineResult } from '../engine/bnnSaturnTimelineEngine';
+import { evaluateLalKitabSaturn, LAL_KITAB_7_GOLDEN_RULES } from '../engine/lalKitabSaturnEngine';
+import {
+  evaluateChartLalKitabAspects,
+  getLalKitabAspects,
+  LAL_KITAB_DRISHTI,
+  PASSIVE_HOUSES,
+  LAL_KITAB_SPECIAL_RULES,
+  HOUSE_BEHAVIOR,
+  UNIVERSAL_REMEDIES,
+  PLANET_HOUSE_REMEDIES,
+  DRISHTI_REMEDY_RULES,
+  PLANET_COMBINATION_REMEDIES
+} from '../engine/lalKitabDrishtiEngine';
 
 function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: string, lang: string, latVal?: number, lonVal?: number): LalKitabResponseData {
   const parts = dobStr.split('/');
@@ -36,6 +50,8 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
   const kundali = calculateBirthKundali('User', birthDate, h, min, cityName || 'Surat', finalLat, finalLon);
   const lalReport = evaluateLalKitabRules(kundali);
   const bnnTimeline = calculateBnnSaturnTimeline(kundali, lang);
+  const saturnReport = evaluateLalKitabSaturn(kundali, lang);
+  const drishtiReport = evaluateChartLalKitabAspects(kundali, lang);
 
   const isHi = lang === 'hi' || lang === 'hinglish';
   const isGu = lang === 'gu';
@@ -120,6 +136,8 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
     pukka_ghar_summary: lalReport.pukkaGharSummary,
     aspects: lalReport.aspects,
     bnn_timeline: bnnTimeline,
+    saturn_report: saturnReport,
+    drishti_report: drishtiReport,
     saturn_nadi_career_analysis: {
       saturn_house: satHouse,
       saturn_longitude: bnnTimeline.saturnBase.totalDegrees,
@@ -255,7 +273,8 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   const [loadingStepIndex, setLoadingStepIndex] = useState(0);
   const [result, setResult] = useState<LalKitabResponseData | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'BNN_CAREER' | 'REMEDIES' | 'DEBTS'>('BNN_CAREER');
+  const [activeTab, setActiveTab] = useState<'BNN_CAREER' | 'SATURN_GUIDE' | 'REMEDIES' | 'DEBTS' | 'DRISHTI'>('BNN_CAREER');
+  const [selectedDrishtiHouse, setSelectedDrishtiHouse] = useState<number>(1);
 
   const stepsList = isHi ? LOADING_STEPS_HI : LOADING_STEPS_EN;
 
@@ -272,7 +291,9 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
         debts: data.debts || localFallback.debts,
         pukka_ghar_summary: data.pukka_ghar_summary || localFallback.pukka_ghar_summary,
         aspects: data.aspects || localFallback.aspects,
-        bnn_timeline: data.bnn_timeline || localFallback.bnn_timeline
+        bnn_timeline: data.bnn_timeline || localFallback.bnn_timeline,
+        saturn_report: data.saturn_report || localFallback.saturn_report,
+        drishti_report: data.drishti_report || localFallback.drishti_report
       });
     } catch (err: any) {
       console.warn('Backend fetch failed, using local Lal Kitab fallback engine:', err);
@@ -370,13 +391,16 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
     runAnalysis(dob, tob, city, lat, lon, tz);
   };
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor="#800000" />
         <View style={styles.container}>
           {/* Top Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { paddingTop: topPadding }]}>
             <View style={styles.headerTitleRow}>
               <Text style={styles.headerIcon}>📕</Text>
               <View>
@@ -538,6 +562,15 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                     </TouchableOpacity>
 
                     <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'SATURN_GUIDE' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('SATURN_GUIDE')}
+                    >
+                      <Text style={[styles.tabBtnText, activeTab === 'SATURN_GUIDE' && styles.tabBtnTextActive]}>
+                        🪐 {isHi ? 'लाल किताब शनि' : language === 'gu' ? 'શનિ ગાઇડ' : 'Saturn Guide'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                       style={[styles.tabBtn, activeTab === 'REMEDIES' && styles.tabBtnActive]}
                       onPress={() => setActiveTab('REMEDIES')}
                     >
@@ -552,6 +585,15 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                     >
                       <Text style={[styles.tabBtnText, activeTab === 'DEBTS' && styles.tabBtnTextActive]}>
                         📜 {isHi ? 'पूर्वज ऋण ऑडिट' : language === 'gu' ? 'પૂર્વજ ઋણ' : 'Ancestral Debts'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.tabBtn, activeTab === 'DRISHTI' && styles.tabBtnActive]}
+                      onPress={() => setActiveTab('DRISHTI')}
+                    >
+                      <Text style={[styles.tabBtnText, activeTab === 'DRISHTI' && styles.tabBtnTextActive]}>
+                        👁️ {isHi ? 'दृष्टि व अचूक उपाय' : language === 'gu' ? 'દ્રષ્ટિ અને ઉપાય' : 'Drishti & Remedies'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -685,6 +727,269 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                   </View>
                 )}
 
+                {/* Tab: Lal Kitab Saturn Guide */}
+                {activeTab === 'SATURN_GUIDE' && (() => {
+                  const satReport = result.saturn_report;
+                  if (!satReport) return null;
+
+                  const hGuide = satReport.houseGuide;
+                  const statusText = hGuide?.status?.[language] || hGuide?.status?.['hi'] || hGuide?.status?.['en'] || '';
+                  
+                  const manifestations = hGuide?.manifestations?.[language] || hGuide?.manifestations?.['hi'] || hGuide?.manifestations?.['en'] || [];
+                  const becomesGood = hGuide?.becomesGoodWhen?.[language] || hGuide?.becomesGoodWhen?.['hi'] || hGuide?.becomesGoodWhen?.['en'] || [];
+                  const becomesBad = hGuide?.becomesBadWhen?.[language] || hGuide?.becomesBadWhen?.['hi'] || hGuide?.becomesBadWhen?.['en'] || [];
+                  const warnings = hGuide?.warnings?.[language] || hGuide?.warnings?.['hi'] || hGuide?.warnings?.['en'] || [];
+                  const remedies = hGuide?.remedies?.[language] || hGuide?.remedies?.['hi'] || hGuide?.remedies?.['en'] || [];
+
+                  const poisonChannel = satReport.poisonReleaseChannel?.[language] || satReport.poisonReleaseChannel?.['hi'] || satReport.poisonReleaseChannel?.['en'] || '';
+                  const threeHouseName = satReport.threeHouseGroup?.name || '';
+                  const threeHouseDesc = satReport.threeHouseGroup?.description?.[language] || satReport.threeHouseGroup?.description?.['hi'] || satReport.threeHouseGroup?.description?.['en'] || '';
+                  const uniRemedies = satReport.universalRemedies?.[language] || satReport.universalRemedies?.['hi'] || satReport.universalRemedies?.['en'] || [];
+                  const digLabel = satReport.saturnDignity ? (satReport.saturnDignity[language] || satReport.saturnDignity['hi'] || satReport.saturnDignity['en']) : hGuide?.dignityType;
+
+                  let dignityBg = '#FEF3C7';
+                  let dignityTextColor = '#92400E';
+                  if (hGuide?.dignityType === 'EXALTED' || hGuide?.dignityType === 'OWN_HOUSE' || hGuide?.dignityType === 'EXCELLENT') {
+                    dignityBg = '#DCFCE7';
+                    dignityTextColor = '#166534';
+                  } else if (hGuide?.dignityType === 'DEBILITATED') {
+                    dignityBg = '#FEE2E2';
+                    dignityTextColor = '#991B1B';
+                  } else if (hGuide?.dignityType === 'DIFFICULT' || hGuide?.dignityType === 'CHALLENGING') {
+                    dignityBg = '#FFEDD5';
+                    dignityTextColor = '#9A3412';
+                  }
+
+                  return (
+                    <View style={styles.card}>
+                      <Text style={styles.cardHeader}>🪐 {isHi ? 'लाल किताब शनि (Saturn) संपूर्ण गाइड' : 'Lal Kitab Shani (Saturn) Complete House Guide'}</Text>
+                      
+                      {/* User Saturn Placement Badge */}
+                      <View style={{ backgroundColor: '#1E293B', padding: 14, borderRadius: 12, marginBottom: 14 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#FFD700' }}>
+                            🪐 {isHi ? `शनि स्थिति: भाव ${satReport.userSaturnHouse}` : `Saturn Placement: House ${satReport.userSaturnHouse}`}
+                          </Text>
+                          <View style={{ backgroundColor: dignityBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
+                            <Text style={{ fontSize: 11, fontWeight: 'bold', color: dignityTextColor }}>
+                              {digLabel}
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <Text style={{ fontSize: 13, color: '#E2E8F0', marginTop: 2, fontWeight: '600' }}>
+                          📍 Rashi: {satReport.userSaturnRashi} • Degree: {satReport.userSaturnDegree}
+                        </Text>
+                        <Text style={{ fontSize: 13, color: '#FCD34D', marginTop: 4, fontStyle: 'italic' }}>
+                          {statusText}
+                        </Text>
+                      </View>
+
+                      {/* 7 Golden Rules Box */}
+                      <View style={{ backgroundColor: '#FFFBEB', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#FDE68A', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#92400E', marginBottom: 8 }}>
+                          👑 {isHi ? 'लाल किताब के 7 स्वर्णिम नियम (The 7 Golden Rules of Saturn):' : 'The 7 Golden Rules of Lal Kitab Saturn:'}
+                        </Text>
+                        {LAL_KITAB_7_GOLDEN_RULES.map((rule: any) => {
+                          const rTitle = rule.title[language] || rule.title['hi'] || rule.title['en'];
+                          const rDesc = rule.desc[language] || rule.desc['hi'] || rule.desc['en'];
+                          return (
+                            <View key={rule.num} style={{ marginBottom: 6 }}>
+                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#78350F' }}>
+                                • {rTitle}
+                              </Text>
+                              <Text style={{ fontSize: 11, color: '#92400E', paddingLeft: 10, lineHeight: 16 }}>
+                                {rDesc}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+
+                      {/* House Specific Manifestation */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                          📖 House {satReport.userSaturnHouse} Specific Life Manifestation:
+                        </Text>
+                        {manifestations.map((m: string, idx: number) => (
+                          <Text key={idx} style={{ fontSize: 13, color: '#334155', marginBottom: 6, lineHeight: 19 }}>
+                            • {m}
+                          </Text>
+                        ))}
+
+                        {/* Becomes Good When */}
+                        {becomesGood.length > 0 && (
+                          <View style={{ marginTop: 8, backgroundColor: '#F0FDF4', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                            <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#166534', marginBottom: 4 }}>
+                              ✅ Becomes Auspicious / Good When:
+                            </Text>
+                            {becomesGood.map((bg: string, idx: number) => (
+                              <Text key={idx} style={{ fontSize: 12, color: '#15803D', marginBottom: 3, lineHeight: 18 }}>
+                                ✓ {bg}
+                              </Text>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* Becomes Bad When */}
+                        {becomesBad.length > 0 && (
+                          <View style={{ marginTop: 8, backgroundColor: '#FEF2F2', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#FECACA' }}>
+                            <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#991B1B', marginBottom: 4 }}>
+                              ⚠️ Becomes Inauspicious / Malefic When:
+                            </Text>
+                            {becomesBad.map((bb: string, idx: number) => (
+                              <Text key={idx} style={{ fontSize: 12, color: '#B91C1C', marginBottom: 3, lineHeight: 18 }}>
+                                ✗ {bb}
+                              </Text>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* Warnings */}
+                        {warnings.length > 0 && (
+                          <View style={{ marginTop: 8, backgroundColor: '#FFF7ED', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#FFEDD5' }}>
+                            <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#C2410C', marginBottom: 4 }}>
+                              🚫 Warnings & Strict Prohibitions:
+                            </Text>
+                            {warnings.map((w: string, idx: number) => (
+                              <Text key={idx} style={{ fontSize: 12, color: '#9A3412', marginBottom: 3, lineHeight: 18 }}>
+                                🛑 {w}
+                              </Text>
+                            ))}
+                          </View>
+                        )}
+
+                        {/* House Specific Remedies */}
+                        {remedies.length > 0 && (
+                          <View style={{ marginTop: 10, backgroundColor: '#EFF6FF', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#BFDBFE' }}>
+                            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#1D4ED8', marginBottom: 6 }}>
+                              🔮 House {satReport.userSaturnHouse} Specific Lal Kitab Remedies:
+                            </Text>
+                            {remedies.map((rem: string, idx: number) => (
+                              <Text key={idx} style={{ fontSize: 13, color: '#1E40AF', marginBottom: 4, lineHeight: 19 }}>
+                                💡 {rem}
+                              </Text>
+                            ))}
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Evaluated Special Lal Kitab Rules */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                          ⚡ Evaluated Special Lal Kitab Rules for Saturn:
+                        </Text>
+                        {satReport.specialRulesEvaluated.map((rule: any, idx: number) => {
+                          const rName = rule.ruleName[language] || rule.ruleName['hi'] || rule.ruleName['en'];
+                          const rDesc = rule.description[language] || rule.description['hi'] || rule.description['en'];
+                          return (
+                            <View
+                              key={idx}
+                              style={{
+                                backgroundColor: rule.isTriggered ? '#FFF5F5' : '#F8FAFC',
+                                padding: 10,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: rule.isTriggered ? '#FEB2B2' : '#E2E8F0',
+                                marginBottom: 8
+                              }}
+                            >
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 13, fontWeight: 'bold', color: rule.isTriggered ? '#9B2C2C' : '#334155' }}>
+                                  {rule.isTriggered ? '🔥 ' : 'ℹ️ '}{rName}
+                                </Text>
+                                <View style={{ backgroundColor: rule.isTriggered ? '#E53E3E' : '#CBD5E1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: rule.isTriggered ? '#FFFFFF' : '#475569' }}>
+                                    {rule.isTriggered ? 'ACTIVE' : 'INACTIVE'}
+                                  </Text>
+                                </View>
+                              </View>
+                              <Text style={{ fontSize: 12, color: rule.isTriggered ? '#742A2A' : '#64748B', lineHeight: 18 }}>
+                                {rDesc}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+
+                      {/* Conjunctions */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                          🤝 Saturn Planetary Conjunctions (साथ बैठे ग्रह):
+                        </Text>
+                        {satReport.activeConjunctions.length > 0 ? (
+                          satReport.activeConjunctions.map((conj: any, idx: number) => {
+                            const effText = conj.effect[language] || conj.effect['hi'] || conj.effect['en'];
+                            return (
+                              <View key={idx} style={{ backgroundColor: '#F8FAFC', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 8 }}>
+                                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 3 }}>
+                                  🪐 Saturn + {conj.planet} ({conj.nature})
+                                </Text>
+                                <Text style={{ fontSize: 12, color: '#475569', lineHeight: 18 }}>
+                                  {effText}
+                                </Text>
+                              </View>
+                            );
+                          })
+                        ) : (
+                          <Text style={{ fontSize: 12, color: '#64748B', fontStyle: 'italic' }}>
+                            {isHi ? `शनि के साथ कोई अन्य ग्रह एक ही भाव में नहीं बैठा है (Saturn sits alone in House ${satReport.userSaturnHouse}).` : `Saturn sits alone in House ${satReport.userSaturnHouse} without direct conjunctions.`}
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* Poison Release Channel */}
+                      <View style={{ backgroundColor: '#FDF4FF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#F5D0FE', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#86198F', marginBottom: 4 }}>
+                          🧪 Saturn Poison Release Theory (विष निकास मार्ग):
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#701A75', lineHeight: 18 }}>
+                          {poisonChannel}
+                        </Text>
+                      </View>
+
+                      {/* 3 House Grouping & Age Milestones */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 6 }}>
+                          🔄 Saturn 3-House Life Focus Group:
+                        </Text>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 4 }}>
+                          {threeHouseName} (Houses: {satReport.threeHouseGroup?.houses?.join(', ')})
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#475569', marginBottom: 10, lineHeight: 18 }}>
+                          {threeHouseDesc}
+                        </Text>
+
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#800000', marginBottom: 6 }}>
+                          ⏱️ Key Age Activation Milestones of Saturn:
+                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                          {satReport.ageMilestones?.map((age: number, idx: number) => (
+                            <View key={idx} style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, borderWidth: 1, borderColor: '#BFDBFE' }}>
+                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1D4ED8' }}>
+                                Age {age}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Universal Remedies */}
+                      <View style={{ backgroundColor: '#F0FDF4', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#166534', marginBottom: 8 }}>
+                          🛡️ Universal Lal Kitab Remedies for Saturn (सार्वभौमिक नियम):
+                        </Text>
+                        {uniRemedies.map((uRem: string, idx: number) => (
+                          <Text key={idx} style={{ fontSize: 12, color: '#15803D', marginBottom: 4, lineHeight: 18 }}>
+                            • {uRem}
+                          </Text>
+                        ))}
+                      </View>
+
+                    </View>
+                  );
+                })()}
+
                 {/* Tab 2: Lal Kitab Planets & Specific Remedies */}
                 {activeTab === 'REMEDIES' && (
                   <View style={styles.card}>
@@ -778,8 +1083,8 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                       }
                       return (
                         <View style={{ backgroundColor: '#F0FDF4', borderRadius: 12, padding: 18, borderWidth: 1, borderColor: '#BBF7D0', marginTop: 12, alignItems: 'center' }}>
-                          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#15803D', textAlign: 'center', marginBottom: 8 }}>
-                            ✨ {isHi ? 'आपकी कुंडली पूर्णतः पितृ व पूर्वज ऋणों से मुक्त है' : 'Your Kundli is Ancestral Debt Free'}
+                          <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#15803D', textAlign: 'center', marginBottom: 8 }}>
+                            ✨ Your Kundli is Ancestral Debt Free (आपकी कुंडली पूर्णतः पितृ व पूर्वज ऋणों से मुक्त है)
                           </Text>
                           <Text style={{ fontSize: 13, color: '#166534', textAlign: 'center', lineHeight: 18 }}>
                             {isHi
@@ -791,6 +1096,249 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                     })()}
                   </View>
                 )}
+
+                {/* Tab: Lal Kitab Drishti & Remedies Engine */}
+                {activeTab === 'DRISHTI' && (() => {
+                  const drishtiReport = result.drishti_report;
+                  if (!drishtiReport) return null;
+
+                  const remedyAudit = drishtiReport.remedyAudit || {};
+                  const houseRemedies = remedyAudit.houseRemedies || [];
+                  const drishtiRemedies = remedyAudit.drishtiRemedies || [];
+                  const combinationRemedies = remedyAudit.combinationRemedies || [];
+                  const universalRemedies = remedyAudit.universalRemedies || [];
+
+                  return (
+                    <View style={styles.card}>
+                      <Text style={styles.cardHeader}>
+                        👁️ {isHi ? 'दृष्टि व अचूक उपाय (Lal Kitab Drishti & Remedies)' : language === 'gu' ? 'દ્રષ્ટિ અને ઉપાય' : 'Lal Kitab Drishti & Remedies'}
+                      </Text>
+                      <Text style={styles.cardSubText}>
+                        {isHi
+                          ? 'लाल किताब दृष्टि सिद्धान्त और प्राथमिकताओं के अनुसार ग्रहीय युति व अचूक निवारण उपाय:'
+                          : 'Lal Kitab House Aspect laws, Virtual Conjunctions & Priority Remedial Engine:'}
+                      </Text>
+
+                      {/* 🔮 Section 1: Active Planetary Drishti (सक्रिय ग्रहीय दृष्टियां) */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                          🔮 {isHi ? 'सक्रिय ग्रहीय दृष्टियां (Active Chart Aspects)' : 'Active Planetary Drishti (Birth Chart)'}
+                        </Text>
+
+                        {/* 🛑 Ulti Drishti Red Alert Card (if House 8 contains planets casting aspect on House 2) */}
+                        {(() => {
+                          const ultiAspect = drishtiReport.activeAspects?.find((a: any) => a.rule?.alwaysMalefic || a.rule?.from === 8);
+                          if (ultiAspect) {
+                            return (
+                              <View style={{ backgroundColor: '#FEE2E2', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#FECACA', marginBottom: 12 }}>
+                                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#991B1B', marginBottom: 4 }}>
+                                  🛑 Ulti Drishti Active (अष्टम से द्वितीय भाव उल्टी दृष्टि)
+                                </Text>
+                                <Text style={{ fontSize: 12, color: '#7F1D1D', lineHeight: 18, marginBottom: 6 }}>
+                                  {isHi
+                                    ? `अष्टम भाव का ग्रह (${ultiAspect.fromPlanets.join(', ')}) द्वितीय भाव (${ultiAspect.toPlanets.length > 0 ? ultiAspect.toPlanets.join(', ') : 'कुटुंब व धन'}) को पीड़ित कर रहा है। यह धन व पारिवारिक सौहार्द पर प्रतिकूल प्रभाव डालता है।`
+                                    : `Planets in House 8 (${ultiAspect.fromPlanets.join(', ')}) cast a 100% malefic Ulti Drishti (Reverse Aspect) onto House 2 (${ultiAspect.toPlanets.length > 0 ? ultiAspect.toPlanets.join(', ') : 'Wealth & Family'}).`}
+                                </Text>
+                                {drishtiRemedies.map((dr: any, idx: number) => (
+                                  <View key={idx} style={{ marginTop: 4 }}>
+                                    <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#991B1B' }}>
+                                      💡 Trigger {dr.trigger} Remedies:
+                                    </Text>
+                                    {dr.remedy?.map((rem: string, rIdx: number) => (
+                                      <Text key={rIdx} style={{ fontSize: 11, color: '#7F1D1D', lineHeight: 16 }}>
+                                        • {rem}
+                                      </Text>
+                                    ))}
+                                  </View>
+                                ))}
+                              </View>
+                            );
+                          }
+                          return null;
+                        })()}
+
+                        {/* List of Active Aspects */}
+                        {drishtiReport.activeAspects && drishtiReport.activeAspects.length > 0 ? (
+                          drishtiReport.activeAspects.map((aspect: any, idx: number) => {
+                            const pct = aspect.aspectStrengthPct;
+                            let badgeBg = '#F1F5F9';
+                            let badgeTextColor = '#475569';
+                            let badgeLabel = `🔹 25% Quarter Aspect`;
+
+                            if (aspect.rule?.alwaysMalefic || aspect.rule?.from === 8) {
+                              badgeBg = '#FEE2E2';
+                              badgeTextColor = '#991B1B';
+                              badgeLabel = `🛑 100% Ulti Drishti Alert`;
+                            } else if (pct === 100) {
+                              badgeBg = '#DCFCE7';
+                              badgeTextColor = '#166534';
+                              badgeLabel = `🎯 100% Full Aspect`;
+                            } else if (pct === 50) {
+                              badgeBg = '#FEF3C7';
+                              badgeTextColor = '#92400E';
+                              badgeLabel = `⚡ 50% Half Aspect`;
+                            }
+
+                            const interpText = aspect.interpretation?.[language] || aspect.interpretation?.['hi'] || aspect.interpretation?.['en'];
+
+                            return (
+                              <View key={idx} style={{ backgroundColor: '#F8FAFC', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 8 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B' }}>
+                                    House {aspect.rule.from} ➔ House {aspect.rule.to}
+                                  </Text>
+                                  <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: badgeTextColor }}>
+                                      {badgeLabel}
+                                    </Text>
+                                  </View>
+                                </View>
+                                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                                  {interpText}
+                                </Text>
+                              </View>
+                            );
+                          })
+                        ) : (
+                          <Text style={{ fontSize: 12, color: '#64748B', fontStyle: 'italic' }}>
+                            No active planetary aspects detected in this birth chart.
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* 🤝 Section 2: Special Relationships & Virtual Conjunctions */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                          🤝 {isHi ? 'विशेष ग्रहीय संबंध व आभासी युति (Special Relationships)' : 'Special Relationships & Virtual Conjunctions'}
+                        </Text>
+
+                        {drishtiReport.specialRelationships && drishtiReport.specialRelationships.length > 0 ? (
+                          drishtiReport.specialRelationships.map((rel: any, idx: number) => {
+                            let relBg = '#F8FAFC';
+                            let relBorder = '#E2E8F0';
+                            let relBadgeBg = '#E0F2FE';
+                            let relBadgeText = '#075985';
+                            let relLabel = `🏡 Neighbor House`;
+
+                            if (rel.type === 'OPPOSITE_AXIS') {
+                              relBg = '#FAF5FF';
+                              relBorder = '#E9D5FF';
+                              relBadgeBg = '#F3E8FF';
+                              relBadgeText = '#6B21A8';
+                              relLabel = `🔄 Virtual Conjunction`;
+                            } else if (rel.type === 'ULTI_DRISHTI') {
+                              relBadgeBg = '#FEE2E2';
+                              relBadgeText = '#991B1B';
+                              relLabel = `🛑 Ulti Drishti`;
+                            } else if (rel.type === 'DHARMA_SUPPORT') {
+                              relBadgeBg = '#FEF3C7';
+                              relBadgeText = '#92400E';
+                              relLabel = `👑 Dharma Axis Support`;
+                            }
+
+                            const relDesc = rel.description?.[language] || rel.description?.['hi'] || rel.description?.['en'];
+
+                            return (
+                              <View key={idx} style={{ backgroundColor: relBg, padding: 10, borderRadius: 8, borderWidth: 1, borderColor: relBorder, marginBottom: 8 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B' }}>
+                                    Houses {rel.houses[0]} & {rel.houses[1]}
+                                  </Text>
+                                  <View style={{ backgroundColor: relBadgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: relBadgeText }}>
+                                      {relLabel}
+                                    </Text>
+                                  </View>
+                                </View>
+                                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                                  {relDesc}
+                                </Text>
+                              </View>
+                            );
+                          })
+                        ) : (
+                          <Text style={{ fontSize: 12, color: '#64748B', fontStyle: 'italic' }}>
+                            No special relationship pairs active in current placements.
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* ⚡ Section 3: Planet Combination Remedies (सर्वोच्च प्राथमिकता योग) */}
+                      <View style={{ backgroundColor: '#FFF7ED', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#FFEDD5', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#C2410C', marginBottom: 8 }}>
+                          ⚡ {isHi ? 'सर्वोच्च प्राथमिकता ग्रहीय योग व उपाय (Planet Combination Remedies)' : 'Planet Combination Remedies (Highest Priority)'}
+                        </Text>
+                        {combinationRemedies.length > 0 ? (
+                          combinationRemedies.map((cRem: any, idx: number) => (
+                            <View key={idx} style={{ backgroundColor: '#FFFFFF', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#FDBA74', marginBottom: 8 }}>
+                              <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#9A3412', marginBottom: 2 }}>
+                                💡 {cRem.combo}
+                              </Text>
+                              <Text style={{ fontSize: 12, color: '#C2410C', fontStyle: 'italic', marginBottom: 4 }}>
+                                Impact: {cRem.result}
+                              </Text>
+                              <Text style={{ fontSize: 12, fontWeight: '600', color: '#7C2D12' }}>
+                                🙏 Upay: {cRem.remedy}
+                              </Text>
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={{ fontSize: 12, color: '#9A3412', fontStyle: 'italic' }}>
+                            No major conflicting or protective planet combinations in same house or opposite axis.
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* 🏠 Section 4: House-Specific Planet Remedies (भाव अनुसार अचूक टोटके) */}
+                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                          🏠 {isHi ? 'भाव अनुसार अचूक लाल किताब टोटके (House Placement Remedies)' : 'House-Specific Planet Remedies'}
+                        </Text>
+                        {houseRemedies.length > 0 ? (
+                          houseRemedies.map((hRem: any, idx: number) => (
+                            <View key={idx} style={{ backgroundColor: '#F8FAFC', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 8 }}>
+                              <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 2 }}>
+                                🪐 {hRem.planet} in House {hRem.house}
+                              </Text>
+                              <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                                💡 {hRem.remedy}
+                              </Text>
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={{ fontSize: 12, color: '#64748B', fontStyle: 'italic' }}>
+                            Standard house remedies evaluated.
+                          </Text>
+                        )}
+                      </View>
+
+                      {/* 🛡️ Section 5: Universal Planet Remedies (सार्वभौमिक नियम) */}
+                      <View style={{ backgroundColor: '#F0FDF4', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#166534', marginBottom: 8 }}>
+                          🛡️ {isHi ? 'सार्वभौमिक ग्रहीय नियम व अचूक उपाय (Universal Planet Remedies)' : 'Universal Planet Lifestyle Remedies'}
+                        </Text>
+                        {universalRemedies.length > 0 ? (
+                          universalRemedies.map((uRem: any, idx: number) => (
+                            <View key={idx} style={{ marginBottom: 8 }}>
+                              <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#15803D', marginBottom: 2 }}>
+                                🌟 {uRem.planet}:
+                              </Text>
+                              {uRem.remedies.map((rem: string, rIdx: number) => (
+                                <Text key={rIdx} style={{ fontSize: 12, color: '#166534', lineHeight: 18, paddingLeft: 8 }}>
+                                  • {rem}
+                                </Text>
+                              ))}
+                            </View>
+                          ))
+                        ) : (
+                          <Text style={{ fontSize: 12, color: '#15803D', fontStyle: 'italic' }}>
+                            Daily lifestyle remedies active.
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })()}
 
               </View>
             )}

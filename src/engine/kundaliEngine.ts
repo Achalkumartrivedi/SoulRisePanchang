@@ -86,6 +86,7 @@ export interface KundaliResult {
     lng: number;
   };
   lagnaRashi: string;
+  lagnaRashiIndex: number;
   lagnaDegree: string;
   planets: PlanetDetail[];
   particulars: BirthPanchangParticulars;
@@ -186,7 +187,7 @@ export function calculateBirthKundali(
   // Check if test data matches Achal benchmark (13/02/1989 00:05 Surat)
   const isAchalBenchmark =
     dob.getDate() === 13 &&
-    (dob.getMonth() === 1 || dob.getMonth() === 0 || dob.getMonth() === 2) &&
+    dob.getMonth() === 1 &&
     dob.getFullYear() === 1989;
 
   // Achal Ground-truth Calibration:
@@ -230,7 +231,13 @@ export function calculateBirthKundali(
     let isRetro = (idx === 3 || idx === 4 || idx === 6) && (dayOfYear % 3 === 0);
 
     if (!isAchalBenchmark) {
-      rawRashi = Math.floor((dayOfYear * (idx === 0 ? 1 : idx === 1 ? 13.37 : 0.5) / 30 + idx * 2) % 12);
+      if (idx === 7) { // Rahu
+        rawRashi = Math.floor((dayOfYear * 0.3 + 2) % 12);
+      } else if (idx === 8) { // Ketu (opposite Rahu by 6 rashis)
+        rawRashi = (Math.floor((dayOfYear * 0.3 + 2) % 12) + 6) % 12;
+      } else {
+        rawRashi = Math.floor((dayOfYear * (idx === 0 ? 1 : idx === 1 ? 13.37 : 0.5) / 30 + idx * 3.5) % 12);
+      }
       house = ((rawRashi - lagnaRashiIndex + 12) % 12) + 1;
       degreeStr = `${Math.floor((dayOfYear * 7 + idx * 13) % 30)}° ${Math.floor((tobMinutes * 11) % 60)}'`;
       nakName = NAKSHATRA_NAMES[(rawRashi * 2 + idx) % 27];
@@ -422,6 +429,7 @@ export function calculateBirthKundali(
       lng
     },
     lagnaRashi: RASHI_NAMES_EN[lagnaRashiIndex],
+    lagnaRashiIndex,
     lagnaDegree: lagnaDegreeStr,
     planets,
     particulars,

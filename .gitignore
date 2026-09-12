@@ -20,4 +20,6 @@ yarn-error.log*
 upload_resp.json
 patch_repo.json
 *.png
+*.aab
+
 

@@ -403,29 +403,47 @@ export const AstrologyInterpretationsView: React.FC<AstrologyInterpretationsView
           </View>
 
           {/* Lal Kitab Applied Rules */}
-          {lalKitabReport.appliedRules.map(rule => (
-            <View key={rule.id} style={styles.lalKitabRuleCard}>
-              <Text style={styles.ruleTitleText}>{getText(rule.title)}</Text>
-              <Text style={styles.ruleDescText}>{getText(rule.description)}</Text>
+          {lalKitabReport.appliedRules.map((rule, idx) => {
+            const title = getText(rule.title);
+            const desc = getText(rule.description);
+            const maternal = rule.maternalImpact ? getText(rule.maternalImpact) : '';
 
-              {/* Maternal / Family Impact Highlight */}
-              {rule.maternalImpact && (
-                <View style={styles.maternalAlertCard}>
-                  <Text style={styles.maternalAlertText}>{getText(rule.maternalImpact)}</Text>
-                </View>
-              )}
+            const rawRemedies = (rule.remedies && rule.remedies[language] && rule.remedies[language].length > 0)
+              ? rule.remedies[language]
+              : ((language === 'hinglish' || language === 'mr') && rule.remedies?.['hi'] && rule.remedies['hi'].length > 0)
+                ? rule.remedies['hi']
+                : (rule.remedies?.['hi'] && rule.remedies['hi'].length > 0)
+                  ? rule.remedies['hi']
+                  : (rule.remedies?.['en'] || []);
 
-              {/* Lal Kitab Totke & Upay Remedies */}
-              {rule.remedies && (
-                <View style={styles.remedyBox}>
-                  <Text style={styles.remedyBoxTitle}>🌸 Lal Kitab Remedies (लाल किताब उपाय):</Text>
-                  {(rule.remedies[language] || rule.remedies['en'] || rule.remedies['hi'] || []).map((rem, idx) => (
-                    <Text key={idx} style={styles.remedyItemText}>• {rem}</Text>
-                  ))}
-                </View>
-              )}
-            </View>
-          ))}
+            const remediesList = rawRemedies.map(item => item.replace(/^[•\s]+/, '').trim());
+
+            return (
+              <View key={rule.id || idx} style={styles.lalKitabRuleCard}>
+                <Text style={styles.ruleTitleText}>{title}</Text>
+                <Text style={styles.ruleDescText}>{desc}</Text>
+
+                {/* Maternal / Family Impact Highlight */}
+                {maternal ? (
+                  <View style={styles.maternalAlertCard}>
+                    <Text style={styles.maternalAlertText}>{maternal}</Text>
+                  </View>
+                ) : null}
+
+                {/* Lal Kitab Totke & Upay Remedies */}
+                {remediesList.length > 0 && (
+                  <View style={styles.remedyBox}>
+                    <Text style={styles.remedyBoxTitle}>
+                      💡 {language === 'hi' || language === 'hinglish' ? 'लाल किताब टोटके एवं अचूक उपाय:' : language === 'gu' ? 'લાલ કિતાબ તોટકા અને ઉપાયો:' : 'Lal Kitab Totke & Upay:'}
+                    </Text>
+                    {remediesList.map((rem, tIdx) => (
+                      <Text key={tIdx} style={styles.remedyItemText}>• {rem}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
 
           {/* Lal Kitab Aspects Section */}
           <View style={[styles.planetDetailCardBox, { marginTop: 14 }]}>

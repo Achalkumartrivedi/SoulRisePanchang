@@ -14,6 +14,16 @@ import {
 import { Colors } from '../theme/colors';
 import { saveUserProfile, loginOrRegisterEmailUser, resetUserPin, UserProfile } from '../engine/userDatabase';
 import { restoreKundliProfilesFromCloud } from '../utils/profileStorage';
+import { useAuth } from '../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  COUNTRY_CODES,
+  DEFAULT_COUNTRY,
+  CountryCodeItem,
+  detectInputType,
+  validatePhoneNumberForCountry,
+  validateEmailFormat
+} from '../utils/countryCodes';
 
 interface OnboardingAuthScreenProps {
   onComplete: () => void;
@@ -21,54 +31,57 @@ interface OnboardingAuthScreenProps {
 }
 
 export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onComplete, onSkip }) => {
+  const { signInWithGoogle, signInWithEmail, sendPasswordlessLink } = useAuth();
+  const insets = useSafeAreaInsets();
+  const bottomInsetPadding = Math.max(insets.bottom + 12, 48);
   const [authMode, setAuthMode] = useState<'SELECT' | 'EMAIL_FORM' | 'FORGOT_PIN'>('SELECT');
   const [showGooglePicker, setShowGooglePicker] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-  // Unified Email Form State
-  const [emailName, setEmailName] = useState('');
+  // Unified Email / Phone State
   const [emailAddr, setEmailAddr] = useState('');
   const [emailPin, setEmailPin] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<CountryCodeItem>(DEFAULT_COUNTRY);
+  const [showCountryModal, setShowCountryModal] = useState(false);
 
   // Forgot PIN Reset State
   const [forgotEmail, setForgotEmail] = useState('');
   const [newPin, setNewPin] = useState('');
 
-  // Custom Google Account Input State inside Picker
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [customGoogleName, setCustomGoogleName] = useState('');
-  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+  const inputType = detectInputType(emailAddr);
 
-  // Simulated Device Google Accounts
-  const DEVICE_GOOGLE_ACCOUNTS = [
-    { name: 'Achal Trivedi', email: 'achal.trivedi@gmail.com' },
-    { name: 'SoulRise Dev', email: 'soulrise.dev@gmail.com' }
-  ];
+  const handleGoogleSignInPress = async () => {
+    const res = await signInWithGoogle();
+    if (res.success) {
+      onComplete();
+    } else if (res.message && !res.message.includes('cancelled')) {
+      Alert.alert('Google Sign-In Error', res.message);
+    }
+  };
 
-  const handleSelectGoogleAccount = async (name: string, email: string) => {
-    setShowGooglePicker(false);
-    const profile: UserProfile = {
-      id: `google_${Date.now()}`,
-      name: name.trim() || 'Google User',
-      email: email.trim().toLowerCase(),
-      authType: 'GOOGLE',
-      createdAtIso: new Date().toISOString(),
-      avatarUrl: 'https://lh3.googleusercontent.com/a/default-user'
-    };
+  const handleSendMagicLink = async () => {
+    const cleanEmail = emailAddr.trim().toLowerCase();
+    const emailCheck = validateEmailFormat(cleanEmail);
+    if (!emailCheck.valid) {
+      Alert.alert('⚠️ Valid Email Required', emailCheck.message || 'Please enter a valid email address to receive a passwordless magic link.');
+      return;
+    }
 
-    await saveUserProfile(profile);
-    await restoreKundliProfilesFromCloud(email);
-    onComplete();
+    const res = await sendPasswordlessLink(cleanEmail);
+    if (res.success) {
+      Alert.alert('✨ Magic Link Sent', res.message || `Magic sign-in link sent to ${cleanEmail}. Open the email link to sign in instantly!`);
+    } else {
+      Alert.alert('❌ Error Sending Link', res.message || 'Failed to send magic link.');
+    }
   };
 
   const handleSmartEmailSubmit = async () => {
-    const cleanEmail = emailAddr.trim().toLowerCase();
+    const rawInput = emailAddr.trim();
     const cleanPin = emailPin.trim();
-    const cleanName = emailName.trim();
 
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      Alert.alert('⚠️ Email Required', 'Please enter a valid email address.');
+    if (!rawInput) {
+      Alert.alert('⚠️ Email or Phone Required', 'Please enter a valid email address or mobile phone number.');
       return;
     }
 
@@ -77,9 +90,26 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
       return;
     }
 
-    const res = await loginOrRegisterEmailUser(cleanEmail, cleanPin, cleanName);
+    let finalIdentifier = rawInput;
+
+    if (inputType === 'EMAIL') {
+      const check = validateEmailFormat(rawInput);
+      if (!check.valid) {
+        Alert.alert('⚠️ Invalid Email Format', check.message);
+        return;
+      }
+      finalIdentifier = rawInput.toLowerCase();
+    } else {
+      const check = validatePhoneNumberForCountry(rawInput, selectedCountry);
+      if (!check.valid) {
+        Alert.alert('⚠️ Invalid Phone Number', check.message);
+        return;
+      }
+      finalIdentifier = check.formattedNumber!;
+    }
+
+    const res = await signInWithEmail(finalIdentifier, cleanPin);
     if (res.success && res.profile) {
-      await restoreKundliProfilesFromCloud(cleanEmail);
       onComplete();
     } else {
       Alert.alert('❌ Sign In Failed', res.message || 'Incorrect PIN or login error.');
@@ -98,12 +128,14 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
     }
   };
 
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1A0006" />
 
       {/* Top Bar with Skip */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: topPadding }]}>
         <View style={styles.topStarBadge}>
           <Text style={styles.starIcon}>✨ 🌌 ✨</Text>
         </View>
@@ -114,7 +146,7 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInsetPadding + 20 }]} showsVerticalScrollIndicator={false}>
         {/* Sacred Sun Logo & Centered Welcome Header */}
         <View style={styles.welcomeBanner}>
           <Text style={styles.sunLogo}>☀️</Text>
@@ -126,10 +158,10 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
 
         {authMode === 'SELECT' && (
           <View style={styles.cardContainer}>
-            {/* Button 1: Sign in With Google (opens Google Account Picker) */}
+            {/* Button 1: Sign in With Google */}
             <TouchableOpacity
               style={styles.googleBtn}
-              onPress={() => setShowGooglePicker(true)}
+              onPress={() => handleGoogleSignInPress()}
               activeOpacity={0.85}
             >
               <View style={styles.googleLogoBadge}>
@@ -144,14 +176,14 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Smart Unified Button: Sign in with Email */}
+            {/* Smart Unified Button: Sign in with Email or Phone */}
             <TouchableOpacity
               style={styles.emailSignupBtn}
               onPress={() => setAuthMode('EMAIL_FORM')}
               activeOpacity={0.85}
             >
-              <Text style={styles.emailIcon}>✉️</Text>
-              <Text style={styles.emailSignupBtnText}>Sign in with Email</Text>
+              <Text style={styles.emailIcon}>✉️ / 📱</Text>
+              <Text style={styles.emailSignupBtnText}>Sign in with Email or Phone</Text>
             </TouchableOpacity>
 
             {/* Bottom Skip Link */}
@@ -177,22 +209,41 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
 
         {authMode === 'EMAIL_FORM' && (
           <View style={styles.cardContainer}>
-            <Text style={styles.modeTitle}>✉️ Sign in with Email</Text>
+            <Text style={styles.modeTitle}>✉️ / 📱 Sign in with Email or Phone</Text>
 
-            <Text style={styles.label}>Email Address (Required):</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Email or Phone Number:</Text>
+              <Text style={{ fontSize: 11, color: inputType === 'PHONE' ? Colors.maroon : '#4CAF50', fontWeight: 'bold' }}>
+                {inputType === 'PHONE' ? '📱 Mobile Phone Mode' : '✉️ Email Mode'}
+              </Text>
+            </View>
+
+            {/* Country Selector Dropdown Bar for Phone Mode */}
+            {inputType === 'PHONE' && (
+              <TouchableOpacity
+                style={styles.countryPickerBtn}
+                onPress={() => setShowCountryModal(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.countryPickerText}>
+                  {selectedCountry.flag} {selectedCountry.name} ({selectedCountry.dialCode})  ▼
+                </Text>
+              </TouchableOpacity>
+            )}
+
             <TextInput
               style={styles.input}
-              placeholder="user@gmail.com"
+              placeholder={inputType === 'PHONE' ? `e.g. 9876543210 (${selectedCountry.minDigits} digits)` : "user@gmail.com"}
               placeholderTextColor="#999"
               value={emailAddr}
               onChangeText={setEmailAddr}
-              keyboardType="email-address"
+              keyboardType={inputType === 'PHONE' ? 'phone-pad' : 'email-address'}
               autoCapitalize="none"
               autoFocus
             />
 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-              <Text style={styles.label}>6-Digit Security PIN / Password (Required):</Text>
+              <Text style={styles.label}>6-Digit Security PIN / Password:</Text>
               <TouchableOpacity onPress={() => {
                 setForgotEmail(emailAddr);
                 setAuthMode('FORGOT_PIN');
@@ -213,15 +264,6 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
               secureTextEntry
             />
 
-            <Text style={styles.label}>Full Name (Optional for new users):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Rahul Sharma"
-              placeholderTextColor="#999"
-              value={emailName}
-              onChangeText={setEmailName}
-            />
-
             <View style={styles.btnRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
                 <Text style={styles.cancelBtnText}>Back</Text>
@@ -231,6 +273,10 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
                 <Text style={styles.submitBtnText}>Sign In / Sign Up ➔</Text>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity style={styles.magicLinkBtn} onPress={handleSendMagicLink} activeOpacity={0.85}>
+              <Text style={styles.magicLinkBtnText}>🪄 Or Send Passwordless Magic Link to Email</Text>
+            </TouchableOpacity>
 
             <View style={styles.termsFooter}>
               <Text style={styles.termsFooterText}>
@@ -251,17 +297,16 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
           <View style={styles.cardContainer}>
             <Text style={styles.modeTitle}>🔑 Reset Security PIN / Password</Text>
             <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 12, lineHeight: 16 }}>
-              Enter your registered email address and create a new 6-digit security PIN to recover your account:
+              Enter your registered email address or phone number and create a new 6-digit security PIN to recover your account:
             </Text>
 
-            <Text style={styles.label}>Registered Email Address:</Text>
+            <Text style={styles.label}>Registered Email / Phone Number:</Text>
             <TextInput
               style={styles.input}
-              placeholder="user@gmail.com"
+              placeholder="user@gmail.com or +91 9876543210"
               placeholderTextColor="#999"
               value={forgotEmail}
               onChangeText={setForgotEmail}
-              keyboardType="email-address"
               autoCapitalize="none"
               autoFocus
             />
@@ -291,88 +336,37 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
         )}
       </ScrollView>
 
-      {/* Google Account Picker Modal */}
-      <Modal visible={showGooglePicker} animationType="slide" transparent>
+
+
+      {/* Country Code Picker Modal */}
+      <Modal visible={showCountryModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.pickerModalCard}>
             <View style={styles.pickerHeader}>
-              <View style={styles.googleBadgeSmall}>
-                <Text style={{ color: '#4285F4', fontSize: 13, fontWeight: 'bold' }}>G</Text>
-              </View>
-              <Text style={styles.pickerHeaderTitle}>Choose an account to SoulRise Panchang and Kundli</Text>
-              <TouchableOpacity onPress={() => setShowGooglePicker(false)} style={styles.closeBtn}>
+              <Text style={styles.pickerHeaderTitle}>🌐 Select Country Code</Text>
+              <TouchableOpacity onPress={() => setShowCountryModal(false)} style={styles.closeBtn}>
                 <Text style={styles.closeText}>✕</Text>
               </TouchableOpacity>
             </View>
-
-            <Text style={styles.pickerSubTitle}>
-              Select a Google account connected on this device to continue to SoulRise Panchang:
-            </Text>
-
-            {/* List Device Accounts */}
-            {DEVICE_GOOGLE_ACCOUNTS.map((acc, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.accountRow}
-                onPress={() => handleSelectGoogleAccount(acc.name, acc.email)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarLetter}>{acc.name.charAt(0)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.accountName}>{acc.name}</Text>
-                  <Text style={styles.accountEmail}>{acc.email}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-
-            {/* Add Custom Google Email Option */}
-            {!showCustomGoogleInput ? (
-              <TouchableOpacity
-                style={styles.addAccountBtn}
-                onPress={() => setShowCustomGoogleInput(true)}
-              >
-                <Text style={styles.addAccountText}>➕ Add or enter another Google email</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.customInputBox}>
-                <Text style={styles.label}>Enter Full Name:</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Amit Patel"
-                  placeholderTextColor="#999"
-                  value={customGoogleName}
-                  onChangeText={setCustomGoogleName}
-                />
-                <Text style={styles.label}>Enter Google Email Address:</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="user@gmail.com"
-                  placeholderTextColor="#999"
-                  value={customGoogleEmail}
-                  onChangeText={setCustomGoogleEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
+            <ScrollView style={{ maxHeight: 360 }}>
+              {COUNTRY_CODES.map((item) => (
                 <TouchableOpacity
-                  style={styles.googleSubmitBtn}
+                  key={item.code}
+                  style={[
+                    styles.countryRow,
+                    selectedCountry.code === item.code && styles.countryRowActive
+                  ]}
                   onPress={() => {
-                    if (!customGoogleEmail || !customGoogleEmail.includes('@')) {
-                      Alert.alert('⚠️ Invalid Email', 'Please enter a valid Google email.');
-                      return;
-                    }
-                    handleSelectGoogleAccount(customGoogleName || 'Google User', customGoogleEmail);
+                    setSelectedCountry(item);
+                    setShowCountryModal(false);
                   }}
                 >
-                  <Text style={styles.submitBtnText}>Sign In with This Account ➔</Text>
+                  <Text style={styles.countryFlagText}>{item.flag}</Text>
+                  <Text style={styles.countryNameText}>{item.name}</Text>
+                  <Text style={styles.countryDialText}>{item.dialCode}</Text>
                 </TouchableOpacity>
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.pickerCancelBtn} onPress={() => setShowGooglePicker(false)}>
-              <Text style={styles.pickerCancelText}>Cancel</Text>
-            </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -453,7 +447,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A0006' // Deep Vedic Galaxy Cosmic Background
   },
   topBar: {
-    paddingTop: 16,
+    paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 10 : 20,
     paddingHorizontal: 20,
     paddingBottom: 10,
     flexDirection: 'row',
@@ -813,5 +807,62 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 8
+  },
+  magicLinkBtn: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#FAF3E0',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  magicLinkBtnText: {
+    color: Colors.maroon,
+    fontSize: 13,
+    fontWeight: 'bold'
+  },
+  countryPickerBtn: {
+    backgroundColor: '#FFF8E7',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    alignItems: 'center'
+  },
+  countryPickerText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon
+  },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE'
+  },
+  countryRowActive: {
+    backgroundColor: '#FFF8E7'
+  },
+  countryFlagText: {
+    fontSize: 20,
+    marginRight: 12
+  },
+  countryNameText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary
+  },
+  countryDialText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon
   }
 });

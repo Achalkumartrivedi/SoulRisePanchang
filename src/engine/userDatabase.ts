@@ -3,16 +3,40 @@ import { syncUserToFirebaseCloud } from './firebaseSync';
 
 export interface UserProfile {
   id: string;
+  uid?: string;
   name: string;
+  displayName?: string;
   email: string;
-  pin6Digit?: string; // 6-digit PIN for email/guest login & sync
-  authType: 'GOOGLE' | 'GUEST';
-  createdAtIso: string;
+  photoURL?: string;
   avatarUrl?: string;
+  pin6Digit?: string; // 6-digit PIN for email/phone login & sync
+  authType: 'GOOGLE' | 'GUEST' | 'EMAIL' | 'PHONE';
+  createdAtIso: string;
+  lastLoginIso?: string;
 }
 
 const CURRENT_USER_PROFILE_KEY = '@soulrise_user_profile_v1';
 const ALL_ACCOUNTS_DATABASE_KEY = '@soulrise_all_user_accounts_v1';
+
+type AuthStateListener = (user: UserProfile | null) => void;
+const authStateListeners: Set<AuthStateListener> = new Set();
+
+export function subscribeToAuthState(listener: AuthStateListener): () => void {
+  authStateListeners.add(listener);
+  return () => {
+    authStateListeners.delete(listener);
+  };
+}
+
+export function notifyAuthStateChanged(user: UserProfile | null): void {
+  authStateListeners.forEach(listener => {
+    try {
+      listener(user);
+    } catch (e) {
+      console.log('Error in auth state listener:', e);
+    }
+  });
+}
 
 export async function getUserProfile(): Promise<UserProfile | null> {
   try {
@@ -49,49 +73,85 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
 }
 
 /**
- * Smart Unified Email Login & Signup Handler.
- * Automatically logs in existing users or registers new users seamlessly!
+ * Smart Unified Email & Phone Number Login & Signup Handler.
+ * Automatically validates Email or Phone number and logs in / registers user seamlessly!
  */
 export async function loginOrRegisterEmailUser(
-  email: string,
+  identifier: string,
   pin: string,
   name?: string
 ): Promise<{ success: boolean; profile?: UserProfile; isNewUser?: boolean; message?: string }> {
   try {
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanInput = identifier.trim().toLowerCase();
     const cleanPin = pin.trim();
 
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      return { success: false, message: 'Please enter a valid email address.' };
+    if (!cleanInput) {
+      return { success: false, message: 'Please enter a valid email address or mobile phone number.' };
+    }
+
+    const isEmail = cleanInput.includes('@');
+    const digitsOnly = cleanInput.replace(/[^\d]/g, '');
+    const isPhone = !isEmail && (digitsOnly.length >= 10);
+
+    if (!isEmail && !isPhone) {
+      return { success: false, message: 'Please enter a valid Email (e.g. user@gmail.com) or 10-digit Phone Number (e.g. +91 9876543210).' };
     }
 
     if (!cleanPin || cleanPin.length < 6) {
       return { success: false, message: 'Please enter a 6-digit PIN.' };
     }
 
+    let normalizedIdentifier = cleanInput;
+    let authType: 'EMAIL' | 'PHONE' = 'EMAIL';
+
+    if (isPhone) {
+      const rawDigits = cleanInput.replace(/[^\d+]/g, '');
+      normalizedIdentifier = rawDigits.startsWith('+') ? rawDigits : (rawDigits.length === 10 ? `+91${rawDigits}` : `+${rawDigits}`);
+      authType = 'PHONE';
+    }
+
     const accountsJson = await AsyncStorage.getItem(ALL_ACCOUNTS_DATABASE_KEY);
     const accounts: UserProfile[] = accountsJson ? JSON.parse(accountsJson) : [];
 
-    const existing = accounts.find(a => a.email.toLowerCase() === cleanEmail);
+    const existing = accounts.find(a => a.email.toLowerCase() === normalizedIdentifier.toLowerCase());
 
     if (existing) {
       // User exists -> verify PIN
       if (existing.pin6Digit && existing.pin6Digit !== cleanPin) {
-        return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN or tap "Forgot PIN?" to reset it.' };
+        return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN or reset it.' };
       }
       await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(existing));
       syncUserToFirebaseCloud(existing).catch(err => console.log('Firebase sync error:', err));
       return { success: true, profile: existing, isNewUser: false };
     } else {
       // New User -> Register
-      const userName = (name && name.trim()) ? name.trim() : cleanEmail.split('@')[0];
+      let userName = (name && name.trim()) ? name.trim() : '';
+      if (!userName) {
+        try {
+          const { getActiveProfile } = require('../utils/profileStorage');
+          const activeBirthProfile = await getActiveProfile();
+          if (activeBirthProfile && activeBirthProfile.name) {
+            userName = activeBirthProfile.name;
+          }
+        } catch (err) {
+          console.log('Error resolving active profile name:', err);
+        }
+      }
+
+      if (!userName) {
+        userName = isPhone ? `User ${normalizedIdentifier.slice(-4)}` : normalizedIdentifier.split('@')[0];
+      }
+
       const newProfile: UserProfile = {
-        id: `guest_${Date.now()}`,
+        id: `user_${Date.now()}`,
+        uid: `user_${Date.now()}`,
         name: userName,
-        email: cleanEmail,
+        displayName: userName,
+        email: normalizedIdentifier,
         pin6Digit: cleanPin,
-        authType: 'GUEST',
-        createdAtIso: new Date().toISOString()
+        authType: authType,
+        createdAtIso: new Date().toISOString(),
+        lastLoginIso: new Date().toISOString()
       };
 
       await saveUserProfile(newProfile);
@@ -147,6 +207,7 @@ export async function loginGuestUser(email: string, pin: string): Promise<{ succ
 export async function clearUserProfile(): Promise<void> {
   try {
     await AsyncStorage.removeItem(CURRENT_USER_PROFILE_KEY);
+    notifyAuthStateChanged(null);
   } catch (e) {
     console.log('Error clearing user profile from DB:', e);
   }

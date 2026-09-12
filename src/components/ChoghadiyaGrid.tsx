@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { ChoghadiyaItem } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedNatureBadge } from '../i18n/vedicTerms';
 
 interface ChoghadiyaGridProps {
   dayChoghadiya: ChoghadiyaItem[];
@@ -85,7 +86,7 @@ export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, n
 
               <View style={[styles.badge, { backgroundColor: item.isAuspicious ? Colors.auspiciousGreen : Colors.inauspiciousRed }]}>
                 <Text style={styles.badgeText}>
-                  {item.isAuspicious ? (showHindiScript ? 'शुभ' : 'Auspicious') : (showHindiScript ? 'अशुभ' : 'Inauspicious')}
+                  {getLocalizedNatureBadge(item.isAuspicious ? 'AUSPICIOUS' : 'INAUSPICIOUS', language)}
                 </Text>
               </View>
 

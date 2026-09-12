@@ -19,11 +19,70 @@ export const getJulianDay = (d: Date): number => {
   return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d.getDate() + b - 1524.5;
 };
 
+export function getJulianDayUTC(date: Date): number {
+  let y = date.getUTCFullYear();
+  let m = date.getUTCMonth() + 1;
+  const d = date.getUTCDate();
+  const h = date.getUTCHours() + date.getUTCMinutes() / 60.0 + date.getUTCSeconds() / 3600.0;
+  if (m <= 2) { y -= 1; m += 12; }
+  const a = Math.floor(y / 100);
+  const b = 2 - a + Math.floor(a / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + (h / 24.0) + b - 1524.5;
+}
+
+export function calculateSolarLunarPositions(date: Date) {
+  const jd = getJulianDayUTC(date);
+  const T = (jd - 2451545.0) / 36525.0;
+
+  // 1. Sun Tropical Longitude
+  const L0 = normalizeAngle(280.46646 + 36000.76983 * T + 0.0003032 * T * T);
+  const M_sun = normalizeAngle(357.52911 + 35999.05029 * T - 0.0001537 * T * T);
+  const M_sun_rad = (M_sun * Math.PI) / 180.0;
+
+  const C_sun = (1.914602 - 0.004817 * T) * Math.sin(M_sun_rad) +
+                (0.019993 - 0.000101 * T) * Math.sin(2 * M_sun_rad) +
+                0.000289 * Math.sin(3 * M_sun_rad);
+
+  const sunTropicalLong = normalizeAngle(L0 + C_sun);
+
+  // 2. Moon Tropical Longitude
+  const L_moon = normalizeAngle(218.3164477 + 481267.8812342 * T);
+  const M_moon = normalizeAngle(134.9633964 + 477198.8675055 * T);
+  const D_moon = normalizeAngle(297.8501921 + 445267.1114034 * T);
+  const F_moon = normalizeAngle(93.2720950 + 483202.0175233 * T);
+
+  const Mm_rad = (M_moon * Math.PI) / 180.0;
+  const Ms_rad = (M_sun * Math.PI) / 180.0;
+  const D_rad = (D_moon * Math.PI) / 180.0;
+  const F_rad = (F_moon * Math.PI) / 180.0;
+
+  const moonPerturbations =
+    6.288774 * Math.sin(Mm_rad) +
+    1.274027 * Math.sin(2 * D_rad - Mm_rad) +
+    0.658314 * Math.sin(2 * D_rad) +
+    -0.185596 * Math.sin(Ms_rad) +
+    -0.114336 * Math.sin(2 * F_rad) +
+    0.213618 * Math.sin(2 * Mm_rad) +
+    0.185116 * Math.sin(D_rad) +
+    0.114332 * Math.sin(2 * D_rad - 2 * F_rad);
+
+  const moonTropicalLong = normalizeAngle(L_moon + moonPerturbations);
+
+  // 3. Lahiri Ayanamsa (~24.215 deg for Sept 2026)
+  const year = date.getUTCFullYear() + (date.getUTCMonth() / 12.0);
+  const ayanamsa = 23.85 + 0.01396 * (year - 2000.0);
+
+  const sunSidereal = normalizeAngle(sunTropicalLong - ayanamsa);
+  const moonSidereal = normalizeAngle(moonTropicalLong - ayanamsa);
+  const tithiAngle = normalizeAngle(moonTropicalLong - sunTropicalLong);
+
+  return { sunSidereal, moonSidereal, tithiAngle };
+}
+
 export const calculateTithiForDate = (d: Date): number => {
   const sunriseDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 6, 0, 0);
-  const diffDaysSunrise = (sunriseDate.getTime() - new Date(2026, 7, 25, 0, 0, 0).getTime()) / (1000 * 60 * 60 * 24);
-  const totalTithiAngle = normalizeAngle(133.55 + diffDaysSunrise * 12.2);
-  const tithiIndex = Math.min(29, Math.max(0, Math.floor(totalTithiAngle / 12.0)));
+  const pos = calculateSolarLunarPositions(sunriseDate);
+  const tithiIndex = Math.min(29, Math.max(0, Math.floor(pos.tithiAngle / 12.0)));
   return tithiIndex;
 };
 
@@ -173,6 +232,110 @@ export function getTimezoneOffsetMinutes(timeZoneId: string = 'Asia/Kolkata', da
   }
 }
 
+function findLimbStartTime(
+  sunriseUtcDate: Date,
+  tzOffsetMin: number,
+  tzAbbrev: string,
+  getLimbIndex: (d: Date) => number
+): string {
+  const initialIndex = getLimbIndex(sunriseUtcDate);
+  const stepMinutes = 15;
+  const maxMinutes = 1800;
+  let transitionTimeMs: number | null = null;
+
+  for (let m = 0; m <= maxMinutes; m += stepMinutes) {
+    const checkDate = new Date(sunriseUtcDate.getTime() - m * 60 * 1000);
+    const idx = getLimbIndex(checkDate);
+    if (idx !== initialIndex) {
+      let low = m - stepMinutes;
+      let high = m;
+      while (high - low > 1) {
+        const mid = Math.floor((low + high) / 2);
+        const midDate = new Date(sunriseUtcDate.getTime() - mid * 60 * 1000);
+        if (getLimbIndex(midDate) !== initialIndex) {
+          high = mid;
+        } else {
+          low = mid;
+        }
+      }
+      transitionTimeMs = sunriseUtcDate.getTime() - high * 60 * 1000;
+      break;
+    }
+  }
+
+  if (transitionTimeMs === null) {
+    return `Earlier ${tzAbbrev}`;
+  }
+
+  const localDate = new Date(transitionTimeMs + tzOffsetMin * 60 * 1000);
+  const utcHours = localDate.getUTCHours();
+  const utcMinutes = localDate.getUTCMinutes();
+
+  const sunriseLocal = new Date(sunriseUtcDate.getTime() + tzOffsetMin * 60 * 1000);
+  let dayPrefix = 'Today';
+  if (localDate.getUTCDate() !== sunriseLocal.getUTCDate()) {
+    dayPrefix = 'Yesterday';
+  }
+
+  const h12 = utcHours % 12 === 0 ? 12 : utcHours % 12;
+  const ampm = utcHours >= 12 ? 'PM' : 'AM';
+  const timeStr = `${padZero(h12)}:${padZero(utcMinutes)} ${ampm}`;
+
+  return `${dayPrefix} ${timeStr} ${tzAbbrev}`;
+}
+
+function findLimbEndTime(
+  sunriseUtcDate: Date,
+  tzOffsetMin: number,
+  tzAbbrev: string,
+  getLimbIndex: (d: Date) => number
+): string {
+  const initialIndex = getLimbIndex(sunriseUtcDate);
+  const stepMinutes = 15;
+  const maxMinutes = 1800;
+  let transitionTimeMs: number | null = null;
+
+  for (let m = 0; m <= maxMinutes; m += stepMinutes) {
+    const checkDate = new Date(sunriseUtcDate.getTime() + m * 60 * 1000);
+    const idx = getLimbIndex(checkDate);
+    if (idx !== initialIndex) {
+      let low = m - stepMinutes;
+      let high = m;
+      while (high - low > 1) {
+        const mid = Math.floor((low + high) / 2);
+        const midDate = new Date(sunriseUtcDate.getTime() + mid * 60 * 1000);
+        if (getLimbIndex(midDate) !== initialIndex) {
+          high = mid;
+        } else {
+          low = mid;
+        }
+      }
+      transitionTimeMs = sunriseUtcDate.getTime() + high * 60 * 1000;
+      break;
+    }
+  }
+
+  if (transitionTimeMs === null) {
+    return `Full Day ${tzAbbrev}`;
+  }
+
+  const localDate = new Date(transitionTimeMs + tzOffsetMin * 60 * 1000);
+  const utcHours = localDate.getUTCHours();
+  const utcMinutes = localDate.getUTCMinutes();
+
+  const sunriseLocal = new Date(sunriseUtcDate.getTime() + tzOffsetMin * 60 * 1000);
+  let dayPrefix = 'Today';
+  if (localDate.getUTCDate() !== sunriseLocal.getUTCDate()) {
+    dayPrefix = 'Tomorrow';
+  }
+
+  const h12 = utcHours % 12 === 0 ? 12 : utcHours % 12;
+  const ampm = utcHours >= 12 ? 'PM' : 'AM';
+  const timeStr = `${padZero(h12)}:${padZero(utcMinutes)} ${ampm}`;
+
+  return `${dayPrefix} ${timeStr} ${tzAbbrev}`;
+}
+
 export function calculatePanchang(
   date: Date,
   city: CityLocation,
@@ -182,15 +345,22 @@ export function calculatePanchang(
   const year = date.getFullYear();
 
   const { sunrise, sunset } = calculateSunriseSunset(date, city.latitude, city.longitude, city.timeZoneId || 'Asia/Kolkata');
-  const { tzAbbrev } = getTimezoneOffsetMinutes(city.timeZoneId || 'Asia/Kolkata', date);
+  const { offsetMin, tzAbbrev } = getTimezoneOffsetMinutes(city.timeZoneId || 'Asia/Kolkata', date);
 
-  // 1. Tithi & Paksha Sunrise (Udaya Tithi) calculation
-  // Parse target date at Sunrise time (06:00 AM) to calculate authentic Udaya Tithi of the day
-  const sunriseDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 6, 0, 0);
-  const diffDaysSunrise = (sunriseDate.getTime() - new Date(2026, 7, 25, 0, 0, 0).getTime()) / (1000 * 60 * 60 * 24);
-  const totalTithiAngle = normalizeAngle(133.55 + diffDaysSunrise * 12.2);
+  const sunriseParts = sunrise.split(' ');
+  const [hStr, mStr] = (sunriseParts[0] || '06:00').split(':');
+  let h = parseInt(hStr, 10) || 6;
+  const m = parseInt(mStr, 10) || 0;
+  if (sunriseParts[1] === 'PM' && h < 12) h += 12;
+  if (sunriseParts[1] === 'AM' && h === 12) h = 0;
 
-  const tithiIndex = Math.min(29, Math.max(0, Math.floor(totalTithiAngle / 12.0)));
+  const sunriseLocalMs = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), h, m);
+  const sunriseUtcDate = new Date(sunriseLocalMs - offsetMin * 60 * 1000);
+
+  const posSunrise = calculateSolarLunarPositions(sunriseUtcDate);
+
+  // 1. Tithi
+  const tithiIndex = Math.min(29, Math.max(0, Math.floor(posSunrise.tithiAngle / 12.0)));
   const paksha: Paksha = tithiIndex < 15 ? 'SHUKLA' : 'KRISHNA';
   const pakshaHindi = paksha === 'SHUKLA' ? 'शुक्ल पक्ष' : 'कृष्ण पक्ष';
 
@@ -208,30 +378,15 @@ export function calculatePanchang(
     displayTithiHindi = 'अमावस्या';
   }
 
-  const tithiEndHour = Math.floor((18 + (tithiIndex * 0.7)) % 24);
-  const tithiEndMin = Math.floor((tithiIndex * 19) % 60);
+  const tithiStartStr = findLimbStartTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
+    const p = calculateSolarLunarPositions(d);
+    return Math.floor(p.tithiAngle / 12.0);
+  });
 
-  // 2. Nakshatra calculation
-  const moonLong = normalizeAngle(210.0 + diffDaysSunrise * 13.176);
-  const sunLong = normalizeAngle(130.0 + diffDaysSunrise * 0.9856);
-
-  const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(moonLong / (360.0 / 27.0))));
-  const nakData = NAKSHATRA_DATA[nakshatraIndex];
-
-  const nakEndHour = Math.floor((16 + (nakshatraIndex * 0.6)) % 24);
-  const nakEndMin = Math.floor((nakshatraIndex * 23) % 60);
-
-  let tithiStartStr = `06:22 AM ${tzAbbrev}`;
-  let tithiEndStr = `Up to ${padZero(tithiEndHour)}:${padZero(tithiEndMin)} ${tzAbbrev}`;
-  let nakStartStr = `04:15 AM ${tzAbbrev}`;
-  let nakEndStr = `Up to ${padZero(nakEndHour)}:${padZero(nakEndMin)} ${tzAbbrev}`;
-
-  if (dateIso === '2026-08-25') {
-    tithiStartStr = `06:22 AM ${tzAbbrev}`;
-    tithiEndStr = `04:54 AM ${tzAbbrev} (Next Day)`;
-    nakStartStr = `04:15 AM ${tzAbbrev}`;
-    nakEndStr = `02:48 AM ${tzAbbrev} (Next Day)`;
-  }
+  const tithiEndStr = findLimbEndTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
+    const p = calculateSolarLunarPositions(d);
+    return Math.floor(p.tithiAngle / 12.0);
+  });
 
   const isEkadashi = tithiInPaksha === 10;
   const isPurnima = tithiIndex === 14;
@@ -253,6 +408,20 @@ export function calculatePanchang(
     specialTag
   };
 
+  // 2. Nakshatra
+  const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(posSunrise.moonSidereal / (360.0 / 27.0))));
+  const nakData = NAKSHATRA_DATA[nakshatraIndex];
+
+  const nakStartStr = findLimbStartTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
+    const p = calculateSolarLunarPositions(d);
+    return Math.floor(p.moonSidereal / (360.0 / 27.0));
+  });
+
+  const nakEndStr = findLimbEndTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
+    const p = calculateSolarLunarPositions(d);
+    return Math.floor(p.moonSidereal / (360.0 / 27.0));
+  });
+
   const nakshatraInfo = {
     name: nakData[0],
     hindiName: nakData[1],
@@ -264,30 +433,40 @@ export function calculatePanchang(
   };
 
   // 3. Yoga
-  const yogaAngle = normalizeAngle(sunLong + moonLong);
-  const yogaIndex = Math.min(26, Math.max(0, Math.floor(yogaAngle / 13.333333333333334)));
+  const yogaAngle = normalizeAngle(posSunrise.sunSidereal + posSunrise.moonSidereal);
+  const yogaIndex = Math.min(26, Math.max(0, Math.floor(yogaAngle / (360.0 / 27.0))));
   const yogaPair = YOGA_DATA[yogaIndex];
   const inauspiciousYogas = new Set([0, 5, 8, 9, 14, 16, 18, 26]);
+
+  const yogaEndStr = findLimbEndTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
+    const p = calculateSolarLunarPositions(d);
+    const ya = normalizeAngle(p.sunSidereal + p.moonSidereal);
+    return Math.floor(ya / (360.0 / 27.0));
+  });
 
   const yogaInfo = {
     name: yogaPair[0],
     hindiName: yogaPair[1],
     number: yogaIndex + 1,
     isAuspicious: !inauspiciousYogas.has(yogaIndex),
-    endTimeFormatted: `Up to ${padZero((15 + yogaIndex % 8) % 24)}:${padZero((yogaIndex * 7) % 60)} ${tzAbbrev}`
+    endTimeFormatted: yogaEndStr
   };
 
   // 4. Karana
-  const diffAngle = normalizeAngle(moonLong - sunLong);
-  const karanaIndex = Math.min(59, Math.max(0, Math.floor(diffAngle / 6.0)));
+  const karanaIndex = Math.min(59, Math.max(0, Math.floor(posSunrise.tithiAngle / 6.0)));
   const karanaPair = getKaranaName(karanaIndex);
+
+  const karanaEndStr = findLimbEndTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
+    const p = calculateSolarLunarPositions(d);
+    return Math.floor(p.tithiAngle / 6.0);
+  });
 
   const karanaInfo = {
     name: karanaPair[0],
     hindiName: karanaPair[1],
     number: karanaIndex + 1,
     category: [0, 57, 58, 59].includes(karanaIndex) ? 'Fixed' : 'Recurring',
-    endTimeFormatted: `Up to ${padZero((11 + karanaIndex % 12) % 24)}:${padZero((karanaIndex * 9) % 60)} ${tzAbbrev}`
+    endTimeFormatted: karanaEndStr
   };
 
   // 5. Vaara
@@ -295,15 +474,15 @@ export function calculatePanchang(
   const vaaraInfo = getVaaraInfo(dayOfWeek);
 
   // Sun & Moon Positions
-  const sunSignIndex = Math.floor(sunLong / 30.0);
-  const moonSignIndex = Math.floor(moonLong / 30.0);
-  const moonPhasePercent = Math.round((diffAngle / 360.0) * 100);
+  const sunSignIndex = Math.floor(posSunrise.sunSidereal / 30.0);
+  const moonSignIndex = Math.floor(posSunrise.moonSidereal / 30.0);
+  const moonPhasePercent = Math.round((posSunrise.tithiAngle / 360.0) * 100);
 
   const sunMoonTiming = {
     sunrise,
     sunset,
-    moonrise: formatShiftedTime(sunrise, Math.floor(diffAngle / 30) + 1),
-    moonset: formatShiftedTime(sunset, Math.floor(diffAngle / 30) + 1),
+    moonrise: formatShiftedTime(sunrise, Math.floor(posSunrise.tithiAngle / 30) + 1),
+    moonset: formatShiftedTime(sunset, Math.floor(posSunrise.tithiAngle / 30) + 1),
     sunSign: RASHI_NAMES[sunSignIndex][0],
     sunSignHindi: RASHI_NAMES[sunSignIndex][1],
     moonSign: RASHI_NAMES[moonSignIndex][0],
@@ -311,16 +490,19 @@ export function calculatePanchang(
     moonPhasePercent
   };
 
-  // Samvat
+  // Samvat & Hindu Month
   const vikramYear = year + 57;
   const shakaYear = year - 78;
-  let purnimantaMonthIndex = (sunSignIndex + 1) % 12;
 
-  // In Amanta system (Gujarat / MH), Krishna Paksha (Vad) belongs to the SAME lunar month name (Shravana)
+  let purnimantaMonthIndex = (sunSignIndex + 1) % 12;
   let effectiveMonthIndex = purnimantaMonthIndex;
-  if (lunarSystem === 'AMANTA' && paksha === 'KRISHNA') {
-    effectiveMonthIndex = (purnimantaMonthIndex + 11) % 12;
+
+  if (lunarSystem === 'AMANTA') {
+    if (paksha === 'KRISHNA') {
+      effectiveMonthIndex = (purnimantaMonthIndex + 11) % 12;
+    }
   }
+
   const monthPair = HINDU_MONTHS[effectiveMonthIndex];
 
   const rituPair = (effectiveMonthIndex === 0 || effectiveMonthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :

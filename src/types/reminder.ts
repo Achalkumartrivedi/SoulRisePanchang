@@ -50,6 +50,7 @@ export interface ReminderItem {
   notes?: string;
   createdAtIso: string;
   recurrence?: RecurrenceRule;
+  isJain?: boolean;
   lalKitabData?: LalKitabRemedyData;
   muhuratSafetyRating?: 'AUSPICIOUS' | 'NEUTRAL' | 'INAUSPICIOUS';
   muhuratAdvice?: string;

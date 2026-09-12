@@ -181,6 +181,116 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                       </View>
                     ) : null}
 
+                    {/* 🏛️ Pancha Vargas (Five Functional Groups) Tithi Secret Classification */}
+                    {(() => {
+                      const tithiNumInPaksha = ((info.tithiNumber - 1) % 15) + 1;
+                      const isAmavasya = info.tithiNumber === 30 || info.tithiNumber === 29;
+
+                      let vargaGroup = {
+                        groupName: 'Nanda (नंदा)',
+                        meaning: 'Joy, Delight & Prosperity',
+                        tithis: 'Pratipada (1st), Shashthi (6th), Ekadashi (11th)',
+                        ruler: 'Venus (Shukra)',
+                        nature: 'Auspicious',
+                        color: '#2E7D32',
+                        bgColor: '#E8F5E9',
+                        recommended: 'Celebrations, arts, festivals, starting new ventures, luxury purchases, travel.'
+                      };
+
+                      if ([1, 6, 11].includes(tithiNumInPaksha)) {
+                        vargaGroup = {
+                          groupName: 'Nanda (नंदा)',
+                          meaning: 'Joy, Delight & Prosperity',
+                          tithis: 'Pratipada (1st), Shashthi (6th), Ekadashi (11th)',
+                          ruler: 'Venus (Shukra)',
+                          nature: 'Auspicious',
+                          color: '#2E7D32',
+                          bgColor: '#E8F5E9',
+                          recommended: 'Celebrations, arts, festivals, starting new ventures, luxury purchases, travel.'
+                        };
+                      } else if ([2, 7, 12].includes(tithiNumInPaksha)) {
+                        vargaGroup = {
+                          groupName: 'Bhadra (भद्रा)',
+                          meaning: 'Welfare, Protection & Auspiciousness',
+                          tithis: 'Dwitiya (2nd), Saptami (7th), Dwadashi (12th)',
+                          ruler: 'Mercury (Budh)',
+                          nature: 'Auspicious',
+                          color: '#2E7D32',
+                          bgColor: '#E8F5E9',
+                          recommended: 'Financial investments, signing contracts, education, marriage, shifting residence.'
+                        };
+                      } else if ([3, 8, 13].includes(tithiNumInPaksha)) {
+                        vargaGroup = {
+                          groupName: 'Jaya (जया)',
+                          meaning: 'Victory, Conquest & Energy',
+                          tithis: 'Tritiya (3rd), Ashtami (8th), Trayodashi (13th)',
+                          ruler: 'Mars (Mangal)',
+                          nature: 'Mixed / Dynamic',
+                          color: '#E65100',
+                          bgColor: '#FFF3E0',
+                          recommended: 'Lawsuits, competitive exams, acquiring tools/machinery, strategic disputes, surgical procedures.'
+                        };
+                      } else if ([4, 9, 14].includes(tithiNumInPaksha)) {
+                        vargaGroup = {
+                          groupName: 'Rikta (रिक्ता)',
+                          meaning: 'Empty, Hollow & Elimination',
+                          tithis: 'Chaturthi (4th), Navami (9th), Chaturdashi (14th)',
+                          ruler: 'Saturn (Shani)',
+                          nature: 'Inauspicious for Material Expansion',
+                          color: '#C62828',
+                          bgColor: '#FFEBEE',
+                          recommended: 'Demolishing structures, debt clearing, surgery, tantric rituals, weapon testing. Avoid new material starts.'
+                        };
+                      } else if ([5, 10, 15, 30].includes(tithiNumInPaksha) || isAmavasya) {
+                        vargaGroup = {
+                          groupName: 'Poorna (पूर्णा)',
+                          meaning: 'Fullness, Completeness & Abundance',
+                          tithis: 'Panchami (5th), Dashami (10th), Purnima / Amavasya (15th/30th)',
+                          ruler: 'Jupiter (Guru)',
+                          nature: 'Highly Auspicious',
+                          color: '#2E7D32',
+                          bgColor: '#E8F5E9',
+                          recommended: 'Milestones, long-term foundation stones, marriages, promotions, ceremonies.'
+                        };
+                      }
+
+                      return (
+                        <View style={{ marginTop: 10, marginBottom: 12 }}>
+                          {/* Pancha Varga Banner */}
+                          <View style={[styles.epigeneticBox, { backgroundColor: vargaGroup.bgColor, borderColor: vargaGroup.color, borderWidth: 1 }]}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <Text style={[styles.epigeneticTitle, { color: vargaGroup.color, fontSize: 14 }]}>
+                                🏛️ Pancha Varga Group: {vargaGroup.groupName}
+                              </Text>
+                              <View style={{ backgroundColor: vargaGroup.color, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: 'bold' }}>{vargaGroup.nature}</Text>
+                              </View>
+                            </View>
+                            <Text style={styles.epigeneticBody}>
+                              <Text style={{ fontWeight: 'bold' }}>Ruled by:</Text> {vargaGroup.ruler} • <Text style={{ fontWeight: 'bold' }}>Essence:</Text> {vargaGroup.meaning}
+                            </Text>
+                            <Text style={[styles.epigeneticBody, { marginTop: 4 }]}>
+                              <Text style={{ fontWeight: 'bold' }}>Best Actions:</Text> {vargaGroup.recommended}
+                            </Text>
+                          </View>
+
+                          {/* 5 Functional Groups Quick Reference Table */}
+                          <View style={[styles.epigeneticBox, { backgroundColor: '#FAFAFA', borderColor: '#EEEEEE', marginTop: 8 }]}>
+                            <Text style={[styles.sectionHeader, { color: Colors.maroon, marginBottom: 6 }]}>
+                              📜 The Five Functional Tithi Groups (Pancha Vargas)
+                            </Text>
+                            <Text style={[styles.epigeneticBody, { lineHeight: 18 }]}>
+                              • <Text style={{ fontWeight: 'bold', color: '#2E7D32' }}>Nanda (1st, 6th, 11th):</Text> Ruled by Venus — Joy, arts & starting fresh ventures.{"\n"}
+                              • <Text style={{ fontWeight: 'bold', color: '#2E7D32' }}>Bhadra (2nd, 7th, 12th):</Text> Ruled by Mercury — Wealth, contracts & foundations.{"\n"}
+                              • <Text style={{ fontWeight: 'bold', color: '#E65100' }}>Jaya (3rd, 8th, 13th):</Text> Ruled by Mars — Victory, litigation & competition.{"\n"}
+                              • <Text style={{ fontWeight: 'bold', color: '#C62828' }}>Rikta (4th, 9th, 14th):</Text> Ruled by Saturn — Elimination, surgery & debt clearing.{"\n"}
+                              • <Text style={{ fontWeight: 'bold', color: '#2E7D32' }}>Poorna (5th, 10th, 15th/30th):</Text> Ruled by Jupiter — Fullness & grand milestones.
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })()}
+
                     {/* Rudhyar Soli-Lunar Western Lunation Phase Synthesis */}
                     <View style={[styles.lunationCardBox, { marginTop: 8 }]}>
                       <Text style={styles.lunationCardTitle}>🌙 Western Soli-Lunar Phase (Dane Rudhyar Synthesis)</Text>

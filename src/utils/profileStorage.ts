@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserProfile } from '../engine/userDatabase';
+import { getUserProfile, saveUserProfile, notifyAuthStateChanged } from '../engine/userDatabase';
 import { syncKundliProfilesToCloud, fetchKundliProfilesFromCloud } from '../engine/firebaseSync';
 
 export interface SavedKundaliProfile {
@@ -32,11 +32,24 @@ export async function getActiveProfileId(): Promise<string | null> {
 }
 
 /**
- * Set active selected profile ID
+ * Set active selected profile ID and sync starred name to User Profile
  */
 export async function setActiveProfileId(id: string): Promise<void> {
   try {
     await AsyncStorage.setItem(ACTIVE_PROFILE_KEY, id);
+
+    // Sync starred profile name to active User Profile
+    const profiles = await getSavedProfiles();
+    const matched = profiles.find(p => p.id === id);
+    if (matched && matched.name) {
+      const currentUser = await getUserProfile();
+      if (currentUser) {
+        currentUser.name = matched.name;
+        currentUser.displayName = matched.name;
+        await saveUserProfile(currentUser);
+        notifyAuthStateChanged(currentUser);
+      }
+    }
   } catch (err) {
     console.log('Error setting active profile ID:', err);
   }

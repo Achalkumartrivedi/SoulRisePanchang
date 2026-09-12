@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { PanchangDayData } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
-import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
+import { getLocalizedTithi, getLocalizedPakshaName, getLocalizedNakshatra, getLocalizedNatureBadge } from '../i18n/vedicTerms';
+import { TithiDetailModal } from './TithiDetailModal';
 
 interface PanchangLimbCardProps {
   panchang: PanchangDayData;
@@ -11,6 +12,7 @@ interface PanchangLimbCardProps {
 
 export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) => {
   const { language, t } = useLanguage();
+  const [tithiModalVisible, setTithiModalVisible] = useState(false);
   const { tithi, nakshatra, yoga, karana, vaara } = panchang;
 
   const locTithi = getLocalizedTithi(tithi.number || 13, language);
@@ -28,7 +30,7 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
 
   // Clean Limb Values
   const displayTithiName = locTithi.name;
-  const displayNakshatraName = isHindi ? nakshatra.hindiName : nakshatra.name;
+  const displayNakshatraName = getLocalizedNakshatra(nakshatra.name || nakshatra.hindiName || 1, language);
   const displayYogaName = isHindi ? yoga.hindiName : yoga.name;
   const displayKaranaName = isHindi ? karana.hindiName : karana.name;
 
@@ -42,37 +44,49 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
 
   const startsText = isHindi ? 'प्रारंभ' : 'Starts';
   const endsText = isHindi ? 'समाप्त' : 'Ends';
+  const infoTapText = isHindi ? 'जानकारी' : 'Info';
 
   return (
     <View style={styles.card}>
       <Text style={styles.cardHeaderTitle} numberOfLines={1} adjustsFontSizeToFit>🪔 {t('panchangamHeader')}</Text>
 
-      {/* 1. Tithi */}
-      <View style={styles.limbRow}>
-        <View style={styles.limbLeft}>
-          <Text style={styles.limbIcon}>🌑</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.limbLabel}>{tithiLabel}</Text>
-            <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
-              {displayTithiName}
-            </Text>
-            <Text style={styles.limbSub} numberOfLines={1} adjustsFontSizeToFit>{locPaksha} • {locTithi.desc}</Text>
-            <View style={styles.timingPillRow}>
-              <View style={styles.startPill}>
-                <Text style={styles.startPillText}>{startsText}: {tithi.startTimeFormatted || '06:22 AM'}</Text>
+      {/* 1. Tithi (Interactive - Opens Pancha Vargas & Guidance Modal) */}
+      <TouchableOpacity 
+        activeOpacity={0.7} 
+        onPress={() => setTithiModalVisible(true)}
+        style={styles.clickableLimbRow}
+      >
+        <View style={styles.limbRow}>
+          <View style={styles.limbLeft}>
+            <Text style={styles.limbIcon}>🌑</Text>
+            <View style={{ flex: 1 }}>
+              <View style={styles.labelWithInfoRow}>
+                <Text style={styles.limbLabel}>{tithiLabel}</Text>
+                <View style={styles.infoChip}>
+                  <Text style={styles.infoChipText}>ℹ️ {infoTapText}</Text>
+                </View>
               </View>
-              <View style={styles.endPill}>
-                <Text style={styles.endPillText}>{endsText}: {tithi.endTimeFormatted}</Text>
+              <Text style={styles.limbValueBold} numberOfLines={1} adjustsFontSizeToFit>
+                {displayTithiName}
+              </Text>
+              <Text style={styles.limbSub} numberOfLines={1} adjustsFontSizeToFit>{locPaksha} • {locTithi.desc}</Text>
+              <View style={styles.timingPillRow}>
+                <View style={styles.startPill}>
+                  <Text style={styles.startPillText}>{startsText}: {tithi.startTimeFormatted || 'Yesterday 06:22 AM'}</Text>
+                </View>
+                <View style={styles.endPill}>
+                  <Text style={styles.endPillText}>{endsText}: {tithi.endTimeFormatted}</Text>
+                </View>
               </View>
             </View>
           </View>
+          {tithi.isSpecial && (
+            <View style={styles.specialBadge}>
+              <Text style={styles.specialBadgeText}>{tithi.specialTag || 'Vrat'}</Text>
+            </View>
+          )}
         </View>
-        {tithi.isSpecial && (
-          <View style={styles.specialBadge}>
-            <Text style={styles.specialBadgeText}>{tithi.specialTag || 'Vrat'}</Text>
-          </View>
-        )}
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.divider} />
 
@@ -88,7 +102,7 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
             <Text style={styles.limbSub} numberOfLines={1} adjustsFontSizeToFit>Ruler: {nakshatra.ruler} • Deity: {nakshatra.deity}</Text>
             <View style={styles.timingPillRow}>
               <View style={styles.startPill}>
-                <Text style={styles.startPillText}>{startsText}: {nakshatra.startTimeFormatted || '04:15 AM'}</Text>
+                <Text style={styles.startPillText}>{startsText}: {nakshatra.startTimeFormatted || 'Yesterday 04:15 AM'}</Text>
               </View>
               <View style={styles.endPill}>
                 <Text style={styles.endPillText}>{endsText}: {nakshatra.endTimeFormatted}</Text>
@@ -113,7 +127,7 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
           </View>
         </View>
         <View style={[styles.statusTag, { backgroundColor: yoga.isAuspicious ? Colors.auspiciousGreen : Colors.inauspiciousRed }]}>
-          <Text style={styles.statusTagText}>{yoga.isAuspicious ? (isHindi ? 'शुभ' : 'Auspicious') : (isHindi ? 'अशुभ' : 'Inauspicious')}</Text>
+          <Text style={styles.statusTagText}>{getLocalizedNatureBadge(yoga.isAuspicious ? 'AUSPICIOUS' : 'INAUSPICIOUS', language)}</Text>
         </View>
       </View>
 
@@ -148,6 +162,13 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
           </View>
         </View>
       </View>
+
+      {/* Detailed Tithi Modal */}
+      <TithiDetailModal
+        visible={tithiModalVisible}
+        onClose={() => setTithiModalVisible(false)}
+        tithi={tithi}
+      />
     </View>
   );
 };
@@ -168,6 +189,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.maroon,
     marginBottom: 12,
+  },
+  clickableLimbRow: {
+    borderRadius: 8,
+    padding: 4,
+    marginHorizontal: -4,
+  },
+  labelWithInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  infoChip: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  infoChipText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#1565C0',
   },
   limbRow: {
     flexDirection: 'row',
@@ -259,3 +301,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+

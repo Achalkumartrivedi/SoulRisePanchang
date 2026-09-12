@@ -8,8 +8,10 @@ import {
   TextInput,
   Modal,
   Switch,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { ReminderItem, ReminderCategory, UpcomingTithiDateInfo } from '../types/reminder';
 import { FESTIVALS } from '../engine/festivalRepository';
@@ -327,10 +329,13 @@ export const RemindersScreen: React.FC = () => {
 
   const activeUpcomingDharmaFestivals = getFilteredUpcomingFestivalsByDharma(selectedDharma);
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <View style={styles.container}>
       {/* Screen Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding }]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>⏰ Universal Smart Reminders</Text>
           <Text style={styles.headerSub}>Custom Vrats, Tithi/Festivals, Lal Kitab remedies & Chants</Text>

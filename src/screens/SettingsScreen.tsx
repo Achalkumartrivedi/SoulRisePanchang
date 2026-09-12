@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../theme/colors';
@@ -17,6 +18,7 @@ import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
 import { getUserProfile, clearUserProfile, UserProfile } from '../engine/userDatabase';
 import { AuthModal } from '../components/AuthModal';
 import { FeedbackModal } from '../components/FeedbackModal';
+import { useAuth } from '../context/AuthContext';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -36,6 +38,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onOpenLanguageModal,
 }) => {
   const { language, t } = useLanguage();
+  const { user: userProfile, logout } = useAuth();
   const { calendarSystem, setCalendarSystem, lunarSystem, setLunarSystem } = useCalendarSystem();
   const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
   const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
@@ -48,7 +51,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [reminderDays, setReminderDays] = useState<number>(1); // 0 (same day), 1, 2, or 5 days before
 
   // Customer Profile & Support Modal States
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
@@ -57,9 +59,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   useEffect(() => {
     (async () => {
-      const profile = await getUserProfile();
-      setUserProfile(profile);
-
       const stored = await AsyncStorage.getItem(CHOGHADIYA_NOTIF_KEY);
       if (stored === 'true') {
         setUseChoghadiyaNotif(true);
@@ -85,7 +84,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           onPress: async () => {
             await clearUserProfile();
             await AsyncStorage.clear();
-            setUserProfile(null);
             Alert.alert('✅ Data Cleared', 'Your account data and preferences have been completely deleted.');
           }
         }
@@ -168,10 +166,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   };
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding }]}>
         <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('settingsTitle')}</Text>
         <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('settingsSub')}</Text>
       </View>
@@ -460,7 +461,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         visible={authModalVisible}
         onClose={() => setAuthModalVisible(false)}
         onSuccess={(profile) => {
-          setUserProfile(profile);
           setAuthModalVisible(false);
           Alert.alert('✅ Profile Saved', `Welcome, ${profile.name}! Your profile is now active.`);
         }}
@@ -540,8 +540,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 style={{ flex: 1, backgroundColor: '#D32F2F', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
                 onPress={async () => {
                   setLogoutModalVisible(false);
-                  await clearUserProfile();
-                  setUserProfile(null);
+                  await logout();
                   Alert.alert('✅ Logged Out', 'You have been successfully logged out.');
                 }}
               >
@@ -580,48 +579,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 13 }}>Delete Account</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* City Modal */}
-      <Modal visible={isModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('activeLocation')}</Text>
-              <TouchableOpacity onPress={onCloseCityModal} style={styles.closeBtn}>
-                <Text style={styles.closeBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={DEFAULT_CITIES}
-              keyExtractor={item => item.name}
-              renderItem={({ item }) => {
-                const isSelected = item.name === selectedCity.name;
-                return (
-                  <TouchableOpacity
-                    style={[styles.cityItem, isSelected && styles.cityItemActive]}
-                    onPress={async () => {
-                      onSelectCity(item);
-                      setUseGps(false);
-                      await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(item));
-                      await AsyncStorage.setItem('SOULRISE_USE_GPS', 'false');
-                      onCloseCityModal();
-                    }}
-                  >
-                    <View>
-                      <Text style={[styles.cityItemName, isSelected && styles.cityItemNameActive]}>
-                        {item.name} ({item.hindiName})
-                      </Text>
-                      <Text style={styles.cityItemSub}>{item.stateCountry}</Text>
-                    </View>
-                    {isSelected && <Text style={styles.checkIcon}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              }}
-            />
           </View>
         </View>
       </Modal>

@@ -12,6 +12,7 @@ import {
 import { Colors } from '../theme/colors';
 import { SUPPORTED_LANGUAGES, LanguageCode } from '../types/language';
 import { useLanguage } from '../context/LanguageContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface LanguageSelectionModalProps {
   visible: boolean;
@@ -21,6 +22,8 @@ interface LanguageSelectionModalProps {
 export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({ visible, onClose }) => {
   const { language, setLanguage, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
+  const insets = useSafeAreaInsets();
+  const bottomInsetPadding = Math.max(insets.bottom + 8, 48);
 
   const filteredLanguages = SUPPORTED_LANGUAGES.filter(lang =>
     lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -37,7 +40,7 @@ export const LanguageSelectionModal: React.FC<LanguageSelectionModalProps> = ({ 
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { paddingBottom: bottomInsetPadding }]}>
               {/* Header Bar */}
               <View style={styles.header}>
                 <Text style={styles.title}>🌐 {t('selectLanguage')}</Text>

@@ -51,15 +51,24 @@ export const LAL_KITAB_PUKKA_GHAR: Record<number, string> = {
   12: 'Rahu'
 };
 
+export {
+  LAL_KITAB_DRISHTI,
+  PASSIVE_HOUSES,
+  LAL_KITAB_SPECIAL_RULES,
+  HOUSE_BEHAVIOR,
+  getLalKitabAspects,
+  evaluateChartLalKitabAspects
+} from './lalKitabDrishtiEngine';
+
 export const LAL_KITAB_ASPECT_RULES: LalKitabAspect[] = [
   {
     fromHouse: 1,
     toHouse: 7,
     percentage: 100,
     description: {
-      en: 'House 1 looks 100% directly into House 7 (Full Direct Aspect)',
-      hi: 'प्रथम भाव सीधे 7वें भाव को पूर्ण दृष्टि (100%) से देखता है',
-      gu: 'પ્રથમ ભાવ સીધા ૭મા ભાવને પૂર્ણ દ્રષ્ટિથી જુએ છે'
+      en: '1st house gives full direct one-way aspect to 7th (100% Full Aspect)',
+      hi: 'प्रथम भाव 7वें भाव को पूर्ण एकतरफा सीधी दृष्टि (100%) प्रदान करता है',
+      gu: 'પ્રથમ ભાવ ૭મા ભાવને પૂર્ણ એકતરફી દ્રષ્ટિ (૧૦૦%) આપે છે'
     }
   },
   {
@@ -67,9 +76,9 @@ export const LAL_KITAB_ASPECT_RULES: LalKitabAspect[] = [
     toHouse: 10,
     percentage: 100,
     description: {
-      en: 'House 4 looks 100% directly into House 10 (Mother/Home affects Career)',
-      hi: 'चतुर्थ भाव 10वें भाव को पूर्ण दृष्टि से देखता है (घर का प्रभाव कर्म पर)',
-      gu: 'ચોથો ભાવ ૧૦મા ભાવને પૂર્ણ દ્રષ્ટિથી જુએ છે'
+      en: '4th house gives full direct one-way aspect to 10th (Mother/Home affects Career - 100%)',
+      hi: 'चतुर्थ भाव 10वें भाव को पूर्ण एकतरफा सीधी दृष्टि (100%) प्रदान करता है',
+      gu: 'ચોથો ભાવ ૧૦મા ભાવને પૂર્ણ એકતરફી દ્રષ્ટિ (૧૦૦%) આપે છે'
     }
   },
   {
@@ -77,9 +86,9 @@ export const LAL_KITAB_ASPECT_RULES: LalKitabAspect[] = [
     toHouse: 2,
     percentage: 100,
     description: {
-      en: 'House 8 looks 100% directly into House 2 (Secret debts/longevity affects wealth & family)',
-      hi: 'अष्टम भाव सीधे 2रे भाव को देखता है (आयु और गुप्त धन का प्रभाव कुटुंब पर)',
-      gu: 'આઠમો ભાવ બીજા ભાવને સીધી દ્રષ્ટિથી જુએ છે'
+      en: 'Famous Ulti Drishti (8th -> 2nd house): Always malefic reverse aspect (100%)',
+      hi: 'प्रसिद्ध उल्टी दृष्टि (अष्टम से द्वितीय भाव): सदैव मंदा व कष्टकारी विपरीत प्रभाव (100%)',
+      gu: 'પ્રસિદ્ધ ઉલ્ટી દ્રષ્ટિ (૮મો -> ૨જો ભાવ): અશુભ દ્રષ્ટિ (૧૦૦%)'
     }
   },
   {
@@ -87,9 +96,19 @@ export const LAL_KITAB_ASPECT_RULES: LalKitabAspect[] = [
     toHouse: 9,
     percentage: 50,
     description: {
-      en: 'House 3 aspects House 9 & 11 with 50% half strength',
-      hi: 'तृतीय भाव 9वें और 11वें भाव को 50% दृष्टि से देखता है',
-      gu: 'ત્રીજો ભાવ ૯મા અને ૧૧મા ભાવને ૫૦% દ્રષ્ટિથી જુએ છે'
+      en: '3rd house influences 9th house fortune with half strength (50% Half Aspect)',
+      hi: 'तृतीय भाव 9वें भाव (भाग्य) को आधी शक्ति (50%) से प्रभावित करता है',
+      gu: 'ત્રીજો ભાવ ૯મા ભાવને ૫૦% દ્રષ્ટિથી પ્રભાવિત કરે છે'
+    }
+  },
+  {
+    fromHouse: 3,
+    toHouse: 11,
+    percentage: 50,
+    description: {
+      en: '3rd house influences 11th house gains with half strength (50% Half Aspect)',
+      hi: 'तृतीय भाव 11वें भाव (लाभ) को आधी शक्ति (50%) से प्रभावित करता है',
+      gu: 'ત્રીજો ભાવ ૧૧મા ભાવને ૫૦% દ્રષ્ટિથી પ્રભાવિત કરે છે'
     }
   },
   {
@@ -97,9 +116,29 @@ export const LAL_KITAB_ASPECT_RULES: LalKitabAspect[] = [
     toHouse: 9,
     percentage: 50,
     description: {
-      en: 'House 5 aspects House 9 with 50% half strength',
-      hi: 'पंचम भाव 9वें भाव को 50% दृष्टि से देखता है',
-      gu: 'પાંચમો ભાવ ૯મા ભાવને ૫૦% દ્રષ્ટિથી જુએ છે'
+      en: '5th house supports 9th house fortune with half strength (50% Half Aspect)',
+      hi: 'पंचम भाव 9वें भाव (भाग्य) को 50% दृष्टि से सहयोग प्रदान करता है',
+      gu: 'પાંચમો ભાવ ૯મા ભાવને ૫૦% દ્રષ્ટિથી સહયોગ આપે છે'
+    }
+  },
+  {
+    fromHouse: 2,
+    toHouse: 6,
+    percentage: 25,
+    description: {
+      en: '2nd house has weak karmic influence on 6th house (25% Quarter Aspect)',
+      hi: 'द्वितीय भाव 6ठे भाव (ऋण/रोग) पर मंद दृष्टि (25%) डालता है',
+      gu: 'બીજો ભાવ ૬ઠ્ઠા ભાવ પર ૨૫% દ્રષ્ટિ નાખે છે'
+    }
+  },
+  {
+    fromHouse: 6,
+    toHouse: 12,
+    percentage: 25,
+    description: {
+      en: '6th house has weak karmic influence on 12th house (25% Quarter Aspect)',
+      hi: '6ठा भाव 12वें भाव (मोक्ष/व्यय) पर मंद दृष्टि (25%) डालता है',
+      gu: '૬ઠ્ઠો ભાવ ૧૨મા ભાવ પર ૨૫% દ્રષ્ટિ નાખે છે'
     }
   }
 ];

@@ -24,6 +24,7 @@ interface HomeScreenProps {
   onNextDay: () => void;
   onToday: () => void;
   onNavigateToFestivals: () => void;
+  onSelectDateIso?: (dateIso: string) => void;
 }
 
 type SectionKey = 'LIMBS' | 'MUHURAT' | 'CHOGHADIYA' | 'PLANETS' | 'KUNDALI' | 'WESTERN' | 'LALKITAB';
@@ -37,6 +38,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNextDay,
   onToday,
   onNavigateToFestivals,
+  onSelectDateIso,
 }) => {
   const { language, t } = useLanguage();
 
@@ -80,6 +82,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onPrevDay={onPrevDay}
         onNextDay={onNextDay}
         onToday={onToday}
+        onSelectDateIso={onSelectDateIso}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -280,17 +283,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <View style={styles.featureHeader}>
               <View style={styles.featureHeaderLeft}>
                 <Text style={styles.featureIcon}>☸️</Text>
-                <View>
-                  <View style={styles.titleRow}>
-                    <Text style={[styles.featureTitle, { color: '#800000', fontWeight: 'bold' }]}>
-                      જૈન પંચાંગ અને કૅલેન્ડર (Jain Calendar)
+                <View style={{ flex: 1, paddingRight: 6 }}>
+                  <View style={[styles.titleRow, { flexWrap: 'wrap', gap: 4 }]}>
+                    <Text style={[styles.featureTitle, { color: '#800000', fontWeight: 'bold', flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit>
+                      જૈન પંચાંગ અને કૅલેન્ડર
                     </Text>
-                    <View style={[styles.comingSoonBadge, { backgroundColor: '#800000' }]}>
-                      <Text style={[styles.comingSoonText, { color: '#FFE082' }]}>જૈન તિથિ</Text>
+                    <View style={[styles.comingSoonBadge, { backgroundColor: '#800000', marginLeft: 0 }]}>
+                      <Text style={[styles.comingSoonText, { color: '#FFE082' }]}>જૈન વિધિ</Text>
                     </View>
                   </View>
-                  <Text style={[styles.featureSub, { color: '#5D4037' }]}>
-                    વીર નિર્વાણ સંવત ૨૫૫૧ • પચ્ચક્ખાણ સમયો • જૈન પર્વ અને નિયમ
+                  <Text style={[styles.featureSub, { color: '#5D4037' }]} numberOfLines={1} adjustsFontSizeToFit>
+                    વીર નિર્વાણ સંવત ૨૫૫૧ • પચ્ચક્ખાણ • જૈન પર્વ અને વિધિ
                   </Text>
                 </View>
               </View>

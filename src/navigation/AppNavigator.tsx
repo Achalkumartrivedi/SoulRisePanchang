@@ -21,8 +21,11 @@ import { LanguageSelectionScreen } from '../screens/LanguageSelectionScreen';
 import { OnboardingAuthScreen } from '../screens/OnboardingAuthScreen';
 
 import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
+import { CitySelectionModal } from '../components/CitySelectionModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useCalendarSystem } from '../context/CalendarContext';
+import { useAuth } from '../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type TabName = 'TODAY' | 'CALENDAR' | 'FESTIVALS' | 'REMINDERS' | 'RASHIPHAL' | 'SETTINGS';
 
@@ -33,6 +36,9 @@ const FIRST_LAUNCH_AUTH_KEY = '@soulrise_onboarding_auth_done';
 
 export const AppNavigator: React.FC = () => {
   const { t } = useLanguage();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const insets = useSafeAreaInsets();
+  const tabBarBottomPadding = Math.max(insets.bottom, 16) + 8;
   const [activeTab, setActiveTab] = useState<TabName>('TODAY');
   const [selectedCity, setSelectedCity] = useState<CityLocation>(DEFAULT_CITIES[0]); // Default New Delhi
   const [currentDateIso, setCurrentDateIso] = useState<string>(() => {
@@ -45,7 +51,7 @@ export const AppNavigator: React.FC = () => {
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
   const [isLangModalVisible, setIsLangModalVisible] = useState(false);
   const [showFirstLaunchLangScreen, setShowFirstLaunchLangScreen] = useState<boolean | null>(null);
-  const [showFirstLaunchAuthScreen, setShowFirstLaunchAuthScreen] = useState<boolean | null>(null);
+  const [isGuestMode, setIsGuestMode] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -55,12 +61,11 @@ export const AppNavigator: React.FC = () => {
           setShowFirstLaunchLangScreen(true);
         } else {
           setShowFirstLaunchLangScreen(false);
-          const authDone = await AsyncStorage.getItem(FIRST_LAUNCH_AUTH_KEY);
-          if (authDone !== 'true') {
-            setShowFirstLaunchAuthScreen(true);
-          } else {
-            setShowFirstLaunchAuthScreen(false);
-          }
+        }
+
+        const authDone = await AsyncStorage.getItem(FIRST_LAUNCH_AUTH_KEY);
+        if (authDone === 'true' || authDone === 'skipped') {
+          setIsGuestMode(true);
         }
 
         const savedCityJson = await AsyncStorage.getItem(CITY_STORAGE_KEY);
@@ -73,44 +78,49 @@ export const AppNavigator: React.FC = () => {
           return;
         }
 
-        // Otherwise request location permission on launch
+        // Otherwise auto-detect current GPS location on launch
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          let loc = await Location.getLastKnownPositionAsync();
-          if (!loc) {
-            loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
-          }
+          let loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced
+          }).catch(async () => {
+            return await Location.getLastKnownPositionAsync();
+          });
 
-          const latitude = loc ? loc.coords.latitude : 28.6139;
-          const longitude = loc ? loc.coords.longitude : 77.2090;
+          if (loc) {
+            const latitude = loc.coords.latitude;
+            const longitude = loc.coords.longitude;
 
-          let cityName = 'GPS Location';
-          let hindiName = 'वर्तमान स्थान';
+            let cityName = 'GPS Location';
+            let hindiName = 'वर्तमान स्थान';
 
-          try {
-            const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
-            if (geocode && geocode.length > 0) {
-              const place = geocode[0];
-              const name = place.city || place.subregion || place.region || 'Current Location';
-              cityName = `${name} (GPS)`;
-              hindiName = name;
+            try {
+              const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+              if (geocode && geocode.length > 0) {
+                const place = geocode[0];
+                const name = place.city || place.subregion || place.district || place.region || 'Current Location';
+                cityName = `${name} (GPS)`;
+                hindiName = place.city || place.district || place.region || 'वर्तमान स्थान';
+              }
+            } catch (err) {
+              console.log('Reverse geocode error:', err);
             }
-          } catch (err) {
-            console.log('Reverse geocode error:', err);
+
+            const userGpsCity: CityLocation = {
+              name: cityName,
+              hindiName,
+              stateCountry: 'GPS Location',
+              latitude,
+              longitude,
+              timeZoneId: 'Asia/Kolkata'
+            };
+
+            setSelectedCity(userGpsCity);
+            await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
+            await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
+          } else if (savedCityJson) {
+            setSelectedCity(JSON.parse(savedCityJson));
           }
-
-          const userGpsCity: CityLocation = {
-            name: cityName,
-            hindiName,
-            stateCountry: 'GPS Location',
-            latitude,
-            longitude,
-            timeZoneId: 'Asia/Kolkata'
-          };
-
-          setSelectedCity(userGpsCity);
-          await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
-          await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
         } else if (savedCityJson) {
           setSelectedCity(JSON.parse(savedCityJson));
         }
@@ -145,14 +155,20 @@ export const AppNavigator: React.FC = () => {
   };
 
   const handlePrevDay = () => {
-    const d = new Date(currentDateIso + 'T00:00:00');
-    d.setDate(d.getDate() - 1);
+    const parts = currentDateIso.split('-');
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(y, m, day - 1);
     setCurrentDateIso(formatDateIso(d));
   };
 
   const handleNextDay = () => {
-    const d = new Date(currentDateIso + 'T00:00:00');
-    d.setDate(d.getDate() + 1);
+    const parts = currentDateIso.split('-');
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(y, m, day + 1);
     setCurrentDateIso(formatDateIso(d));
   };
 
@@ -193,36 +209,36 @@ export const AppNavigator: React.FC = () => {
       console.log('Error saving first launch lang status:', e);
     }
     setShowFirstLaunchLangScreen(false);
-    setShowFirstLaunchAuthScreen(true);
-  };
-
-  const handleFirstLaunchAuthComplete = async () => {
-    try {
-      await AsyncStorage.setItem(FIRST_LAUNCH_AUTH_KEY, 'true');
-    } catch (e) {
-      console.log('Error saving first launch auth status:', e);
-    }
-    setShowFirstLaunchAuthScreen(false);
-  };
-
-  const handleFirstLaunchAuthSkip = async () => {
-    try {
-      await AsyncStorage.setItem(FIRST_LAUNCH_AUTH_KEY, 'true');
-    } catch (e) {
-      console.log('Error saving first launch auth skip status:', e);
-    }
-    setShowFirstLaunchAuthScreen(false);
   };
 
   if (showFirstLaunchLangScreen === true) {
     return <LanguageSelectionScreen onComplete={handleFirstLaunchLangComplete} />;
   }
 
-  if (showFirstLaunchAuthScreen === true) {
+  const handleSkipAuth = async () => {
+    try {
+      await AsyncStorage.setItem(FIRST_LAUNCH_AUTH_KEY, 'skipped');
+    } catch (e) {
+      console.log('Error persisting skip auth status:', e);
+    }
+    setIsGuestMode(true);
+  };
+
+  const handleAuthComplete = async () => {
+    try {
+      await AsyncStorage.setItem(FIRST_LAUNCH_AUTH_KEY, 'true');
+    } catch (e) {
+      console.log('Error persisting auth complete status:', e);
+    }
+    setIsGuestMode(true);
+  };
+
+  // Single Source of Truth Auth Check: If no authenticated user exists and not in guest mode, render Login Screen
+  if (!user && !isGuestMode && !isAuthLoading) {
     return (
       <OnboardingAuthScreen
-        onComplete={handleFirstLaunchAuthComplete}
-        onSkip={handleFirstLaunchAuthSkip}
+        onComplete={handleAuthComplete}
+        onSkip={handleSkipAuth}
       />
     );
   }
@@ -242,6 +258,7 @@ export const AppNavigator: React.FC = () => {
             onNextDay={handleNextDay}
             onToday={handleToday}
             onNavigateToFestivals={() => handleTabPress('FESTIVALS')}
+            onSelectDateIso={(dateIso) => setCurrentDateIso(dateIso)}
           />
         )}
 
@@ -276,7 +293,7 @@ export const AppNavigator: React.FC = () => {
       </View>
 
       {/* Custom Bottom Tab Bar */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { paddingBottom: tabBarBottomPadding }]}>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'TODAY' && styles.tabItemActive]}
           onPress={() => handleTabPress('TODAY')}
@@ -330,6 +347,14 @@ export const AppNavigator: React.FC = () => {
       <LanguageSelectionModal
         visible={isLangModalVisible}
         onClose={() => setIsLangModalVisible(false)}
+      />
+
+      {/* Global City Selection Modal triggered from Header or Settings */}
+      <CitySelectionModal
+        visible={isCityModalVisible}
+        onClose={() => setIsCityModalVisible(false)}
+        selectedCity={selectedCity}
+        onSelectCity={handleSelectCity}
       />
     </SafeAreaView>
   );

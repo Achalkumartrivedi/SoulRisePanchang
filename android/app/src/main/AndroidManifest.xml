@@ -28,6 +28,19 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.soulrise.panchang"/>
       </intent-filter>
+      <!-- Firebase Auth Email Link (Passwordless Sign-In) Deep Link Filter -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="project-788454132501.firebaseapp.com" android:pathPrefix="/__/auth/links" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="soulrise-panchang.firebaseapp.com" android:pathPrefix="/__/auth/links" />
+      </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
   </application>

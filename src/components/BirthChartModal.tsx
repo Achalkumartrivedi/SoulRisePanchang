@@ -9,8 +9,10 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   ActivityIndicator,
-  SafeAreaView
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
 import { calculateBirthKundali, KundaliResult, KundaliDivisionalChart } from '../engine/kundaliEngine';
@@ -78,13 +80,13 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const { language } = useLanguage();
   const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
 
-  // Clean Default Input Values for New Downloads / Users
+  // Clean Default Input Values for New Downloads / Users (Empty by default)
   const [name, setName] = useState('');
-  const [dobDay, setDobDay] = useState('01');
-  const [dobMonth, setDobMonth] = useState('01');
-  const [dobYear, setDobYear] = useState('2000');
-  const [tobHour, setTobHour] = useState('06');
-  const [tobMinute, setTobMinute] = useState('00');
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
+  const [tobHour, setTobHour] = useState('');
+  const [tobMinute, setTobMinute] = useState('');
 
   // Active Location State (Default to selectedCity prop or New Delhi)
   const [activeLocation, setActiveLocation] = useState<{
@@ -168,27 +170,27 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
           const result = calculateBirthKundali(activeP.name, new Date(year, month, day), h, m, activeP.cityName, activeP.lat, activeP.lng);
           setKundali(result);
         } else {
-          setShowForm(true);
-          if (profile && profile.name) {
-            setName(profile.name);
-          }
-          if (!kundali) {
-            const benchmarkDate = new Date(1989, 1, 13);
-            const defaultKundali = calculateBirthKundali(
-              'User',
-              benchmarkDate,
-              0,
-              5,
-              'Surat, Gujarat, India',
-              21.1702,
-              72.8311
-            );
-            setKundali(defaultKundali);
-          }
+          resetFormToEmpty();
         }
       })();
     }
   }, [visible]);
+
+  const resetFormToEmpty = () => {
+    setName('');
+    setDobDay('');
+    setDobMonth('');
+    setDobYear('');
+    setTobHour('');
+    setTobMinute('');
+    setActiveLocation({
+      cityName: selectedCity?.name || 'New Delhi, India',
+      lat: selectedCity?.latitude || 28.6139,
+      lng: selectedCity?.longitude || 77.2090
+    });
+    setKundali(null);
+    setShowForm(true);
+  };
 
   // Live Free Geocoding API Search debouncer
   useEffect(() => {
@@ -288,11 +290,14 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 
   const activeChart: KundaliDivisionalChart | undefined = kundali?.divisionalCharts[activeChartKey];
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={styles.fullScreenContainer}>
         {/* Header Bar */}
-        <View style={styles.headerRow}>
+        <View style={[styles.headerRow, { paddingTop: topPadding }]}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
             <Text style={styles.backBtnText}>←</Text>
           </TouchableOpacity>
@@ -316,11 +321,11 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 
           <TouchableOpacity
             style={[styles.addNewBtn, showForm && styles.addNewBtnActive]}
-            onPress={() => setShowForm(!showForm)}
+            onPress={() => resetFormToEmpty()}
             activeOpacity={0.8}
           >
             <Text style={[styles.addNewBtnText, showForm && styles.addNewBtnTextActive]}>
-              {showForm ? '✕ Hide Form' : '➕ Add New Profile'}
+              ➕ Add New Profile
             </Text>
           </TouchableOpacity>
         </View>
@@ -365,7 +370,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   style={[styles.dropdownField, styles.col3]}
                   onPress={() => setShowDayModal(true)}
                 >
-                  <Text style={styles.dropdownValText}>Day: {dobDay}</Text>
+                  <Text style={styles.dropdownValText}>Day: {dobDay || 'DD'}</Text>
                   <Text style={styles.fieldArrow}>▼</Text>
                 </TouchableOpacity>
 
@@ -373,7 +378,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   style={[styles.dropdownField, styles.col3]}
                   onPress={() => setShowMonthModal(true)}
                 >
-                  <Text style={styles.dropdownValText}>{MONTHS_LIST[parseInt(dobMonth, 10) - 1] || 'Month'}</Text>
+                  <Text style={styles.dropdownValText}>{MONTHS_LIST[parseInt(dobMonth, 10) - 1] || 'Month: MM'}</Text>
                   <Text style={styles.fieldArrow}>▼</Text>
                 </TouchableOpacity>
 
@@ -381,7 +386,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   style={[styles.dropdownField, styles.col3]}
                   onPress={() => setShowYearModal(true)}
                 >
-                  <Text style={styles.dropdownValText}>Year: {dobYear}</Text>
+                  <Text style={styles.dropdownValText}>Year: {dobYear || 'YYYY'}</Text>
                   <Text style={styles.fieldArrow}>▼</Text>
                 </TouchableOpacity>
               </View>
@@ -393,7 +398,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   style={[styles.dropdownField, styles.col2]}
                   onPress={() => setShowHourModal(true)}
                 >
-                  <Text style={styles.dropdownValText}>Hour: {tobHour} : 00</Text>
+                  <Text style={styles.dropdownValText}>Hour: {tobHour !== '' ? tobHour : 'HH'}</Text>
                   <Text style={styles.fieldArrow}>▼</Text>
                 </TouchableOpacity>
 
@@ -401,7 +406,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   style={[styles.dropdownField, styles.col2]}
                   onPress={() => setShowMinuteModal(true)}
                 >
-                  <Text style={styles.dropdownValText}>Min: {tobMinute}</Text>
+                  <Text style={styles.dropdownValText}>Min: {tobMinute !== '' ? tobMinute : 'MM'}</Text>
                   <Text style={styles.fieldArrow}>▼</Text>
                 </TouchableOpacity>
               </View>

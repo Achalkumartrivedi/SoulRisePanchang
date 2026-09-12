@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { Colors } from '../theme/colors';
 import { FESTIVALS, getLocalizedFestivalTitle } from '../engine/festivalRepository';
@@ -112,6 +113,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   const [selectedModalDateIso, setSelectedModalDateIso] = useState<string | null>(null);
   const [showPopupInfoModal, setShowPopupInfoModal] = useState(false);
 
+  // Month & Year Selector Modal State
+  const [monthYearPickerVisible, setMonthYearPickerVisible] = useState(false);
+  const [tempSelectedMonth, setTempSelectedMonth] = useState(new Date().getMonth());
+  const [tempSelectedYear, setTempSelectedYear] = useState(new Date().getFullYear());
+
   // Date Quick Reminder Modal State
   const [dateRemModalVisible, setDateRemModalVisible] = useState(false);
   const [dateRemTitle, setDateRemTitle] = useState('');
@@ -128,6 +134,17 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const handleToday = () => setCurrentDate(new Date());
+
+  const handleOpenMonthYearPicker = () => {
+    setTempSelectedMonth(month);
+    setTempSelectedYear(year);
+    setMonthYearPickerVisible(true);
+  };
+
+  const handleApplyMonthYear = (targetMonth: number, targetYear: number) => {
+    setCurrentDate(new Date(targetYear, targetMonth, 1));
+    setMonthYearPickerVisible(false);
+  };
 
   const monthFestivals = FESTIVALS.filter(f => {
     const parts = f.dateIso.split('-');
@@ -148,10 +165,10 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
     const tithiIdx = calculateTithiForDate(dateObj);
 
     if (tithiIdx === 14) {
-      const panchang = calculatePanchang(dateObj, selectedCity);
+      const panchang = calculatePanchang(dateObj, selectedCity, lunarSystem);
       purnimaList.push({ dateObj, dateIso, panchang });
     } else if (tithiIdx === 29) {
-      const panchang = calculatePanchang(dateObj, selectedCity);
+      const panchang = calculatePanchang(dateObj, selectedCity, lunarSystem);
       amavasyaList.push({ dateObj, dateIso, panchang });
     }
   }
@@ -164,7 +181,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   let mPakshaFull = "";
   let mRitual: string | null = null;
   let festMatchModal: typeof FESTIVALS[0] | null = null;
-  let mPanchang = calculatePanchang(new Date(), selectedCity);
+  let mPanchang = calculatePanchang(new Date(), selectedCity, lunarSystem);
   let mJainData = getJainDayData(new Date(), 0);
 
   let mWorldFest = selectedModalDateIso ? getWorldFestivalForDate(selectedModalDateIso) : null;
@@ -188,7 +205,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
       festMatchModal = FESTIVALS.find(f => f.dateIso === selectedModalDateIso) || null;
     }
 
-    mPanchang = calculatePanchang(mDate, selectedCity);
+    mPanchang = calculatePanchang(mDate, selectedCity, lunarSystem);
     mJainData = getJainDayData(mDate, mTithiIdx);
   }
 
@@ -211,8 +228,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
     }
   };
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingTop: topPadding }]}>
       {/* Monthly Calendar Card */}
       <View style={styles.card}>
 
@@ -243,9 +263,11 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
           </TouchableOpacity>
 
           <View style={styles.titleContainer}>
-            <Text style={styles.monthTitle} numberOfLines={1}>
-              {MONTH_NAMES[month]} {year}
-            </Text>
+            <TouchableOpacity style={styles.monthTitlePill} onPress={handleOpenMonthYearPicker} activeOpacity={0.7}>
+              <Text style={styles.monthTitleText} numberOfLines={1}>
+                📅 {MONTH_NAMES[month]} {year} ▾
+              </Text>
+            </TouchableOpacity>
             {(() => {
               const startMonthDate = new Date(year, month, 1);
               const endMonthDate = new Date(year, month, 25);
@@ -878,6 +900,131 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
         </Modal>
       )}
 
+      {/* Month & Year Selection Modal */}
+      {monthYearPickerVisible && (
+        <Modal visible={monthYearPickerVisible} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalCard, { maxHeight: '85%' }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitleDate}>📅 Select Month & Year (माह एवं वर्ष चुनें)</Text>
+                <TouchableOpacity onPress={() => setMonthYearPickerVisible(false)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Year Controls Section */}
+                <Text style={styles.pickerSectionHeader}>Year (वर्ष)</Text>
+                <View style={styles.yearPickerRow}>
+                  <TouchableOpacity 
+                    style={styles.yearStepBtn} 
+                    onPress={() => setTempSelectedYear(prev => prev - 1)}
+                  >
+                    <Text style={styles.yearStepText}>◀ -1 Yr</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={styles.yearStepBtn} 
+                    onPress={() => setTempSelectedYear(prev => prev - 5)}
+                  >
+                    <Text style={styles.yearStepText}>-5</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.yearDisplayBox}>
+                    <Text style={styles.yearDisplayText}>{tempSelectedYear}</Text>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.yearStepBtn} 
+                    onPress={() => setTempSelectedYear(prev => prev + 5)}
+                  >
+                    <Text style={styles.yearStepText}>+5</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={styles.yearStepBtn} 
+                    onPress={() => setTempSelectedYear(prev => prev + 1)}
+                  >
+                    <Text style={styles.yearStepText}>+1 Yr ▶</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Quick Year Chips */}
+                <View style={styles.yearChipsRow}>
+                  {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                    <TouchableOpacity
+                      key={y}
+                      style={[styles.yearChip, tempSelectedYear === y && styles.yearChipActive]}
+                      onPress={() => setTempSelectedYear(y)}
+                    >
+                      <Text style={[styles.yearChipText, tempSelectedYear === y && styles.yearChipTextActive]}>
+                        {y}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Month Selection Grid */}
+                <Text style={[styles.pickerSectionHeader, { marginTop: 16 }]}>Month (माह)</Text>
+                <View style={styles.monthGrid}>
+                  {[
+                    { m: 0, en: 'Jan', hi: 'जनवरी' },
+                    { m: 1, en: 'Feb', hi: 'फ़रवरी' },
+                    { m: 2, en: 'Mar', hi: 'मार्च' },
+                    { m: 3, en: 'Apr', hi: 'अप्रैल' },
+                    { m: 4, en: 'May', hi: 'मई' },
+                    { m: 5, en: 'Jun', hi: 'जून' },
+                    { m: 6, en: 'Jul', hi: 'जुलाई' },
+                    { m: 7, en: 'Aug', hi: 'अगस्त' },
+                    { m: 8, en: 'Sep', hi: 'सितंबर' },
+                    { m: 9, en: 'Oct', hi: 'अक्टूबर' },
+                    { m: 10, en: 'Nov', hi: 'नवंबर' },
+                    { m: 11, en: 'Dec', hi: 'दिसंबर' },
+                  ].map(item => {
+                    const isSelected = tempSelectedMonth === item.m;
+                    return (
+                      <TouchableOpacity
+                        key={item.m}
+                        style={[styles.monthTile, isSelected && styles.monthTileActive]}
+                        onPress={() => setTempSelectedMonth(item.m)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.monthTileEn, isSelected && styles.monthTileTextActive]}>
+                          {item.en}
+                        </Text>
+                        <Text style={[styles.monthTileHi, isSelected && styles.monthTileSubActive]}>
+                          {item.hi}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+
+              {/* Modal Action Footer */}
+              <View style={styles.pickerFooterRow}>
+                <TouchableOpacity 
+                  style={styles.pickerTodayBtn}
+                  onPress={() => {
+                    const today = new Date();
+                    handleApplyMonthYear(today.getMonth(), today.getFullYear());
+                  }}
+                >
+                  <Text style={styles.pickerTodayBtnText}>📍 Reset to Today</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.pickerApplyBtn}
+                  onPress={() => handleApplyMonthYear(tempSelectedMonth, tempSelectedYear)}
+                >
+                  <Text style={styles.pickerApplyBtnText}>Apply (लागू करें) ✓</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {/* Interactive Time Picker Modal Component */}
       <TimePickerModal
         visible={timePickerVisible}
@@ -1004,6 +1151,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+  },
+  monthTitlePill: {
+    backgroundColor: '#FFF3E0',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 3,
+    elevation: 1,
+  },
+  monthTitleText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    textAlign: 'center',
   },
   monthTitle: {
     fontSize: 15,
@@ -1614,5 +1777,138 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 12,
     color: Colors.textPrimary,
+  },
+  pickerSectionHeader: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginBottom: 8,
+  },
+  yearPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  yearStepBtn: {
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  yearStepText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+  },
+  yearDisplayBox: {
+    backgroundColor: Colors.maroon,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  yearDisplayText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  yearChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 12,
+  },
+  yearChip: {
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  yearChipActive: {
+    backgroundColor: Colors.maroon,
+    borderColor: Colors.maroon,
+  },
+  yearChipText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  yearChipTextActive: {
+    color: '#FFD700',
+  },
+  monthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  monthTile: {
+    width: '30%',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  monthTileActive: {
+    backgroundColor: Colors.maroon,
+    borderColor: Colors.maroon,
+  },
+  monthTileEn: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  monthTileHi: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  monthTileTextActive: {
+    color: '#FFD700',
+  },
+  monthTileSubActive: {
+    color: '#FFFFFF',
+  },
+  pickerFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E8D8C8',
+  },
+  pickerTodayBtn: {
+    flex: 1,
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: '#E8D8C8',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  pickerTodayBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: Colors.textSecondary,
+  },
+  pickerApplyBtn: {
+    flex: 1.2,
+    backgroundColor: Colors.maroon,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  pickerApplyBtnText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#FFD700',
   },
 });

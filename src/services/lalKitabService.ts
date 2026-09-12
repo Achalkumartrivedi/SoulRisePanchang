@@ -19,6 +19,8 @@ export interface LalKitabResponseData {
   pukka_ghar_summary?: any[];
   aspects?: any[];
   bnn_timeline?: any;
+  saturn_report?: any;
+  drishti_report?: any;
   saturn_nadi_career_analysis: {
     saturn_house: number;
     saturn_longitude: number;
@@ -32,6 +34,7 @@ export interface LalKitabResponseData {
     }>;
     chronological_phases: string[];
     destination_career: string;
+    destination_career_planets?: any[];
     ketu_interception_break: string[];
   };
   report: string;

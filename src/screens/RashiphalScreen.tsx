@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  TextInput
+  TextInput,
+  StatusBar
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../theme/colors';
 import { RashiDetail } from '../types/panchang';
@@ -130,10 +132,13 @@ export const RashiphalScreen: React.FC = () => {
   const activeSunRashi = getRashiById(userSunRashiId);
   const currentPersonalRashi = personalSignTab === 'MOON' ? activeMoonRashi : activeSunRashi;
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: topPadding }]}>
         <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('rashiphalTitle')}</Text>
         <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('rashiphalSub')}</Text>
 

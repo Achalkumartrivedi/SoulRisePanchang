@@ -17,13 +17,13 @@ const LUNAR_STORAGE_KEY = '@soulrise_lunar_system_preference_v1';
 const CalendarContext = createContext<CalendarContextType>({
   calendarSystem: 'HINDU',
   setCalendarSystem: async () => {},
-  lunarSystem: 'AMANTA',
+  lunarSystem: 'PURNIMANTA',
   setLunarSystem: async () => {}
 });
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [calendarSystem, setCalendarSystemState] = useState<CalendarSystem>('HINDU');
-  const [lunarSystem, setLunarSystemState] = useState<LunarMonthSystem>('AMANTA');
+  const [lunarSystem, setLunarSystemState] = useState<LunarMonthSystem>('PURNIMANTA');
 
   useEffect(() => {
     (async () => {

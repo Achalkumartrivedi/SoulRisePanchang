@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "788454132501",
+    "project_id": "project-788454132501",
+    "storage_bucket": "project-788454132501.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:788454132501:android:eoi7nk3ssis8i8hmdf5p92",
+        "android_client_info": {
+          "package_name": "com.soulrise.panchang"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "788454132501-eoi7nk3ssis8i8hmdf5p92ss7g7c3fts.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.soulrise.panchang",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "788454132501-il76vbdi8a81gb5340pf6vcjggi8jvk5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForGoogleServicesJson"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
