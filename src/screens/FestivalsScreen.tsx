@@ -303,7 +303,7 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
             📅 July 29, 2026 (Ashadh Purnima) ➔ November 24, 2026 (Kartiki Purnima)
           </Text>
           <Text style={styles.chaturmasHighlight}>
-            ✨ <Text style={{ fontWeight: 'bold', color: '#FFD700' }}>Holiest Event:</Text> Paryushan Parva & Samvatsari (Sept 12, 2026 - Michhami Dukkadam Universal Forgiveness)
+            ✨ <Text style={{ fontWeight: 'bold', color: '#FFD700' }}>Holiest Event:</Text> Paryushan Parva & Samvatsari (Sept 15, 2026 - Michhami Dukkadam | Digambar Kshamavani: Sept 26, 2026)
           </Text>
         </View>
       )}

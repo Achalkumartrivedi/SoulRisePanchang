@@ -48,24 +48,33 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalCard}>
-              
-              {/* Header Bar */}
-              <View style={styles.headerRow}>
-                <View style={styles.titleBadge}>
-                  <Text style={styles.headerIcon}>✨</Text>
-                  <Text style={styles.headerTitle}>Soul Purpose on Earth</Text>
-                </View>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                  <Text style={styles.closeBtnText}>✕</Text>
-                </TouchableOpacity>
-              </View>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        {/* Backdrop Pressable */}
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
 
-              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.modalCard}>
+          
+          {/* Header Bar */}
+          <View style={styles.headerRow}>
+            <View style={styles.titleBadge}>
+              <Text style={styles.headerIcon}>✨</Text>
+              <Text style={styles.headerTitle}>Soul Purpose on Earth</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            overScrollMode="always"
+            keyboardShouldPersistTaps="handled"
+            bounces={true}
+            scrollEventThrottle={16}
+          >
                 
                 {/* Hero Tithi Badge Card */}
                 <View style={styles.heroCard}>
@@ -86,7 +95,7 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                 </View>
 
                 {/* Main Tab Navigation Bar */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled={true} style={{ marginBottom: 12 }}>
                   <View style={styles.tabNavRow}>
                     <TouchableOpacity
                       style={[styles.tabBtn, activeTab === 'PURPOSE' && styles.tabBtnActive]}
@@ -525,10 +534,8 @@ export const SoulPurposeModal: React.FC<SoulPurposeModalProps> = ({
                 )}
 
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
+          </View>
         </View>
-      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -543,9 +550,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.creamBg,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '92%',
+    maxHeight: '90%',
     padding: 16,
     elevation: 12,
+    flexDirection: 'column',
   },
   headerRow: {
     flexDirection: 'row',

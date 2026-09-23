@@ -24,6 +24,8 @@ import { TimePickerModal } from './TimePickerModal';
 import { calculateChoghadiya, calculateMuhurats } from '../engine/muhuratCalculator';
 import { getJainDayData } from '../engine/jainCalendarEngine';
 import { calculatePanchang } from '../engine/panchangEngine';
+import { scheduleSingleReminderNotification } from '../utils/reminderScheduler';
+
 
 // Vector SVG Component for Sacred Jain Prateek Chinha (Jain Universe, Swastika, Ahimsa Hand)
 export const JainPrateekIcon: React.FC<{ size?: number; color?: string }> = ({
@@ -115,37 +117,37 @@ export interface JainPachkhanVow {
 const JAIN_FESTIVALS_FULL: JainFestival[] = [
   {
     id: 'jain_fest_paryushan_2026',
-    nameGuj: 'પર્યુષણ મહાપર્વ અને સંવત્સરી',
-    nameHin: 'पर्युषण महापर्व एवं संवत्सरी',
-    nameHing: 'Paryushan Mahaparva & Samvatsari',
-    dateStrGuj: '૦૭ સપ્ટેમ્બર - ૧૪ સપ્ટેમ્બર ૨૦૨૬',
-    dateStrHin: '०७ सितंबर - १४ सितंबर २०२६',
-    dateStrHing: '07 Sept - 14 Sept 2026',
-    startDateIso: '2026-09-07',
-    endDateIso: '2026-09-14',
-    tithiGuj: 'ભાદરવા વદ અગિયારસ થી સુદ ચોથ',
-    tithiHin: 'भाद्रपद कृष्ण एकादशी से शुक्ल चतुर्थी',
-    tithiHing: 'Bhadrapad Krishna Ekadashi to Shukla Chaturthi',
-    significanceGuj: 'જૈન શાસનનું ૮ દિવસનું આત્મશુદ્ધિ, ક્ષમાપના "મિચ્છામિ દુક્કડં" અને તપ-આરાધનાનું મહાપર્વ.',
-    significanceHin: 'जैन धर्म का ८ दिवसीय आत्मशुद्धि, क्षमापना "मिच्छामि दुक्कड़ं" एवं तप-आराधना का महापर्व।',
-    significanceHing: '8-day holiest Jain festival of self-purification, fasting, and Michhami Dukkadam forgiveness.'
+    nameGuj: 'પર્યુષણ મહાપર્વ અને સંવત્સરી (મિચ્છામિ દુક્કડં)',
+    nameHin: 'पर्युषण महापर्व एवं संवत्सरी (मिच्छामि दुक्कड़ं)',
+    nameHing: 'Paryushan Mahaparva & Samvatsari (Michhami Dukkadam)',
+    dateStrGuj: '૦૮ સપ્ટેમ્બર - ૧૫ સપ્ટેમ્બર ૨૦૨૬',
+    dateStrHin: '०८ सितंबर - १५ सितंबर २०२६',
+    dateStrHing: '08 Sept - 15 Sept 2026',
+    startDateIso: '2026-09-08',
+    endDateIso: '2026-09-15',
+    tithiGuj: 'ભાદરવા વદ દ્વાદશી થી સુદ ચોથ/પંચમી',
+    tithiHin: 'भाद्रपद कृष्ण द्वादशी से शुक्ल चतुर्थी/पंचमी',
+    tithiHing: 'Bhadrapad Krishna Dwadashi to Shukla Chaturthi/Panchami',
+    significanceGuj: 'જૈન શાસનનું ૮ દિવસનું આત્મશુદ્ધિનું મહાપર્વ. ૧૫ સપ્ટેમ્બર ૨૦૨૬ ના રોજ સંવત્સરી અને મિચ્છામિ દુક્કડં મહાપર્વ છે.',
+    significanceHin: 'जैन धर्म का ८ दिवसीय आत्मशुद्धि का महापर्व। १५ सितंबर २०२६ को संवत्सरी एवं मिच्छामि दुक्कड़ं महापर्व है।',
+    significanceHing: '8-day holiest Jain festival of self-purification. Sept 15, 2026 is Samvatsari & Michhami Dukkadam.'
   },
   {
     id: 'jain_fest_dashlakshan_2026',
-    nameGuj: 'દશલક્ષણ પર્વ (દિગંબર જૈન)',
-    nameHin: 'दशलक्षण पर्व (दिगंबर जैन)',
-    nameHing: 'Dashalakshana Parva (Digambar)',
-    dateStrGuj: '૧૫ સપ્ટેમ્બર - ૨૪ સપ્ટેમ્બર ૨૦૨૬',
-    dateStrHin: '१५ सितंबर - २४ सितंबर २०२६',
-    dateStrHing: '15 Sept - 24 Sept 2026',
-    startDateIso: '2026-09-15',
-    endDateIso: '2026-09-24',
-    tithiGuj: 'ભાદરવા સુદ પંચમી થી ચૌદશ',
-    tithiHin: 'भाद्रपद शुक्ल पंचमी से चतुर्दशी',
-    tithiHing: 'Bhadrapad Shukla Panchami to Chaturdashi',
-    significanceGuj: 'દસ ઉત્તમ ધર્મોની દસ દિવસીય ભક્તિ અને દશલક્ષણ સાધના.',
-    significanceHin: 'दस उत्तम धर्मों की दस दिवसीय भक्ति एवं दशलक्षण साधना।',
-    significanceHing: '10-day Digambar festival honoring the 10 Supreme Virtues.'
+    nameGuj: 'દશલક્ષણ પર્વ અને ક્ષમાવાણી (દિગંબર જૈન)',
+    nameHin: 'दशलक्षण पर्व एवं क्षमावाणी (दिगंबर जैन)',
+    nameHing: 'Dashalakshana Parva & Kshamavani (Digambar)',
+    dateStrGuj: '૧૬ સપ્ટેમ્બર - ૨૬ સપ્ટેમ્બર ૨૦૨૬',
+    dateStrHin: '૧૬ सितंबर - २६ सितंबर २०२६',
+    dateStrHing: '16 Sept - 26 Sept 2026',
+    startDateIso: '2026-09-16',
+    endDateIso: '2026-09-26',
+    tithiGuj: 'ભાદરવા સુદ પંચમી થી ચૌદશ (૨૬ સપ્ટેમ્બર ક્ષમાવાણી પર્વ)',
+    tithiHin: 'भाद्रपद शुक्ल पंचमी से चतुर्दशी (२६ सितंबर क्षमावाणी पर्व)',
+    tithiHing: 'Bhadrapad Shukla Panchami to Chaturdashi (Sept 26 Kshamavani)',
+    significanceGuj: 'દસ ઉત્તમ ધર્મોની દસ દિવસીય સાધના અને ૨૬ સપ્ટેમ્બર ૨૦૨૬ ના રોજ દશલક્ષણ ક્ષમાવાણી પર્વ.',
+    significanceHin: 'दस उत्तम धर्मों की दस दिवसीय साधना एवं २६ सितंबर २०२६ को दशलक्षण क्षमावाणी पर्व।',
+    significanceHing: '10-day Digambar festival honoring 10 Supreme Virtues & Sept 26 Kshamavani Forgiveness Day.'
   },
   {
     id: 'jain_fest_oli_ashvin_2026',
@@ -988,6 +990,7 @@ export const JainCalendarModal: React.FC<JainCalendarModalProps> = ({
       id: editingReminderId || `jain_rem_${Date.now()}`,
       title: reminderTitle.trim(),
       category: 'TITHI_FESTIVAL',
+      dateIso: selectedDateIso,
       timeStr: reminderTime,
       enabled: true,
       notes: reminderNotes.trim(),
@@ -996,11 +999,13 @@ export const JainCalendarModal: React.FC<JainCalendarModalProps> = ({
       recurrence: {
         subType: 'FESTIVAL',
         festivalDharma: 'JAIN',
-        tithiName: tithiName
+        tithiName: tithiName,
+        selectedUpcomingDateIso: selectedDateIso,
       }
     };
 
     await saveReminder(itemToSave);
+    await scheduleSingleReminderNotification(itemToSave);
     await loadJainReminders();
     setShowReminderModal(false);
     setEditingReminderId(null);
@@ -1784,7 +1789,9 @@ export const JainCalendarModal: React.FC<JainCalendarModalProps> = ({
                         </Text>
                       </View>
                       <View style={styles.jainRemTimeBadge}>
-                        <Text style={styles.jainRemTimeText}>⏰ {rem.timeStr}</Text>
+                        <Text style={styles.jainRemTimeText}>
+                          {rem.dateIso ? `📅 ${rem.dateIso} ` : ''}⏰ {rem.timeStr}
+                        </Text>
                       </View>
                     </View>
 
@@ -1947,6 +1954,12 @@ export const JainCalendarModal: React.FC<JainCalendarModalProps> = ({
               </View>
 
               <ScrollView style={{ maxHeight: 400 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF3E0', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#FFE082' }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E65100' }}>
+                    📅 {getTxt('તારીખ (Date):', 'दिनांक (Date):', 'Date:')} {selectedDateIso}
+                  </Text>
+                </View>
+
                 <Text style={styles.inputLabel}>
                   {getTxt('રિમાઇન્ડર શીર્ષક (Title):', 'रिमाइंडर शीर्षक (Title):', 'Reminder Title:')}
                 </Text>

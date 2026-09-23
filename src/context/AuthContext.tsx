@@ -191,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return {
           success: false,
           message:
-            'Google Sign-In DEVELOPER_ERROR (Code 10):\n\nSHA-1 Certificate Fingerprint configuration is required in Firebase Console / Google Cloud Console for package "com.soulrise.panchang".\n\n1. Debug SHA-1:\n5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25\n\n2. Add your SHA-1 under Firebase Console -> Project Settings -> Your Apps -> com.soulrise.panchang.\n\n3. Troubleshooting Guide:\nhttps://react-native-google-signin.github.io/docs/troubleshooting\n\nTip: You can sign in instantly using Email, Phone, or Guest Mode below!'
+            'Google Sign-In DEVELOPER_ERROR (Code 10):\n\nSHA-1 Certificate Fingerprint configuration is required in Firebase Console for package "com.soulrise.panchang".\n\n• Google Play Store App Signing SHA-1:\n58:63:34:4F:28:10:05:26:EE:5D:A9:4B:CD:D5:C4:3B:76:72:DE:5C\n\n• Local Upload / Release SHA-1:\nB3:BB:A8:12:94:89:AD:96:7E:42:B6:B4:AD:90:26:E9:96:FB:A3:7D\n\n• Debug SHA-1:\n5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25\n\n👉 Add the Play Store SHA-1 in Firebase Console -> Project Settings -> Your Apps -> com.soulrise.panchang -> Add Fingerprint.\n\nTip: You can also sign in using Email, Phone, or Guest Mode!'
         };
       }
       return { success: false, message: e.message || 'Google Sign-In failed.' };

@@ -18,7 +18,9 @@ export const NorthIndianTriangleChart: React.FC<NorthIndianTriangleChartProps> =
   houses,
   size = 320
 }) => {
-  const S = size;
+  const windowWidth = Dimensions.get('window').width;
+  // Responsively scale chart graphics to fit smaller mobile devices cleanly
+  const S = Math.min(size, Math.max(windowWidth - 56, 250));
   const H = S / 2;
 
   // Map house numbers 1-12 to their geometric center positions in the North Indian Kundali graphic
@@ -39,6 +41,9 @@ export const NorthIndianTriangleChart: React.FC<NorthIndianTriangleChartProps> =
 
   const houseMap = new Map<number, HouseData>();
   houses.forEach(h => houseMap.set(h.houseNumber, h));
+
+  const scaleFactor = S / 320;
+  const badgeW = Math.round(scaleFactor * 72);
 
   return (
     <View style={[styles.container, { width: S, height: S }]}>
@@ -80,9 +85,9 @@ export const NorthIndianTriangleChart: React.FC<NorthIndianTriangleChartProps> =
             style={[
               styles.houseTextBadge,
               {
-                left: pos.x - 36,
-                top: pos.y - 24,
-                width: 72,
+                left: pos.x - badgeW / 2,
+                top: pos.y - 22,
+                width: badgeW,
               }
             ]}
           >

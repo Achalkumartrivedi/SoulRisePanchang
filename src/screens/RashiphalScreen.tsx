@@ -19,6 +19,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getSavedProfiles, getActiveProfile, setActiveProfileId, SavedKundaliProfile } from '../utils/profileStorage';
 import { calculateBirthKundali } from '../engine/kundaliEngine';
 import { BirthChartModal } from '../components/BirthChartModal';
+import { AddNewProfileModal } from '../components/AddNewProfileModal';
 import { DEFAULT_CITIES } from '../data/cities';
 
 const PREF_KEY = '@soulrise_user_horoscope_pref_v1';
@@ -46,6 +47,27 @@ export const RashiphalScreen: React.FC = () => {
   const [showManualSignModal, setShowManualSignModal] = useState(false);
   const [showProfileDropdownModal, setShowProfileDropdownModal] = useState(false);
   const [showBirthDetailsModal, setShowBirthDetailsModal] = useState(false);
+  const [showAddNewProfileModal, setShowAddNewProfileModal] = useState(false);
+
+  const handleOpenProfileDropdown = async () => {
+    try {
+      const freshProfiles = await getSavedProfiles();
+      setSavedProfiles(freshProfiles);
+    } catch (e) {
+      console.log('Error refreshing saved profiles:', e);
+    }
+    setShowProfileDropdownModal(true);
+  };
+
+  const handleProfileAdded = async (newProfile: SavedKundaliProfile) => {
+    try {
+      const freshProfiles = await getSavedProfiles();
+      setSavedProfiles(freshProfiles);
+      loadProfileHoroscope(newProfile);
+    } catch (e) {
+      console.log('Error updating added profile:', e);
+    }
+  };
 
   // Load Saved Profiles & User Preferences on Mount
   useEffect(() => {
@@ -177,7 +199,7 @@ export const RashiphalScreen: React.FC = () => {
               {savedProfiles.length > 0 ? (
                 <TouchableOpacity
                   style={styles.profileSelectRow}
-                  onPress={() => setShowProfileDropdownModal(true)}
+                  onPress={handleOpenProfileDropdown}
                   activeOpacity={0.8}
                 >
                   <View style={{ flex: 1 }}>
@@ -208,7 +230,7 @@ export const RashiphalScreen: React.FC = () => {
 
                     <TouchableOpacity
                       style={styles.generateBirthBtn}
-                      onPress={() => setShowBirthDetailsModal(true)}
+                      onPress={() => setShowAddNewProfileModal(true)}
                     >
                       <Text style={styles.generateBirthBtnText}>✨ Calculate via Birth Generator ➔</Text>
                     </TouchableOpacity>
@@ -362,7 +384,7 @@ export const RashiphalScreen: React.FC = () => {
               style={styles.addNewProfileBtn}
               onPress={() => {
                 setShowProfileDropdownModal(false);
-                setShowBirthDetailsModal(true);
+                setShowAddNewProfileModal(true);
               }}
             >
               <Text style={styles.addNewProfileBtnText}>+ Add New Birth Profile</Text>
@@ -371,14 +393,12 @@ export const RashiphalScreen: React.FC = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Birth Details Generator Modal */}
-      {showBirthDetailsModal && (
-        <BirthChartModal
-          visible={showBirthDetailsModal}
-          onClose={() => setShowBirthDetailsModal(false)}
-          selectedCity={DEFAULT_CITIES[0]}
-        />
-      )}
+      {/* Add New Birth Profile Form Modal */}
+      <AddNewProfileModal
+        visible={showAddNewProfileModal}
+        onClose={() => setShowAddNewProfileModal(false)}
+        onProfileAdded={handleProfileAdded}
+      />
     </View>
   );
 
@@ -541,8 +561,10 @@ const styles = StyleSheet.create({
   },
   profileSelectRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   profileBannerSubtitle: {
     fontSize: 9,
@@ -591,6 +613,8 @@ const styles = StyleSheet.create({
   },
   noProfileBtnRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 8,
   },
   selectSignsBtn: {

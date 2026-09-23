@@ -1,18 +1,26 @@
 {
   "project_info": {
     "project_number": "788454132501",
-    "project_id": "project-788454132501",
-    "storage_bucket": "project-788454132501.appspot.com"
+    "project_id": "soulrise-panchang",
+    "storage_bucket": "soulrise-panchang.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:788454132501:android:eoi7nk3ssis8i8hmdf5p92",
+        "mobilesdk_app_id": "1:788454132501:android:27a48cb5cb3940f1eef71c",
         "android_client_info": {
           "package_name": "com.soulrise.panchang"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "788454132501-d47uchujg52acmvgdo8ce0q8eouqv7kl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.soulrise.panchang",
+            "certificate_hash": "b3bba8129489ad967e42b6b4ad9026e996fba37d"
+          }
+        },
         {
           "client_id": "788454132501-eoi7nk3ssis8i8hmdf5p92ss7g7c3fts.apps.googleusercontent.com",
           "client_type": 1,
@@ -28,12 +36,17 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyKeyForGoogleServicesJson"
+          "current_key": "AIzaSyBOUGd2hIHiyEeHcDr7ktmOTxhm6RNA8Yk"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "788454132501-il76vbdi8a81gb5340pf6vcjggi8jvk5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

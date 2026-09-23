@@ -86,9 +86,10 @@ export const calculateTithiForDate = (d: Date): number => {
   return tithiIndex;
 };
 
-export const getHinduMonthName = (d: Date): string => {
+export const getHinduMonthName = (d: Date, lunarSystem: 'AMANTA' | 'PURNIMANTA' = 'PURNIMANTA'): string => {
+  if (!d || isNaN(d.getTime())) d = new Date();
   const defaultCity = { name: 'New Delhi', hindiName: 'नई दिल्ली', stateCountry: 'India', latitude: 28.6139, longitude: 77.2090, timeZoneId: 'Asia/Kolkata' };
-  const p = calculatePanchang(d, defaultCity);
+  const p = calculatePanchang(d, defaultCity, lunarSystem);
   return p.samvat.monthName;
 };
 
@@ -341,6 +342,13 @@ export function calculatePanchang(
   city: CityLocation,
   lunarSystem: 'AMANTA' | 'PURNIMANTA' = 'AMANTA'
 ): PanchangDayData {
+  if (!date || isNaN(date.getTime())) {
+    date = new Date();
+  }
+  if (!city || typeof city.latitude !== 'number' || typeof city.longitude !== 'number') {
+    city = { name: 'New Delhi', hindiName: 'नई दिल्ली', stateCountry: 'India', latitude: 28.6139, longitude: 77.2090, timeZoneId: 'Asia/Kolkata' };
+  }
+
   const dateIso = formatDateIso(date);
   const year = date.getFullYear();
 
@@ -360,12 +368,14 @@ export function calculatePanchang(
   const posSunrise = calculateSolarLunarPositions(sunriseUtcDate);
 
   // 1. Tithi
-  const tithiIndex = Math.min(29, Math.max(0, Math.floor(posSunrise.tithiAngle / 12.0)));
+  const rawTithiAngle = isNaN(posSunrise.tithiAngle) ? 0 : posSunrise.tithiAngle;
+  const tithiIndex = Math.min(29, Math.max(0, Math.floor(rawTithiAngle / 12.0)));
   const paksha: Paksha = tithiIndex < 15 ? 'SHUKLA' : 'KRISHNA';
   const pakshaHindi = paksha === 'SHUKLA' ? 'शुक्ल पक्ष' : 'कृष्ण पक्ष';
 
   const tithiInPaksha = (tithiIndex % 15) + 1;
-  const tithiNamePair = TITHI_NAMES[tithiInPaksha - 1];
+  const safeTithiIdx = Math.min(14, Math.max(0, tithiInPaksha - 1));
+  const tithiNamePair = TITHI_NAMES[safeTithiIdx] || TITHI_NAMES[0];
 
   let displayTithiName = `${paksha === 'SHUKLA' ? 'Shukla' : 'Krishna'} ${tithiNamePair[0]}`;
   let displayTithiHindi = `${pakshaHindi} ${tithiNamePair[1]}`;
@@ -409,8 +419,9 @@ export function calculatePanchang(
   };
 
   // 2. Nakshatra
-  const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(posSunrise.moonSidereal / (360.0 / 27.0))));
-  const nakData = NAKSHATRA_DATA[nakshatraIndex];
+  const rawMoonSidereal = isNaN(posSunrise.moonSidereal) ? 0 : posSunrise.moonSidereal;
+  const nakshatraIndex = Math.min(26, Math.max(0, Math.floor(rawMoonSidereal / (360.0 / 27.0))));
+  const nakData = NAKSHATRA_DATA[nakshatraIndex] || NAKSHATRA_DATA[0];
 
   const nakStartStr = findLimbStartTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
     const p = calculateSolarLunarPositions(d);
@@ -433,9 +444,10 @@ export function calculatePanchang(
   };
 
   // 3. Yoga
-  const yogaAngle = normalizeAngle(posSunrise.sunSidereal + posSunrise.moonSidereal);
+  const rawSunSidereal = isNaN(posSunrise.sunSidereal) ? 0 : posSunrise.sunSidereal;
+  const yogaAngle = normalizeAngle(rawSunSidereal + rawMoonSidereal);
   const yogaIndex = Math.min(26, Math.max(0, Math.floor(yogaAngle / (360.0 / 27.0))));
-  const yogaPair = YOGA_DATA[yogaIndex];
+  const yogaPair = YOGA_DATA[yogaIndex] || YOGA_DATA[0];
   const inauspiciousYogas = new Set([0, 5, 8, 9, 14, 16, 18, 26]);
 
   const yogaEndStr = findLimbEndTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
@@ -453,8 +465,8 @@ export function calculatePanchang(
   };
 
   // 4. Karana
-  const karanaIndex = Math.min(59, Math.max(0, Math.floor(posSunrise.tithiAngle / 6.0)));
-  const karanaPair = getKaranaName(karanaIndex);
+  const karanaIndex = Math.min(59, Math.max(0, Math.floor(rawTithiAngle / 6.0)));
+  const karanaPair = getKaranaName(karanaIndex) || ['Bava', 'बव'];
 
   const karanaEndStr = findLimbEndTime(sunriseUtcDate, offsetMin, tzAbbrev, (d) => {
     const p = calculateSolarLunarPositions(d);
@@ -474,19 +486,24 @@ export function calculatePanchang(
   const vaaraInfo = getVaaraInfo(dayOfWeek);
 
   // Sun & Moon Positions
-  const sunSignIndex = Math.floor(posSunrise.sunSidereal / 30.0);
-  const moonSignIndex = Math.floor(posSunrise.moonSidereal / 30.0);
-  const moonPhasePercent = Math.round((posSunrise.tithiAngle / 360.0) * 100);
+  const rawSunSignIdx = Math.floor(rawSunSidereal / 30.0);
+  const rawMoonSignIdx = Math.floor(rawMoonSidereal / 30.0);
+  const sunSignIndex = isNaN(rawSunSignIdx) ? 0 : Math.min(11, Math.max(0, rawSunSignIdx));
+  const moonSignIndex = isNaN(rawMoonSignIdx) ? 0 : Math.min(11, Math.max(0, rawMoonSignIdx));
+  const moonPhasePercent = Math.round((rawTithiAngle / 360.0) * 100);
+
+  const sunSignPair = RASHI_NAMES[sunSignIndex] || RASHI_NAMES[0];
+  const moonSignPair = RASHI_NAMES[moonSignIndex] || RASHI_NAMES[0];
 
   const sunMoonTiming = {
     sunrise,
     sunset,
-    moonrise: formatShiftedTime(sunrise, Math.floor(posSunrise.tithiAngle / 30) + 1),
-    moonset: formatShiftedTime(sunset, Math.floor(posSunrise.tithiAngle / 30) + 1),
-    sunSign: RASHI_NAMES[sunSignIndex][0],
-    sunSignHindi: RASHI_NAMES[sunSignIndex][1],
-    moonSign: RASHI_NAMES[moonSignIndex][0],
-    moonSignHindi: RASHI_NAMES[moonSignIndex][1],
+    moonrise: formatShiftedTime(sunrise, Math.floor(rawTithiAngle / 30) + 1),
+    moonset: formatShiftedTime(sunset, Math.floor(rawTithiAngle / 30) + 1),
+    sunSign: sunSignPair[0],
+    sunSignHindi: sunSignPair[1],
+    moonSign: moonSignPair[0],
+    moonSignHindi: moonSignPair[1],
     moonPhasePercent
   };
 
@@ -499,17 +516,18 @@ export function calculatePanchang(
 
   if (lunarSystem === 'AMANTA') {
     if (paksha === 'KRISHNA') {
-      effectiveMonthIndex = (purnimantaMonthIndex + 11) % 12;
+      effectiveMonthIndex = (((purnimantaMonthIndex + 11) % 12) + 12) % 12;
     }
   }
 
-  const monthPair = HINDU_MONTHS[effectiveMonthIndex];
+  const safeMonthIndex = isNaN(effectiveMonthIndex) ? 0 : (((Math.floor(effectiveMonthIndex) % 12) + 12) % 12);
+  const monthPair = HINDU_MONTHS[safeMonthIndex] || HINDU_MONTHS[0];
 
-  const rituPair = (effectiveMonthIndex === 0 || effectiveMonthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :
-    (effectiveMonthIndex === 2 || effectiveMonthIndex === 3) ? ['Grishma (Summer)', 'ग्रीष्म'] :
-    (effectiveMonthIndex === 4 || effectiveMonthIndex === 5) ? ['Varsha (Monsoon)', 'वर्षा'] :
-    (effectiveMonthIndex === 6 || effectiveMonthIndex === 7) ? ['Sharad (Autumn)', 'शरद'] :
-    (effectiveMonthIndex === 8 || effectiveMonthIndex === 9) ? ['Hemanta (Pre-Winter)', 'हेमन्त'] : ['Shishira (Winter)', 'शिशिर'];
+  const rituPair = (safeMonthIndex === 0 || safeMonthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :
+    (safeMonthIndex === 2 || safeMonthIndex === 3) ? ['Grishma (Summer)', 'ग्रीष्म'] :
+    (safeMonthIndex === 4 || safeMonthIndex === 5) ? ['Varsha (Monsoon)', 'वर्षा'] :
+    (safeMonthIndex === 6 || safeMonthIndex === 7) ? ['Sharad (Autumn)', 'शरद'] :
+    (safeMonthIndex === 8 || safeMonthIndex === 9) ? ['Hemanta (Pre-Winter)', 'हेमन्त'] : ['Shishira (Winter)', 'शिशिर'];
 
   const ayanaPair = (sunSignIndex >= 9 || sunSignIndex <= 2) ? ['Uttarayana', 'उत्तरायण'] : ['Dakshinayana', 'दक्षिणायन'];
 

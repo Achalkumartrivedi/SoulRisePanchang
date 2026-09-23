@@ -12,15 +12,72 @@ import {
   StatusBar,
   TouchableWithoutFeedback
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../theme/colors';
 import { useLanguage } from '../context/LanguageContext';
 import { fetchLalKitabAnalysis, LalKitabResponseData } from '../services/lalKitabService';
-import { getSavedProfiles, deleteKundaliProfile, getActiveProfile, setActiveProfileId, SavedKundaliProfile } from '../utils/profileStorage';
+import { getSavedProfiles, saveKundaliProfile, deleteKundaliProfile, getActiveProfile, setActiveProfileId, SavedKundaliProfile } from '../utils/profileStorage';
 import { calculateBirthKundali } from '../engine/kundaliEngine';
 import { evaluateLalKitabRules } from '../engine/lalKitabAstrologyRules';
 import { calculateBnnSaturnTimeline, BnnSaturnTimelineResult } from '../engine/bnnSaturnTimelineEngine';
-import { evaluateLalKitabSaturn, LAL_KITAB_7_GOLDEN_RULES } from '../engine/lalKitabSaturnEngine';
+import { evaluateLalKitabSaturn } from '../engine/lalKitabSaturnEngine';
+import { CitySelectionModal } from './CitySelectionModal';
+import { AddNewProfileModal } from './AddNewProfileModal';
+
+// In-Memory & AsyncStorage Cache for ultra-fast (0ms) profile report retrieval
+const memoryLalKitabCache = new Map<string, LalKitabResponseData>();
+const AI_KUNDLI_CACHE_PREFIX = 'SOULRISE_AI_KUNDLI_CACHE_v1_';
+
+const generateCacheKey = (
+  name: string,
+  dob: string,
+  tob: string,
+  city: string,
+  lat?: number,
+  lon?: number,
+  lang?: string
+) => {
+  const safeLat = lat !== undefined ? lat.toFixed(3) : '21.170';
+  const safeLon = lon !== undefined ? lon.toFixed(3) : '72.831';
+  return `${AI_KUNDLI_CACHE_PREFIX}${name.trim().toLowerCase()}_${dob}_${tob}_${city.trim().toLowerCase()}_${safeLat}_${safeLon}_${lang || 'en'}`;
+};
+
+const getCachedAnalysis = async (cacheKey: string): Promise<LalKitabResponseData | null> => {
+  if (memoryLalKitabCache.has(cacheKey)) {
+    return memoryLalKitabCache.get(cacheKey)!;
+  }
+  try {
+    const raw = await AsyncStorage.getItem(cacheKey);
+    if (raw) {
+      const parsed: LalKitabResponseData = JSON.parse(raw);
+      memoryLalKitabCache.set(cacheKey, parsed);
+      return parsed;
+    }
+  } catch (err) {
+    console.log('Error reading AI Kundli cache:', err);
+  }
+  return null;
+};
+
+const saveCachedAnalysis = async (cacheKey: string, data: LalKitabResponseData) => {
+  memoryLalKitabCache.set(cacheKey, data);
+  try {
+    await AsyncStorage.setItem(cacheKey, JSON.stringify(data));
+  } catch (err) {
+    console.log('Error saving AI Kundli cache:', err);
+  }
+};
+
+const DAYS_LIST = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+const MONTHS_LIST = [
+  'January (01)', 'February (02)', 'March (03)', 'April (04)',
+  'May (05)', 'June (06)', 'July (07)', 'August (08)',
+  'September (09)', 'October (10)', 'November (11)', 'December (12)'
+];
+const YEARS_LIST = Array.from({ length: 111 }, (_, i) => (1920 + i).toString());
+const HOURS_LIST = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+const MINUTES_LIST = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 import {
   evaluateChartLalKitabAspects,
   getLalKitabAspects,
@@ -34,7 +91,7 @@ import {
   PLANET_COMBINATION_REMEDIES
 } from '../engine/lalKitabDrishtiEngine';
 
-function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: string, lang: string, latVal?: number, lonVal?: number): LalKitabResponseData {
+function buildLocalLalKitabFallback(profileNameStr: string, dobStr: string, tobStr: string, cityName: string, lang: string, latVal?: number, lonVal?: number): LalKitabResponseData {
   const parts = dobStr.split('/');
   const d = parseInt(parts[0], 10) || 13;
   const m = parseInt(parts[1], 10) || 2;
@@ -47,7 +104,7 @@ function buildLocalLalKitabFallback(dobStr: string, tobStr: string, cityName: st
   const birthDate = new Date(y, m - 1, d);
   const finalLat = latVal !== undefined ? latVal : 21.17;
   const finalLon = lonVal !== undefined ? lonVal : 72.83;
-  const kundali = calculateBirthKundali('User', birthDate, h, min, cityName || 'Surat', finalLat, finalLon);
+  const kundali = calculateBirthKundali(profileNameStr || 'User', birthDate, h, min, cityName || 'Surat', finalLat, finalLon);
   const lalReport = evaluateLalKitabRules(kundali);
   const bnnTimeline = calculateBnnSaturnTimeline(kundali, lang);
   const saturnReport = evaluateLalKitabSaturn(kundali, lang);
@@ -257,6 +314,12 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   const { language } = useLanguage();
   const isHi = language === 'hi' || language === 'hinglish';
 
+  const [profileName, setProfileName] = useState<string>('User');
+  const [dobDay, setDobDay] = useState<string>('13');
+  const [dobMonth, setDobMonth] = useState<string>('02');
+  const [dobYear, setDobYear] = useState<string>('1989');
+  const [tobHour, setTobHour] = useState<string>('00');
+  const [tobMinute, setTobMinute] = useState<string>('05');
   const [dob, setDob] = useState(initialDob || '13/02/1989');
   const [tob, setTob] = useState(initialTob || '00:05');
   const [city, setCity] = useState(initialCity || defaultCity || 'Surat');
@@ -267,6 +330,13 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   const [savedProfiles, setSavedProfiles] = useState<SavedKundaliProfile[]>([]);
   const [selectedProfileName, setSelectedProfileName] = useState<string>('');
   const [showSavedProfilesModal, setShowSavedProfilesModal] = useState(false);
+  const [showCityPickerModal, setShowCityPickerModal] = useState(false);
+  const [showAddNewProfileModal, setShowAddNewProfileModal] = useState(false);
+  const [showDayModal, setShowDayModal] = useState(false);
+  const [showMonthModal, setShowMonthModal] = useState(false);
+  const [showYearModal, setShowYearModal] = useState(false);
+  const [showHourModal, setShowHourModal] = useState(false);
+  const [showMinuteModal, setShowMinuteModal] = useState(false);
   const [showForm, setShowForm] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(false);
@@ -278,13 +348,34 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
 
   const stepsList = isHi ? LOADING_STEPS_HI : LOADING_STEPS_EN;
 
-  const runAnalysis = async (dobVal: string, tobVal: string, cityVal: string, latVal?: number, lonVal?: number, tzVal?: number) => {
+  const runAnalysis = async (
+    profNameVal: string,
+    dobVal: string,
+    tobVal: string,
+    cityVal: string,
+    latVal?: number,
+    lonVal?: number,
+    tzVal?: number,
+    forceRefresh: boolean = false
+  ) => {
+    const cacheKey = generateCacheKey(profNameVal, dobVal, tobVal, cityVal, latVal, lonVal, language);
+
+    // ⚡ Ultra-fast Local Cache Check (0ms latency, zero unnecessary API calls)
+    if (!forceRefresh) {
+      const cachedData = await getCachedAnalysis(cacheKey);
+      if (cachedData) {
+        setResult(cachedData);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
     setErrorMsg('');
     try {
       const data = await fetchLalKitabAnalysis({ dob: dobVal, tob: tobVal, city: cityVal, lat: latVal, lon: lonVal, tz: tzVal, lang: language });
-      const localFallback = buildLocalLalKitabFallback(dobVal, tobVal, cityVal, language, latVal, lonVal);
-      setResult({
+      const localFallback = buildLocalLalKitabFallback(profNameVal, dobVal, tobVal, cityVal, language, latVal, lonVal);
+      const mergedResult: LalKitabResponseData = {
         ...localFallback,
         ...data,
         applied_rules_detailed: data.applied_rules_detailed || localFallback.applied_rules_detailed,
@@ -294,11 +385,14 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
         bnn_timeline: data.bnn_timeline || localFallback.bnn_timeline,
         saturn_report: data.saturn_report || localFallback.saturn_report,
         drishti_report: data.drishti_report || localFallback.drishti_report
-      });
+      };
+      setResult(mergedResult);
+      await saveCachedAnalysis(cacheKey, mergedResult);
     } catch (err: any) {
       console.warn('Backend fetch failed, using local Lal Kitab fallback engine:', err);
-      const fallbackData = buildLocalLalKitabFallback(dobVal, tobVal, cityVal, language, latVal, lonVal);
+      const fallbackData = buildLocalLalKitabFallback(profNameVal, dobVal, tobVal, cityVal, language, latVal, lonVal);
       setResult(fallbackData);
+      await saveCachedAnalysis(cacheKey, fallbackData);
     } finally {
       setLoading(false);
     }
@@ -324,12 +418,25 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
           if (initialLon) setLon(initialLon);
           if (initialTz) setTz(initialTz);
           setShowForm(false);
-          runAnalysis(initialDob, initialTob, initialCity, initialLat, initialLon, initialTz);
+          runAnalysis('User', initialDob, initialTob, initialCity, initialLat, initialLon, initialTz);
         } else {
           const activeP = await getActiveProfile();
           if (activeP) {
-            const formattedDob = `${activeP.dobDay.padStart(2, '0')}/${activeP.dobMonth.padStart(2, '0')}/${activeP.dobYear}`;
-            const formattedTob = `${activeP.tobHour.padStart(2, '0')}:${activeP.tobMinute.padStart(2, '0')}`;
+            const dDay = activeP.dobDay.padStart(2, '0');
+            const dMon = activeP.dobMonth.padStart(2, '0');
+            const dYr = activeP.dobYear;
+            const tH = activeP.tobHour.padStart(2, '0');
+            const tM = activeP.tobMinute.padStart(2, '0');
+
+            setProfileName(activeP.name);
+            setDobDay(dDay);
+            setDobMonth(dMon);
+            setDobYear(dYr);
+            setTobHour(tH);
+            setTobMinute(tM);
+
+            const formattedDob = `${dDay}/${dMon}/${dYr}`;
+            const formattedTob = `${tH}:${tM}`;
             setDob(formattedDob);
             setTob(formattedTob);
             setCity(activeP.cityName);
@@ -337,7 +444,7 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
             setLon(activeP.lng);
             setSelectedProfileName(activeP.name);
             setShowForm(false);
-            runAnalysis(formattedDob, formattedTob, activeP.cityName, activeP.lat, activeP.lng);
+            runAnalysis(activeP.name, formattedDob, formattedTob, activeP.cityName, activeP.lat, activeP.lng);
           } else {
             setShowForm(true);
           }
@@ -347,8 +454,21 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   }, [visible, initialDob, initialTob, initialCity, initialLat, initialLon, initialTz]);
 
   const handleSelectSavedProfile = (p: SavedKundaliProfile) => {
-    const formattedDob = `${p.dobDay.padStart(2, '0')}/${p.dobMonth.padStart(2, '0')}/${p.dobYear}`;
-    const formattedTob = `${p.tobHour.padStart(2, '0')}:${p.tobMinute.padStart(2, '0')}`;
+    const dDay = p.dobDay.padStart(2, '0');
+    const dMon = p.dobMonth.padStart(2, '0');
+    const dYr = p.dobYear;
+    const tH = p.tobHour.padStart(2, '0');
+    const tM = p.tobMinute.padStart(2, '0');
+
+    setProfileName(p.name);
+    setDobDay(dDay);
+    setDobMonth(dMon);
+    setDobYear(dYr);
+    setTobHour(tH);
+    setTobMinute(tM);
+
+    const formattedDob = `${dDay}/${dMon}/${dYr}`;
+    const formattedTob = `${tH}:${tM}`;
     setDob(formattedDob);
     setTob(formattedTob);
     setCity(p.cityName);
@@ -358,7 +478,7 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
     setActiveProfileId(p.id);
     setShowSavedProfilesModal(false);
     setShowForm(false);
-    runAnalysis(formattedDob, formattedTob, p.cityName, p.lat, p.lng);
+    runAnalysis(p.name, formattedDob, formattedTob, p.cityName, p.lat, p.lng);
   };
 
   const handleDeleteProfile = async (id: string) => {
@@ -383,12 +503,32 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
   }, [loading, stepsList.length]);
 
   const handleAnalyze = async () => {
-    if (!dob || !tob || !city) {
-      setErrorMsg(isHi ? 'कृपया सभी फ़ील्ड (दिनांक, समय, शहर) भरें।' : 'Please fill all fields (Date, Time, City).');
-      return;
-    }
+    const finalName = profileName.trim() || 'User';
+    const formattedDob = `${dobDay.padStart(2, '0')}/${dobMonth.padStart(2, '0')}/${dobYear}`;
+    const formattedTob = `${tobHour.padStart(2, '0')}:${tobMinute.padStart(2, '0')}`;
+    setDob(formattedDob);
+    setTob(formattedTob);
+    setSelectedProfileName(finalName);
     setShowForm(false);
-    runAnalysis(dob, tob, city, lat, lon, tz);
+
+    try {
+      const updated = await saveKundaliProfile({
+        name: finalName,
+        dobDay: dobDay.padStart(2, '0'),
+        dobMonth: dobMonth.padStart(2, '0'),
+        dobYear: dobYear,
+        tobHour: tobHour.padStart(2, '0'),
+        tobMinute: tobMinute.padStart(2, '0'),
+        cityName: city,
+        lat: lat || 21.1702,
+        lng: lon || 72.8311
+      });
+      setSavedProfiles(updated);
+    } catch (e) {
+      console.log('Error saving profile in LalKitabModal:', e);
+    }
+
+    runAnalysis(finalName, formattedDob, formattedTob, city, lat, lon, tz, true);
   };
 
   const insets = useSafeAreaInsets();
@@ -430,12 +570,12 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addNewBtn, showForm && styles.addNewBtnActive]}
-              onPress={() => setShowForm(!showForm)}
+              style={styles.addNewBtn}
+              onPress={() => setShowAddNewProfileModal(true)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.addNewBtnText, showForm && styles.addNewBtnTextActive]}>
-                {showForm ? (isHi ? '✕ फॉर्म छिपाएं' : '✕ Hide Form') : (isHi ? '➕ नया विवरण' : '➕ Add New Details')}
+              <Text style={styles.addNewBtnText}>
+                ➕ {isHi ? 'नया प्रोफाइल जोड़ें' : 'Add New Profile'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -464,40 +604,107 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                   {isHi ? '📝 जन्म विवरण भरें (Enter Birth Details)' : '📝 Enter Birth Details'}
                 </Text>
 
-                <View style={styles.inputRow}>
-                  <View style={[styles.inputGroup, { flex: 1.2, marginRight: 8 }]}>
-                    <Text style={styles.label}>{isHi ? 'जन्म तिथि' : 'Date of Birth'}</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={dob}
-                      onChangeText={setDob}
-                      placeholder="DD/MM/YYYY"
-                      placeholderTextColor="#A0AEC0"
-                    />
-                  </View>
-
-                  <View style={[styles.inputGroup, { flex: 1 }]}>
-                    <Text style={styles.label}>{isHi ? 'समय (24hr)' : 'Time (24-hr)'}</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={tob}
-                      onChangeText={setTob}
-                      placeholder="HH:MM"
-                      placeholderTextColor="#A0AEC0"
-                    />
-                  </View>
-                </View>
-
+                {/* Full Name Field */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>{isHi ? 'जन्म शहर' : 'Birth City'}</Text>
+                  <Text style={styles.label}>{isHi ? 'नाम (Full Name)' : 'Full Name'}</Text>
                   <TextInput
                     style={styles.input}
-                    value={city}
-                    onChangeText={setCity}
-                    placeholder="e.g. Surat, Mumbai"
+                    value={profileName}
+                    onChangeText={setProfileName}
+                    placeholder={isHi ? 'अपना नाम दर्ज करें' : 'Enter full name'}
                     placeholderTextColor="#A0AEC0"
                   />
                 </View>
+
+                {/* Date of Birth (DOB) Dropdowns */}
+                <Text style={styles.label}>{isHi ? 'जन्म तिथि (Date of Birth)' : 'Date of Birth (DOB)'}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EE', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10 }}
+                    onPress={() => setShowDayModal(true)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B' }}>Day: {dobDay || 'DD'}</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#800000' }}>▼</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EE', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10 }}
+                    onPress={() => setShowMonthModal(true)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B' }}>
+                      {MONTHS_LIST[parseInt(dobMonth, 10) - 1] || 'Month: MM'}
+                    </Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#800000' }}>▼</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EE', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10 }}
+                    onPress={() => setShowYearModal(true)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B' }}>Year: {dobYear || 'YYYY'}</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#800000' }}>▼</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Time of Birth (TOB) Dropdowns */}
+                <Text style={styles.label}>{isHi ? 'जन्म समय (Time of Birth 24-hr)' : 'Time of Birth (TOB 24-hr)'}</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EE', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10 }}
+                    onPress={() => setShowHourModal(true)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B' }}>Hour: {tobHour !== '' ? tobHour : 'HH'}</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#800000' }}>▼</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EE', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10 }}
+                    onPress={() => setShowMinuteModal(true)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1E293B' }}>Min: {tobMinute !== '' ? tobMinute : 'MM'}</Text>
+                    <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#800000' }}>▼</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Global Location of Birth Search Dropdown */}
+                <Text style={styles.label}>{isHi ? 'जन्म स्थान (Global Location)' : 'Global Location of Birth'}</Text>
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: '#FAF5EE',
+                    borderWidth: 1,
+                    borderColor: '#800000',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    marginBottom: 14
+                  }}
+                  onPress={() => setShowCityPickerModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <View style={{ flex: 1 }}>
+                    {city ? (
+                      <>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#800000' }}>📍 {city}</Text>
+                        <Text style={{ fontSize: 10, color: '#666666', marginTop: 1 }}>
+                          Lat: {lat ? lat.toFixed(4) : '21.1702'}° • Lng: {lon ? lon.toFixed(4) : '72.8311'}°
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#A0AEC0' }}>
+                          📍 {isHi ? 'जन्म स्थान चुनें' : 'Select Birth Location'}
+                        </Text>
+                        <Text style={{ fontSize: 10, color: '#666666', marginTop: 1 }}>
+                          {isHi ? 'शहर का नाम खोजें' : 'Tap to search birth city'}
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#800000' }}>🔍 Search Place ▼</Text>
+                </TouchableOpacity>
 
                 {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
@@ -744,8 +951,10 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                   const poisonChannel = satReport.poisonReleaseChannel?.[language] || satReport.poisonReleaseChannel?.['hi'] || satReport.poisonReleaseChannel?.['en'] || '';
                   const threeHouseName = satReport.threeHouseGroup?.name || '';
                   const threeHouseDesc = satReport.threeHouseGroup?.description?.[language] || satReport.threeHouseGroup?.description?.['hi'] || satReport.threeHouseGroup?.description?.['en'] || '';
-                  const uniRemedies = satReport.universalRemedies?.[language] || satReport.universalRemedies?.['hi'] || satReport.universalRemedies?.['en'] || [];
                   const digLabel = satReport.saturnDignity ? (satReport.saturnDignity[language] || satReport.saturnDignity['hi'] || satReport.saturnDignity['en']) : hGuide?.dignityType;
+                  const satChains = satReport.saturnChains;
+                  const rkChain = satChains?.rahuKetuChain;
+                  const jupChain = satChains?.jupiterChain;
 
                   let dignityBg = '#FEF3C7';
                   let dignityTextColor = '#92400E';
@@ -766,11 +975,11 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                       
                       {/* User Saturn Placement Badge */}
                       <View style={{ backgroundColor: '#1E293B', padding: 14, borderRadius: 12, marginBottom: 14 }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#FFD700' }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#FFD700', flex: 1, flexShrink: 1 }}>
                             🪐 {isHi ? `शनि स्थिति: भाव ${satReport.userSaturnHouse}` : `Saturn Placement: House ${satReport.userSaturnHouse}`}
                           </Text>
-                          <View style={{ backgroundColor: dignityBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
+                          <View style={{ backgroundColor: dignityBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, flexShrink: 0, alignSelf: 'flex-start' }}>
                             <Text style={{ fontSize: 11, fontWeight: 'bold', color: dignityTextColor }}>
                               {digLabel}
                             </Text>
@@ -785,26 +994,51 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                         </Text>
                       </View>
 
-                      {/* 7 Golden Rules Box */}
-                      <View style={{ backgroundColor: '#FFFBEB', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#FDE68A', marginBottom: 14 }}>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#92400E', marginBottom: 8 }}>
-                          👑 {isHi ? 'लाल किताब के 7 स्वर्णिम नियम (The 7 Golden Rules of Saturn):' : 'The 7 Golden Rules of Lal Kitab Saturn:'}
-                        </Text>
-                        {LAL_KITAB_7_GOLDEN_RULES.map((rule: any) => {
-                          const rTitle = rule.title[language] || rule.title['hi'] || rule.title['en'];
-                          const rDesc = rule.desc[language] || rule.desc['hi'] || rule.desc['en'];
-                          return (
-                            <View key={rule.num} style={{ marginBottom: 6 }}>
-                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#78350F' }}>
-                                • {rTitle}
-                              </Text>
-                              <Text style={{ fontSize: 11, color: '#92400E', paddingLeft: 10, lineHeight: 16 }}>
-                                {rDesc}
+                      {/* Permanent Section 1: Career - Saturn / Rahu / Ketu chain */}
+                      {rkChain && (
+                        <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', marginBottom: 14 }}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', flex: 1, flexShrink: 1 }}>
+                              🔗 Career - Saturn / Rahu / Ketu chain
+                            </Text>
+                            <View style={{ backgroundColor: rkChain.chainType === 'SATURN_RAHU' ? '#DCFCE7' : '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: rkChain.chainType === 'SATURN_RAHU' ? '#86EFAC' : '#FDE68A' }}>
+                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: rkChain.chainType === 'SATURN_RAHU' ? '#166534' : '#92400E' }}>
+                                {rkChain.chainType === 'SATURN_RAHU' ? (isHi ? 'उमदा ग्रोथ (RAHU)' : 'EXPANSIVE (RAHU)') : (isHi ? 'मंदा गति (KETU)' : 'MANDA PACE (KETU)')}
                               </Text>
                             </View>
-                          );
-                        })}
-                      </View>
+                          </View>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 6 }}>
+                            {rkChain.statusTitle[language] || rkChain.statusTitle['hi'] || rkChain.statusTitle['en']}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                            {rkChain.summary[language] || rkChain.summary['hi'] || rkChain.summary['en']}
+                          </Text>
+                        </View>
+                      )}
+
+                      {/* Permanent Section 2: Career - Saturn - Jupiter chain */}
+                      {jupChain && (
+                        <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', marginBottom: 14 }}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                            <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', flex: 1, flexShrink: 1 }}>
+                              👑 Career - Saturn - Jupiter chain
+                            </Text>
+                            <View style={{ backgroundColor: jupChain.chainType === 'JUPITER_BEHIND' ? '#DCFCE7' : '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: jupChain.chainType === 'JUPITER_BEHIND' ? '#86EFAC' : '#FDE68A' }}>
+                              <Text style={{ fontSize: 11, fontWeight: 'bold', color: jupChain.chainType === 'JUPITER_BEHIND' ? '#166534' : '#92400E' }}>
+                                {jupChain.chainType === 'JUPITER_BEHIND' ? (isHi ? 'उमदा लक (GURU BEHIND)' : 'SUPREME LUCK') : (isHi ? 'कठोर परिश्रम (GURU AHEAD)' : 'HARD WORK NEEDED')}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 6 }}>
+                            {jupChain.statusTitle[language] || jupChain.statusTitle['hi'] || jupChain.statusTitle['en']}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                            {jupChain.summary[language] || jupChain.summary['hi'] || jupChain.summary['en']}
+                          </Text>
+                        </View>
+                      )}
+
+
 
                       {/* House Specific Manifestation */}
                       <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
@@ -874,51 +1108,58 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                         )}
                       </View>
 
-                      {/* Evaluated Special Lal Kitab Rules */}
-                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
-                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
-                          ⚡ Evaluated Special Lal Kitab Rules for Saturn:
-                        </Text>
-                        {satReport.specialRulesEvaluated.map((rule: any, idx: number) => {
-                          const rName = rule.ruleName[language] || rule.ruleName['hi'] || rule.ruleName['en'];
-                          const rDesc = rule.description[language] || rule.description['hi'] || rule.description['en'];
-                          return (
-                            <View
-                              key={idx}
-                              style={{
-                                backgroundColor: rule.isTriggered ? '#FFF5F5' : '#F8FAFC',
-                                padding: 10,
-                                borderRadius: 8,
-                                borderWidth: 1,
-                                borderColor: rule.isTriggered ? '#FEB2B2' : '#E2E8F0',
-                                marginBottom: 8
-                              }}
-                            >
-                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                <Text style={{ fontSize: 13, fontWeight: 'bold', color: rule.isTriggered ? '#9B2C2C' : '#334155' }}>
-                                  {rule.isTriggered ? '🔥 ' : 'ℹ️ '}{rName}
-                                </Text>
-                                <View style={{ backgroundColor: rule.isTriggered ? '#E53E3E' : '#CBD5E1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: rule.isTriggered ? '#FFFFFF' : '#475569' }}>
-                                    {rule.isTriggered ? 'ACTIVE' : 'INACTIVE'}
+                      {/* Evaluated Special Lal Kitab Rules (Render ONLY triggered active rules) */}
+                      {(() => {
+                        const activeSpecialRules = (satReport.specialRulesEvaluated || []).filter((r: any) => r.isTriggered === true);
+                        if (activeSpecialRules.length === 0) return null;
+
+                        return (
+                          <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                            <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                              ⚡ Evaluated Special Lal Kitab Rules for Saturn:
+                            </Text>
+                            {activeSpecialRules.map((rule: any, idx: number) => {
+                              const rName = rule.ruleName[language] || rule.ruleName['hi'] || rule.ruleName['en'];
+                              const rDesc = rule.description[language] || rule.description['hi'] || rule.description['en'];
+                              return (
+                                <View
+                                  key={idx}
+                                  style={{
+                                    backgroundColor: '#FFF5F5',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: '#FEB2B2',
+                                    marginBottom: 8
+                                  }}
+                                >
+                                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                                    <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#9B2C2C', flex: 1, flexShrink: 1 }}>
+                                      🔥 {rName}
+                                    </Text>
+                                    <View style={{ backgroundColor: '#E53E3E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, flexShrink: 0, alignSelf: 'flex-start' }}>
+                                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#FFFFFF' }}>
+                                        ACTIVE
+                                      </Text>
+                                    </View>
+                                  </View>
+                                  <Text style={{ fontSize: 12, color: '#742A2A', lineHeight: 18 }}>
+                                    {rDesc}
                                   </Text>
                                 </View>
-                              </View>
-                              <Text style={{ fontSize: 12, color: rule.isTriggered ? '#742A2A' : '#64748B', lineHeight: 18 }}>
-                                {rDesc}
-                              </Text>
-                            </View>
-                          );
-                        })}
-                      </View>
+                              );
+                            })}
+                          </View>
+                        );
+                      })()}
 
-                      {/* Conjunctions */}
-                      <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
-                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
-                          🤝 Saturn Planetary Conjunctions (साथ बैठे ग्रह):
-                        </Text>
-                        {satReport.activeConjunctions.length > 0 ? (
-                          satReport.activeConjunctions.map((conj: any, idx: number) => {
+                      {/* Conjunctions (Render ONLY IF active conjunctions exist) */}
+                      {satReport.activeConjunctions && satReport.activeConjunctions.length > 0 ? (
+                        <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
+                          <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#800000', marginBottom: 8 }}>
+                            🤝 Saturn Planetary Conjunctions (साथ बैठे ग्रह):
+                          </Text>
+                          {satReport.activeConjunctions.map((conj: any, idx: number) => {
                             const effText = conj.effect[language] || conj.effect['hi'] || conj.effect['en'];
                             return (
                               <View key={idx} style={{ backgroundColor: '#F8FAFC', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 8 }}>
@@ -930,23 +1171,21 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                                 </Text>
                               </View>
                             );
-                          })
-                        ) : (
-                          <Text style={{ fontSize: 12, color: '#64748B', fontStyle: 'italic' }}>
-                            {isHi ? `शनि के साथ कोई अन्य ग्रह एक ही भाव में नहीं बैठा है (Saturn sits alone in House ${satReport.userSaturnHouse}).` : `Saturn sits alone in House ${satReport.userSaturnHouse} without direct conjunctions.`}
-                          </Text>
-                        )}
-                      </View>
+                          })}
+                        </View>
+                      ) : null}
 
-                      {/* Poison Release Channel */}
-                      <View style={{ backgroundColor: '#FDF4FF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#F5D0FE', marginBottom: 14 }}>
-                        <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#86198F', marginBottom: 4 }}>
-                          🧪 Saturn Poison Release Theory (विष निकास मार्ग):
-                        </Text>
-                        <Text style={{ fontSize: 12, color: '#701A75', lineHeight: 18 }}>
-                          {poisonChannel}
-                        </Text>
-                      </View>
+                      {/* Poison Release Channel (Render ONLY IF specific house triggers an active poison channel) */}
+                      {satReport.hasActivePoisonChannel && poisonChannel ? (
+                        <View style={{ backgroundColor: '#FDF4FF', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#F5D0FE', marginBottom: 14 }}>
+                          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#86198F', marginBottom: 4 }}>
+                            🧪 Saturn Poison Release Theory (विष निकास मार्ग):
+                          </Text>
+                          <Text style={{ fontSize: 12, color: '#701A75', lineHeight: 18 }}>
+                            {poisonChannel}
+                          </Text>
+                        </View>
+                      ) : null}
 
                       {/* 3 House Grouping & Age Milestones */}
                       <View style={{ backgroundColor: '#FFFFFF', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 14 }}>
@@ -974,17 +1213,7 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                         </View>
                       </View>
 
-                      {/* Universal Remedies */}
-                      <View style={{ backgroundColor: '#F0FDF4', padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#BBF7D0' }}>
-                        <Text style={{ fontSize: 15, fontWeight: 'bold', color: '#166534', marginBottom: 8 }}>
-                          🛡️ Universal Lal Kitab Remedies for Saturn (सार्वभौमिक नियम):
-                        </Text>
-                        {uniRemedies.map((uRem: string, idx: number) => (
-                          <Text key={idx} style={{ fontSize: 12, color: '#15803D', marginBottom: 4, lineHeight: 18 }}>
-                            • {uRem}
-                          </Text>
-                        ))}
-                      </View>
+
 
                     </View>
                   );
@@ -1183,11 +1412,11 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
 
                             return (
                               <View key={idx} style={{ backgroundColor: '#F8FAFC', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 8 }}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B' }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', flex: 1, flexShrink: 1 }}>
                                     House {aspect.rule.from} ➔ House {aspect.rule.to}
                                   </Text>
-                                  <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                                  <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, flexShrink: 0, alignSelf: 'flex-start' }}>
                                     <Text style={{ fontSize: 10, fontWeight: 'bold', color: badgeTextColor }}>
                                       {badgeLabel}
                                     </Text>
@@ -1240,11 +1469,11 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
 
                             return (
                               <View key={idx} style={{ backgroundColor: relBg, padding: 10, borderRadius: 8, borderWidth: 1, borderColor: relBorder, marginBottom: 8 }}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B' }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#1E293B', flex: 1, flexShrink: 1 }}>
                                     Houses {rel.houses[0]} & {rel.houses[1]}
                                   </Text>
-                                  <View style={{ backgroundColor: relBadgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                                  <View style={{ backgroundColor: relBadgeBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, flexShrink: 0, alignSelf: 'flex-start' }}>
                                     <Text style={{ fontSize: 10, fontWeight: 'bold', color: relBadgeText }}>
                                       {relLabel}
                                     </Text>
@@ -1381,11 +1610,194 @@ export const LalKitabModal: React.FC<LalKitabModalProps> = ({
                       ))}
                     </ScrollView>
                   )}
+
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#800000', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 12 }}
+                    onPress={() => {
+                      setShowSavedProfilesModal(false);
+                      setShowAddNewProfileModal(true);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 'bold' }}>
+                      ➕ {isHi ? 'नया जन्म प्रोफाइल जोड़ें' : 'Add New Birth Profile'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+
+        {/* Day Picker Modal */}
+        <Modal visible={showDayModal} animationType="fade" transparent>
+          <TouchableWithoutFeedback onPress={() => setShowDayModal(false)}>
+            <View style={styles.dropdownOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.dropdownModalCard}>
+                  <Text style={styles.dropdownTitle}>{isHi ? 'जन्म तिथि चुनें (Day)' : 'Select Day of Birth'}</Text>
+                  <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                    {DAYS_LIST.map(d => (
+                      <TouchableOpacity
+                        key={d}
+                        style={[styles.pickerItem, dobDay === d && styles.pickerItemActive]}
+                        onPress={() => {
+                          setDobDay(d);
+                          setShowDayModal(false);
+                        }}
+                      >
+                        <Text style={[styles.pickerItemText, dobDay === d && styles.pickerItemTextActive]}>Day {d}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Month Picker Modal */}
+        <Modal visible={showMonthModal} animationType="fade" transparent>
+          <TouchableWithoutFeedback onPress={() => setShowMonthModal(false)}>
+            <View style={styles.dropdownOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.dropdownModalCard}>
+                  <Text style={styles.dropdownTitle}>{isHi ? 'जन्म महीना चुनें (Month)' : 'Select Month of Birth'}</Text>
+                  <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                    {MONTHS_LIST.map((m, idx) => {
+                      const mVal = (idx + 1).toString().padStart(2, '0');
+                      return (
+                        <TouchableOpacity
+                          key={m}
+                          style={[styles.pickerItem, dobMonth === mVal && styles.pickerItemActive]}
+                          onPress={() => {
+                            setDobMonth(mVal);
+                            setShowMonthModal(false);
+                          }}
+                        >
+                          <Text style={[styles.pickerItemText, dobMonth === mVal && styles.pickerItemTextActive]}>{m}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Year Picker Modal */}
+        <Modal visible={showYearModal} animationType="fade" transparent>
+          <TouchableWithoutFeedback onPress={() => setShowYearModal(false)}>
+            <View style={styles.dropdownOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.dropdownModalCard}>
+                  <Text style={styles.dropdownTitle}>{isHi ? 'जन्म वर्ष चुनें (Year)' : 'Select Year of Birth'}</Text>
+                  <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                    {YEARS_LIST.map(y => (
+                      <TouchableOpacity
+                        key={y}
+                        style={[styles.pickerItem, dobYear === y && styles.pickerItemActive]}
+                        onPress={() => {
+                          setDobYear(y);
+                          setShowYearModal(false);
+                        }}
+                      >
+                        <Text style={[styles.pickerItemText, dobYear === y && styles.pickerItemTextActive]}>{y}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Hour Picker Modal */}
+        <Modal visible={showHourModal} animationType="fade" transparent>
+          <TouchableWithoutFeedback onPress={() => setShowHourModal(false)}>
+            <View style={styles.dropdownOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.dropdownModalCard}>
+                  <Text style={styles.dropdownTitle}>{isHi ? 'जन्म घंटा चुनें (Hour)' : 'Select Hour of Birth (24-Hour)'}</Text>
+                  <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                    {HOURS_LIST.map(h => (
+                      <TouchableOpacity
+                        key={h}
+                        style={[styles.pickerItem, tobHour === h && styles.pickerItemActive]}
+                        onPress={() => {
+                          setTobHour(h);
+                          setShowHourModal(false);
+                        }}
+                      >
+                        <Text style={[styles.pickerItemText, tobHour === h && styles.pickerItemTextActive]}>{h}:00 Hours</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* Minute Picker Modal */}
+        <Modal visible={showMinuteModal} animationType="fade" transparent>
+          <TouchableWithoutFeedback onPress={() => setShowMinuteModal(false)}>
+            <View style={styles.dropdownOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.dropdownModalCard}>
+                  <Text style={styles.dropdownTitle}>{isHi ? 'जन्म मिनट चुनें (Minute)' : 'Select Minute of Birth'}</Text>
+                  <ScrollView style={{ maxHeight: 300, marginTop: 10 }}>
+                    {MINUTES_LIST.map(m => (
+                      <TouchableOpacity
+                        key={m}
+                        style={[styles.pickerItem, tobMinute === m && styles.pickerItemActive]}
+                        onPress={() => {
+                          setTobMinute(m);
+                          setShowMinuteModal(false);
+                        }}
+                      >
+                        <Text style={[styles.pickerItemText, tobMinute === m && styles.pickerItemTextActive]}>{m} Minutes</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        <CitySelectionModal
+          visible={showCityPickerModal}
+          onClose={() => setShowCityPickerModal(false)}
+          onSelectCity={(selectedLoc) => {
+            const cleanName = selectedLoc.name.replace(/\s*\(GPS\)/gi, '').trim() || selectedLoc.name;
+            setCity(cleanName);
+            if (selectedLoc.latitude) setLat(selectedLoc.latitude);
+            if (selectedLoc.longitude) setLon(selectedLoc.longitude);
+            setShowCityPickerModal(false);
+          }}
+          selectedCity={{
+            name: city || 'Surat',
+            hindiName: city || 'सूरत',
+            stateCountry: '',
+            latitude: lat || 21.17,
+            longitude: lon || 72.83,
+            timeZoneId: 'Asia/Kolkata'
+          }}
+          title="Select Birth Place / जन्म स्थान"
+          persistToGlobalStorage={false}
+        />
+
+        <AddNewProfileModal
+          visible={showAddNewProfileModal}
+          onClose={() => setShowAddNewProfileModal(false)}
+          onProfileAdded={async (newP) => {
+            const fresh = await getSavedProfiles();
+            setSavedProfiles(fresh);
+            handleSelectSavedProfile(newP);
+          }}
+        />
       </SafeAreaView>
     </Modal>
   );
@@ -1440,13 +1852,15 @@ const styles = StyleSheet.create({
   },
   topControlRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
     paddingVertical: 8,
     backgroundColor: '#FFF3E0',
     borderBottomWidth: 1,
-    borderBottomColor: '#FFE0B2'
+    borderBottomColor: '#FFE0B2',
+    gap: 6,
   },
   loadProfileBtn: {
     flex: 1.4,
@@ -1494,12 +1908,16 @@ const styles = StyleSheet.create({
   activeProfileTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6
   },
   activeProfileName: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.maroon
+    color: Colors.maroon,
+    flex: 1,
+    flexShrink: 1
   },
   editProfileBtn: {
     backgroundColor: '#FFF3E0',
@@ -1507,7 +1925,9 @@ const styles = StyleSheet.create({
     borderColor: '#FFB74D',
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 3
+    paddingVertical: 3,
+    flexShrink: 0,
+    alignSelf: 'flex-start'
   },
   editProfileText: {
     fontSize: 11,
@@ -1925,18 +2345,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4
+    marginBottom: 4,
+    flexWrap: 'wrap',
+    gap: 6
   },
   debtTitle: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: Colors.maroon
+    color: Colors.maroon,
+    flex: 1,
+    flexShrink: 1
   },
   activeDebtBadge: {
     backgroundColor: '#C62828',
     borderRadius: 6,
     paddingHorizontal: 6,
-    paddingVertical: 2
+    paddingVertical: 2,
+    flexShrink: 0,
+    alignSelf: 'flex-start'
   },
   activeDebtBadgeText: {
     fontSize: 9,
@@ -2112,5 +2538,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textPrimary,
     lineHeight: 16
+  },
+  pickerItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 4
+  },
+  pickerItemActive: {
+    backgroundColor: '#FFF8E7'
+  },
+  pickerItemText: {
+    fontSize: 13,
+    color: Colors.textPrimary
+  },
+  pickerItemTextActive: {
+    fontWeight: 'bold',
+    color: Colors.maroon
   }
 });

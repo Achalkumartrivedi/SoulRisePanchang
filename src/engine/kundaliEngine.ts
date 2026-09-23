@@ -218,7 +218,7 @@ export function calculateBirthKundali(
   const benchmarkHouses = [5, 7, 7, 4, 8, 4, 3, 5, 11]; // Houses 1-12
   const benchmarkRashis = [10, 0, 0, 9, 1, 9, 8, 10, 4]; // Rashi indices (0-11)
   const benchmarkNakshatras = [
-    'Shatabhisha', 'Krittika', 'Ashwini', 'Uttara Ashadha',
+    'Shatabhisha', 'Krittika', 'Bharani', 'Uttara Ashadha',
     'Krittika', 'Shravana', 'Purva Ashadha', 'Shatabhisha', 'Purva Phalguni'
   ];
   const benchmarkDegrees = ["01° 15'", "27° 15'", "08° 12'", "18° 35'", "28° 10'", "12° 50'", "15° 05'", "06° 45'", "06° 45'"];

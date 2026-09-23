@@ -8,6 +8,8 @@ export interface AstrologyLocalization {
   tobLabel: string;
   cityLabel: string;
   generateBtn: string;
+  getKundali: string;
+  saveProfile: string;
   divisionalChartsTitle: string;
   
   // Chart Tabs
@@ -61,6 +63,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'Time of Birth (24-Hour HH:MM)',
     cityLabel: 'City of Birth',
     generateBtn: '✨ Generate Birth Chart',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ Divisional & International Astro Charts',
     
     d1Lagna: 'D1 Lagna',
@@ -108,6 +112,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'जन्म समय (२४-घंटे HH:MM)',
     cityLabel: 'जन्म शहर',
     generateBtn: '✨ वैदिक एवं अंतर्राष्ट्रीय कुंडली बनाएं',
+    getKundali: '✨ कुंडली प्राप्त करें',
+    saveProfile: '💾 प्रोफाइल सेव करें',
     divisionalChartsTitle: '🏛️ वर्ग एवं अंतर्राष्ट्रीय ज्योतिष चार्ट',
 
     d1Lagna: 'D1 लग्न कुंडली',
@@ -155,6 +161,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'જન્મ સમય (૨૪-કલાક HH:MM)',
     cityLabel: 'જન્મ શહેર',
     generateBtn: '✨ વૈદિક અને આંતરરાષ્ટ્રીય કુંડળી બનાવો',
+    getKundali: '✨ કુંડળી મેળવો',
+    saveProfile: '💾 પ્રોફાઇલ સેવ કરો',
     divisionalChartsTitle: '🏛️ વર્ગ અને આંતરરાષ્ટ્રીય ચાર્ટ',
 
     d1Lagna: 'D1 લગ્ન કુંડળી',
@@ -202,6 +210,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'Time of Birth (24-Hour HH:MM)',
     cityLabel: 'City of Birth',
     generateBtn: '✨ Generate Birth Chart',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ Divisional & Global Astrology Charts',
 
     d1Lagna: 'D1 Lagna',
@@ -249,6 +259,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'பிறந்த நேரம் (24-மணி நேரம் HH:MM)',
     cityLabel: 'பிறந்த நகரம்',
     generateBtn: '✨ ஜாதகம் உருவாக்கவும்',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ ஜாதகக் கட்டங்கள்',
 
     d1Lagna: 'D1 லக்னம்',
@@ -296,6 +308,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'జనన సమయం (24-గంటలు HH:MM)',
     cityLabel: 'జనన నగరం',
     generateBtn: '✨ జాతకం తయారు చేయండి',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ జాతక చక్రాలు',
 
     d1Lagna: 'D1 లగ్నం',
@@ -343,6 +357,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'জন্ম সময় (২৪-ঘণ্টা HH:MM)',
     cityLabel: 'জন্ম শহর',
     generateBtn: '✨ কোষ্ঠী তৈরি করুন',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ বর্গ ও আন্তর্জাতিক চার্ট',
 
     d1Lagna: 'D1 লগ্ন',
@@ -390,6 +406,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'जन्म वेळ (२४-तास HH:MM)',
     cityLabel: 'जन्म शहर',
     generateBtn: '✨ कुंडली तयार करा',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ वर्ग आणि आंतरराष्ट्रीय तक्ते',
 
     d1Lagna: 'D1 लग्न कुंडली',
@@ -437,6 +455,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'Время рождения (24h ЧЧ:ММ)',
     cityLabel: 'Город рождения',
     generateBtn: '✨ Рассчитать натальную карту',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ Варга и Мировые карты',
 
     d1Lagna: 'D1 Лагна (Асцендент)',
@@ -484,6 +504,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'Heure de naissance (24h HH:MM)',
     cityLabel: 'Ville de naissance',
     generateBtn: '✨ Générer le Thème Astral',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ Cartes Divisionnaires & Mondiales',
 
     d1Lagna: 'D1 Lagna',
@@ -531,6 +553,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'Hora de nacimiento (24h HH:MM)',
     cityLabel: 'Ciudad de nacimiento',
     generateBtn: '✨ Generar Carta Astral',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ Cartas Cartas Divisionales y Globales',
 
     d1Lagna: 'D1 Lagna',
@@ -578,6 +602,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'שעת לידה (24 שעות HH:MM)',
     cityLabel: 'עיר לידה',
     generateBtn: '✨ צור מפת לידה',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ מפות חלוקה ועולמיות',
 
     d1Lagna: 'D1 לאגנה (אופק)',
@@ -625,6 +651,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'Waktu Lahir (24-Jam HH:MM)',
     cityLabel: 'Kota Kelahiran',
     generateBtn: '✨ Buat Peta Kelahiran',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ Bagan Divisi & Internasional',
 
     d1Lagna: 'D1 Lagna',
@@ -672,6 +700,8 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     tobLabel: 'เวลาเกิด (24 ชม. HH:MM)',
     cityLabel: 'จังหวัด/เมืองที่เกิด',
     generateBtn: '✨ คำนวณผูกดวงชะตา',
+    getKundali: '✨ Get Kundali',
+    saveProfile: '💾 Save Profile',
     divisionalChartsTitle: '🏛️ แผนผังจักรราศี & สากล',
 
     d1Lagna: 'D1 ลัคนา',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -8,7 +8,8 @@ import {
   FlatList,
   TextInput,
   ActivityIndicator,
-  Alert
+  Alert,
+  Linking
 } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,6 +18,7 @@ import { CityLocation } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { useLanguage } from '../context/LanguageContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { searchGlobalLocations, GeocodedLocation } from '../utils/geocodingService';
 
 const CITY_STORAGE_KEY = 'SOULRISE_SELECTED_CITY';
 const GPS_STORAGE_KEY = 'SOULRISE_USE_GPS';
@@ -26,24 +28,62 @@ interface CitySelectionModalProps {
   onClose: () => void;
   selectedCity: CityLocation;
   onSelectCity: (city: CityLocation) => void;
+  title?: string;
+  persistToGlobalStorage?: boolean;
 }
 
 export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
   visible,
   onClose,
   selectedCity,
-  onSelectCity
+  onSelectCity,
+  title,
+  persistToGlobalStorage = false
 }) => {
   const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom + 12, 24);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<GeocodedLocation[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [isDetectingGps, setIsDetectingGps] = useState(false);
 
   const isGpsActive = selectedCity.stateCountry === 'GPS Location' || selectedCity.name.includes('(GPS)');
 
-  const filteredCities = DEFAULT_CITIES.filter(c =>
+  // Reset search when modal opens
+  useEffect(() => {
+    if (visible) {
+      setSearchQuery('');
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+  }, [visible]);
+
+  // Live Free Geocoding API Search debouncer (400ms)
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchGlobalLocations(searchQuery);
+        setSearchResults(results);
+      } catch (err) {
+        console.log('Global geocoding search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredDefaultCities = DEFAULT_CITIES.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.hindiName.includes(searchQuery) ||
     c.stateCountry.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,11 +94,37 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          '📍 Permission Required / स्थान अनुमति आवश्यक',
-          'Please allow location permission in your device settings to auto-detect your current GPS location.'
-        );
         setIsDetectingGps(false);
+        Alert.alert(
+          '📍 Location Permission Required / स्थान अनुमति आवश्यक',
+          'Without location permission, accurate local Tithi, Sunrise, Sunset, Muhurat and Planetary positions for your exact location cannot be calculated.\n\nस्थान अनुमति के बिना आपके सटीक क्षेत्र की सही तिथि, सूर्योदय और ग्रह स्थिति की सटीक गणना संभव नहीं है।\n\nWould you like to turn on location permission in device settings?',
+          [
+            {
+              text: 'Turn On in Settings (सेटिंग खोलें)',
+              onPress: () => {
+                Linking.openSettings().catch(() => {});
+              }
+            },
+            {
+              text: 'No, Use Default (New Delhi)',
+              style: 'cancel',
+              onPress: async () => {
+                if (persistToGlobalStorage) {
+                  const defaultCity = DEFAULT_CITIES[0];
+                  onSelectCity(defaultCity);
+                  await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(defaultCity));
+                  await AsyncStorage.setItem(GPS_STORAGE_KEY, 'false');
+                  Alert.alert(
+                    '📍 Default Location Active',
+                    'Showing Panchang & Planetary info for New Delhi (नई दिल्ली) as default.'
+                  );
+                }
+                onClose();
+              }
+            }
+          ],
+          { cancelable: false }
+        );
         return;
       }
 
@@ -88,7 +154,7 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
         if (geocode && geocode.length > 0) {
           const place = geocode[0];
           const foundName = place.city || place.subregion || place.district || place.region || 'Current Location';
-          cityName = `${foundName} (GPS)`;
+          cityName = persistToGlobalStorage ? `${foundName} (GPS)` : foundName;
           hindiName = place.city || place.district || place.region || 'वर्तमान स्थान';
         }
       } catch (err) {
@@ -98,15 +164,17 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
       const userGpsCity: CityLocation = {
         name: cityName,
         hindiName,
-        stateCountry: 'GPS Location',
+        stateCountry: persistToGlobalStorage ? 'GPS Location' : 'Device Location',
         latitude,
         longitude,
         timeZoneId: 'Asia/Kolkata'
       };
 
       onSelectCity(userGpsCity);
-      await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
-      await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
+      if (persistToGlobalStorage) {
+        await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
+        await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
+      }
       onClose();
     } catch (e: any) {
       console.log('GPS detection error:', e);
@@ -118,14 +186,39 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
 
   const handleSelectPredefinedCity = async (item: CityLocation) => {
     onSelectCity(item);
-    try {
-      await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(item));
-      await AsyncStorage.setItem(GPS_STORAGE_KEY, 'false');
-    } catch (e) {
-      console.log('Save city error:', e);
+    if (persistToGlobalStorage) {
+      try {
+        await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(item));
+        await AsyncStorage.setItem(GPS_STORAGE_KEY, 'false');
+      } catch (e) {
+        console.log('Save city error:', e);
+      }
     }
     onClose();
   };
+
+  const handleSelectGeocoded = async (res: GeocodedLocation) => {
+    const cityObj: CityLocation = {
+      name: res.cityName,
+      hindiName: res.cityName,
+      stateCountry: res.countryName || res.displayName,
+      latitude: res.lat,
+      longitude: res.lng,
+      timeZoneId: 'Asia/Kolkata'
+    };
+    onSelectCity(cityObj);
+    if (persistToGlobalStorage) {
+      try {
+        await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(cityObj));
+        await AsyncStorage.setItem(GPS_STORAGE_KEY, 'false');
+      } catch (e) {
+        console.log('Save city error:', e);
+      }
+    }
+    onClose();
+  };
+
+  const isQueryTyped = searchQuery.trim().length >= 2;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -134,9 +227,9 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
           {/* Modal Header */}
           <View style={styles.modalHeader}>
             <View>
-              <Text style={styles.modalTitle}>📍 {t('activeLocation') || 'Select Location'}</Text>
+              <Text style={styles.modalTitle}>📍 {title || t('activeLocation') || 'Select Location'}</Text>
               <Text style={styles.modalSub}>
-                {language === 'hi' || language === 'hinglish' ? 'पंचांग व त्योहार हेतु अपना स्थान चुनें' : 'Panchang & Sunrise timed to your location'}
+                {language === 'hi' || language === 'hinglish' ? 'विश्वभर में कोई भी शहर या स्थान खोजें' : 'Search any city, town or country worldwide'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
@@ -161,10 +254,14 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
                 <Text style={styles.gpsIcon}>🎯</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.gpsBtnTitle, isGpsActive && styles.gpsBtnTextActive]}>
-                    Use Current GPS Location (वर्तमान स्थान)
+                    {persistToGlobalStorage
+                      ? 'Use Current GPS Location (वर्तमान स्थान)'
+                      : 'Use Device Current Location (वर्तमान स्थान)'}
                   </Text>
                   <Text style={[styles.gpsBtnSub, isGpsActive && styles.gpsBtnSubActive]}>
-                    {isGpsActive ? `Active: ${selectedCity.name}` : 'Auto-detect exact latitude & longitude via device GPS'}
+                    {persistToGlobalStorage
+                      ? (isGpsActive ? `Active: ${selectedCity.name}` : 'Auto-detect exact latitude & longitude via device GPS')
+                      : 'Use device current latitude & longitude for this profile'}
                   </Text>
                 </View>
                 {isGpsActive && <Text style={styles.checkIconLight}>✓</Text>}
@@ -177,10 +274,12 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search city, state or country..."
+              placeholder="Type city, village, state or country..."
               placeholderTextColor={Colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -189,32 +288,71 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
             )}
           </View>
 
-          <Text style={styles.sectionHeaderLabel}>POPULAR CITIES & SACRED HUBS (प्रमुख शहर)</Text>
+          {isSearching && (
+            <View style={styles.searchingRow}>
+              <ActivityIndicator size="small" color={Colors.maroon} />
+              <Text style={styles.searchingText}>Searching global locations (विश्वभर में खोज रहे हैं)...</Text>
+            </View>
+          )}
 
-          {/* Predefined Cities List */}
-          <FlatList
-            data={filteredCities}
-            keyExtractor={item => item.name}
-            showsVerticalScrollIndicator={true}
-            renderItem={({ item }) => {
-              const isSelected = !isGpsActive && item.name === selectedCity.name;
-              return (
+          <Text style={styles.sectionHeaderLabel}>
+            {isQueryTyped
+              ? (searchResults.length > 0 ? `SEARCH RESULTS (${searchResults.length})` : 'POPULAR & MATCHING CITIES')
+              : 'POPULAR CITIES & SACRED HUBS (प्रमुख शहर)'}
+          </Text>
+
+          {/* Global Search Results List or Default Cities List */}
+          {isQueryTyped && searchResults.length > 0 ? (
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item, index) => `${item.cityName}_${item.lat}_${item.lng}_${index}`}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={[styles.cityItem, isSelected && styles.cityItemActive]}
-                  onPress={() => handleSelectPredefinedCity(item)}
+                  style={styles.cityItem}
+                  onPress={() => handleSelectGeocoded(item)}
                   activeOpacity={0.7}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.cityItemName, isSelected && styles.cityItemNameActive]}>
-                      {item.name} ({item.hindiName})
+                    <Text style={styles.cityItemName}>📍 {item.cityName}</Text>
+                    <Text style={styles.cityItemSub} numberOfLines={2}>{item.displayName}</Text>
+                    <Text style={styles.latLngTag}>
+                      Lat: {item.lat.toFixed(4)}° | Lng: {item.lng.toFixed(4)}°
                     </Text>
-                    <Text style={styles.cityItemSub}>{item.stateCountry}</Text>
                   </View>
-                  {isSelected && <Text style={styles.checkIcon}>✓</Text>}
                 </TouchableOpacity>
-              );
-            }}
-          />
+              )}
+            />
+          ) : (
+            <FlatList
+              data={filteredDefaultCities}
+              keyExtractor={(item, index) => `${item.name}_${index}`}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => {
+                const isSelected = !isGpsActive && item.name === selectedCity.name;
+                return (
+                  <TouchableOpacity
+                    style={[styles.cityItem, isSelected && styles.cityItemActive]}
+                    onPress={() => handleSelectPredefinedCity(item)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.cityItemName, isSelected && styles.cityItemNameActive]}>
+                        📍 {item.name} {item.hindiName ? `(${item.hindiName})` : ''}
+                      </Text>
+                      <Text style={styles.cityItemSub}>{item.stateCountry}</Text>
+                      <Text style={styles.latLngTag}>
+                        Lat: {item.latitude.toFixed(4)}° | Lng: {item.longitude.toFixed(4)}°
+                      </Text>
+                    </View>
+                    {isSelected && <Text style={styles.checkIcon}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
         </View>
       </View>
     </Modal>
@@ -316,7 +454,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: 10,
-    marginBottom: 12,
+    marginBottom: 10,
     height: 42,
   },
   searchIcon: {
@@ -327,6 +465,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: Colors.textPrimary,
+  },
+  searchingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    marginBottom: 6,
+  },
+  searchingText: {
+    fontSize: 12,
+    color: Colors.maroon,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   sectionHeaderLabel: {
     fontSize: 10,
@@ -363,6 +514,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  latLngTag: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.maroon,
+    marginTop: 3,
   },
   checkIcon: {
     fontSize: 16,

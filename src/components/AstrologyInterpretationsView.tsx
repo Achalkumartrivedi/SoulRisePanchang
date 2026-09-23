@@ -595,11 +595,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
+    flexWrap: 'wrap',
+    gap: 6,
   },
   planetDetailTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: Colors.maroon,
+    flex: 1,
+    flexShrink: 1,
   },
   planetDetailBadge: {
     fontSize: 11,
@@ -609,6 +613,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
+    flexShrink: 0,
+    alignSelf: 'flex-start',
   },
   planetDetailSub: {
     fontSize: 11,

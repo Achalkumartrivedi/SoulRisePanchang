@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert, StatusBar, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -117,6 +117,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     await AsyncStorage.setItem('MOON_REMINDER_TIMING_DAYS', days.toString());
   };
 
+  useEffect(() => {
+    const isGps = selectedCity.stateCountry === 'GPS Location' || selectedCity.name.includes('(GPS)');
+    setUseGps(isGps);
+  }, [selectedCity]);
+
   const handleGpsToggle = async (val: boolean) => {
     setUseGps(val);
     if (val) {
@@ -125,26 +130,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         if (status === 'granted') {
           let loc = await Location.getLastKnownPositionAsync();
           if (!loc) {
-            loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+            loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
           }
 
           const latitude = loc ? loc.coords.latitude : 28.6139;
           const longitude = loc ? loc.coords.longitude : 77.2090;
 
-          let cityName = 'GPS Location';
+          let cityName = 'Current Location';
+          let hindiName = 'वर्तमान स्थान';
           try {
             const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
             if (geocode && geocode.length > 0) {
               const place = geocode[0];
-              cityName = place.city || place.subregion || place.district || 'GPS Location';
+              cityName = place.city || place.subregion || place.district || place.region || 'Current Location';
+              hindiName = place.city || place.district || place.region || 'वर्तमान स्थान';
             }
           } catch (err) {
             console.log('Reverse geocode error:', err);
           }
 
           const gpsCity: CityLocation = {
-            name: cityName,
-            hindiName: 'जीपीएस स्थान',
+            name: `${cityName} (GPS)`,
+            hindiName,
             stateCountry: 'GPS Location',
             latitude,
             longitude,
@@ -155,14 +162,47 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           await AsyncStorage.setItem('SOULRISE_USE_GPS', 'true');
         } else {
           setUseGps(false);
+          Alert.alert(
+            '📍 Location Permission Required / स्थान अनुमति आवश्यक',
+            'Without location permission, accurate local Tithi, Sunrise, Sunset, Muhurat and Planetary positions for your exact location cannot be calculated.\n\nस्थान अनुमति के बिना आपके सटीक क्षेत्र की सही तिथि, सूर्योदय और ग्रह स्थिति की सटीक गणना संभव नहीं है।\n\nWould you like to turn on location permission in device settings?',
+            [
+              {
+                text: 'Turn On in Settings (सेटिंग खोलें)',
+                onPress: () => {
+                  Linking.openSettings().catch(() => {});
+                }
+              },
+              {
+                text: 'No, Use Default (New Delhi)',
+                style: 'cancel',
+                onPress: async () => {
+                  const defaultCity = DEFAULT_CITIES[0];
+                  onSelectCity(defaultCity);
+                  await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(defaultCity));
+                  await AsyncStorage.setItem('SOULRISE_USE_GPS', 'false');
+                  Alert.alert(
+                    '📍 Default Location Active',
+                    'Showing Panchang & Planetary info for New Delhi (नई दिल्ली) as default.'
+                  );
+                }
+              }
+            ],
+            { cancelable: false }
+          );
         }
       } catch (e) {
-        onSelectCity(DEFAULT_CITIES[0]);
         setUseGps(false);
       }
     } else {
-      onSelectCity(DEFAULT_CITIES[0]);
       await AsyncStorage.setItem('SOULRISE_USE_GPS', 'false');
+      const cleanName = selectedCity.name.replace(/\s*\(GPS\)/gi, '').trim() || selectedCity.name;
+      const manualCity: CityLocation = {
+        ...selectedCity,
+        name: cleanName,
+        stateCountry: selectedCity.stateCountry === 'GPS Location' ? 'Manual Selection' : selectedCity.stateCountry
+      };
+      onSelectCity(manualCity);
+      await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(manualCity));
     }
   };
 

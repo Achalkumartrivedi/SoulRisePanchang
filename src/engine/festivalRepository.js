@@ -1,19 +1,10 @@
 "use strict";
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FESTIVALS = void 0;
 exports.getFestivalsForDate = getFestivalsForDate;
 exports.getFestivalsForMonth = getFestivalsForMonth;
 exports.getLocalizedFestivalTitle = getLocalizedFestivalTitle;
-var RAW_FESTIVALS = [
+const RAW_FESTIVALS = [
     {
         id: 'f_makar_sankranti',
         name: 'Makar Sankranti / Pongal',
@@ -580,24 +571,36 @@ var RAW_FESTIVALS = [
         id: 'f_jain_paryushan_start',
         name: '🪔 Sacred Paryushan Parva Arambha',
         hindiName: '🪔 पर्युषण महापर्व प्रारम्भ',
-        dateIso: '2026-09-07',
+        dateIso: '2026-09-08',
         category: 'JAIN_FESTIVAL',
         deity: '24 Tirthankaras',
         description: 'The king of Jain festivals (Paryushan Mahaparva) focusing on internal purification, Kalpa Sutra recitation, and intense fasting.',
         rituals: 'Attending Jinendra discourses, Upvas, Attham Tapa, and Kalpa Sutra Vachana.',
-        tithiDescription: 'Bhadrapada Shukla Ekam',
+        tithiDescription: 'Bhadrapada Krishna Dwadashi',
         isHoliday: true
     },
     {
         id: 'f_jain_samvatsari',
         name: '🪔 Samvatsari Parva & Michhami Dukkadam',
         hindiName: '🪔 संवत्सरी महापर्व एवं मिच्छामि दुक्कडम्',
-        dateIso: '2026-09-12',
+        dateIso: '2026-09-15',
         category: 'JAIN_FESTIVAL',
         deity: '24 Tirthankaras & All Living Beings',
-        description: 'The holiest day of universal forgiveness in Jainism. Seek forgiveness from all living beings with the phrase "Michhami Dukkadam".',
+        description: 'The holiest day of universal forgiveness in Jainism (Shwetambar). Seek forgiveness from all living beings with the phrase "Michhami Dukkadam".',
         rituals: 'Samvatsari Pratikraman, strict Fasting/Upvas, Kshapna (Forgiveness ritual) to all souls.',
-        tithiDescription: 'Bhadrapada Shukla Panchami',
+        tithiDescription: 'Bhadrapada Shukla Chaturthi / Panchami (Sept 15, 2026)',
+        isHoliday: true
+    },
+    {
+        id: 'f_jain_kshamavani',
+        name: '🪔 Digambar Kshamavani Parva (Universal Forgiveness)',
+        hindiName: '🪔 क्षमावाणी पर्व एवं उत्तम क्षमा (दिगंबर जैन)',
+        dateIso: '2026-09-26',
+        category: 'JAIN_FESTIVAL',
+        deity: '24 Tirthankaras & All Souls',
+        description: 'The holy forgiveness day of the Digambar Jain tradition marking the culmination of Dashalakshana Parva.',
+        rituals: 'Kshamavani Pratikraman, Uttam Kshama Aradhana, and asking forgiveness from all living beings.',
+        tithiDescription: 'Bhadrapada Shukla Chaturdashi (Sept 26, 2026)',
         isHoliday: true
     },
     {
@@ -1358,20 +1361,20 @@ var RAW_FESTIVALS = [
         isHoliday: true
     }
 ];
-exports.FESTIVALS = __spreadArray([], RAW_FESTIVALS, true).sort(function (a, b) {
-    var tA = new Date(a.dateIso + 'T00:00:00Z').getTime();
-    var tB = new Date(b.dateIso + 'T00:00:00Z').getTime();
+exports.FESTIVALS = [...RAW_FESTIVALS].sort((a, b) => {
+    const tA = new Date(a.dateIso + 'T00:00:00Z').getTime();
+    const tB = new Date(b.dateIso + 'T00:00:00Z').getTime();
     if (tA !== tB) {
         return tA - tB;
     }
     return a.name.localeCompare(b.name);
 });
 function getFestivalsForDate(dateIso) {
-    return exports.FESTIVALS.filter(function (f) { return f.dateIso === dateIso; });
+    return exports.FESTIVALS.filter(f => f.dateIso === dateIso);
 }
 function getFestivalsForMonth(year, month) {
-    var prefix = "".concat(year, "-").concat(month < 10 ? '0' + month : month);
-    return exports.FESTIVALS.filter(function (f) { return f.dateIso.startsWith(prefix); });
+    const prefix = `${year}-${month < 10 ? '0' + month : month}`;
+    return exports.FESTIVALS.filter(f => f.dateIso.startsWith(prefix));
 }
 function getLocalizedFestivalTitle(festival, language) {
     if (language === 'gu' && festival.gujaratiName) {

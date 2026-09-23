@@ -96,8 +96,45 @@ export function getJainDayData(date: Date, tithiIndex: number): JainDayData {
     jainFestivalName = '🌸 Lord Mahavir Jayanti Kalyanak';
     religiousActivities.unshift('🌸 Celebrate Bhagwan Mahavir Janma Kalyanak with Ahimsa & Rath Yatra');
   } else if (month === 7 || month === 8) {
-    if (jainMonthName.includes('Bhadarvo') && tithiNum === 5 && isSud) {
-      jainFestivalName = '🪔 Paryushan Parva - Samvatsari (Michhami Dukkadam)';
+    // 2026 Jain Festivals
+    if (gYear === 2026 && month === 8 && day === 15) {
+      jainFestivalName = '🪔 Samvatsari Parva & Michhami Dukkadam (Shwetambar)';
+      religiousActivities.unshift('🙏 Universal Forgiveness (Michhami Dukkadam): Ask forgiveness from all living beings');
+      religiousActivities.push('🧘 Perform Samvatsari Pratikraman and 24-hour Fasting');
+    } else if (gYear === 2026 && month === 8 && day === 26) {
+      jainFestivalName = '🪔 Kshamavani Parva (Digambar Universal Forgiveness)';
+      religiousActivities.unshift('🙏 Digambar Kshamavani Parva: Seek Uttam Kshama (Universal Forgiveness)');
+      religiousActivities.push('🧘 Perform Kshamavani Pratikraman & Temple Puja');
+    } else if (gYear === 2026 && month === 8 && day >= 8 && day <= 14) {
+      jainFestivalName = '🪔 Sacred Paryushan Mahaparva (Shwetambar)';
+      religiousActivities.unshift('📜 Kalpa Sutra Vachana & Daily Upvas/Tapa');
+    } else if (gYear === 2026 && month === 8 && day >= 16 && day <= 25) {
+      jainFestivalName = '🪔 Dashalakshana Mahaparva (Digambar)';
+      religiousActivities.unshift('📜 10 Supreme Virtues (Uttam Kshama, Mardava, Arjava...) Aradhana');
+    }
+    // 2027 Jain Festivals
+    else if (gYear === 2027 && ((month === 7 && day >= 28) || (month === 8 && day <= 4))) {
+      if (month === 8 && day === 4) {
+        jainFestivalName = '🪔 Samvatsari Parva & Michhami Dukkadam (Shwetambar)';
+        religiousActivities.unshift('🙏 Universal Forgiveness (Michhami Dukkadam): Ask forgiveness from all living beings');
+        religiousActivities.push('🧘 Perform Samvatsari Pratikraman and 24-hour Fasting');
+      } else {
+        jainFestivalName = '🪔 Sacred Paryushan Mahaparva (Shwetambar)';
+        religiousActivities.unshift('📜 Kalpa Sutra Vachana & Daily Upvas/Tapa');
+      }
+    } else if (gYear === 2027 && month === 8 && day >= 5 && day <= 15) {
+      if (day === 15) {
+        jainFestivalName = '🪔 Kshamavani Parva (Digambar Universal Forgiveness)';
+        religiousActivities.unshift('🙏 Digambar Kshamavani Parva: Seek Uttam Kshama (Universal Forgiveness)');
+        religiousActivities.push('🧘 Perform Kshamavani Pratikraman & Temple Puja');
+      } else {
+        jainFestivalName = '🪔 Dashalakshana Mahaparva (Digambar)';
+        religiousActivities.unshift('📜 10 Supreme Virtues (Uttam Kshama, Mardava, Arjava...) Aradhana');
+      }
+    }
+    // Dynamic Fallback
+    else if (jainMonthName.includes('Bhadarvo') && (tithiNum === 4 || tithiNum === 5) && isSud) {
+      jainFestivalName = '🪔 Samvatsari Parva - Michhami Dukkadam';
       religiousActivities.unshift('🙏 Universal Forgiveness (Michhami Dukkadam): Ask forgiveness from all living beings');
       religiousActivities.push('🧘 Perform Samvatsari Pratikraman and 24-hour Fasting');
     } else if (jainMonthName.includes('Bhadarvo') && isSud && tithiNum >= 1 && tithiNum <= 8) {

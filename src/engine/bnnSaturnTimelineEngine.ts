@@ -29,6 +29,31 @@ export interface BnnIdentifiedPlanet {
   relation: string;
 }
 
+export interface SaturnRahuKetuChainResult {
+  chainType: 'SATURN_RAHU' | 'SATURN_KETU';
+  aheadPlanet: 'Rahu' | 'Ketu';
+  saturnHouse: number;
+  aheadPlanetHouse: number;
+  distanceDegrees: number;
+  statusTitle: { en: string; hi: string; gu: string };
+  summary: { en: string; hi: string; gu: string };
+}
+
+export interface SaturnJupiterChainResult {
+  chainType: 'JUPITER_BEHIND' | 'JUPITER_AHEAD';
+  jupiterPosition: 'BEHIND' | 'AHEAD';
+  saturnHouse: number;
+  jupiterHouse: number;
+  distanceDegrees: number;
+  statusTitle: { en: string; hi: string; gu: string };
+  summary: { en: string; hi: string; gu: string };
+}
+
+export interface SaturnChainsAudit {
+  rahuKetuChain: SaturnRahuKetuChainResult;
+  jupiterChain: SaturnJupiterChainResult;
+}
+
 export interface BnnSaturnTimelineResult {
   saturnBase: {
     planetName: string;
@@ -50,6 +75,7 @@ export interface BnnSaturnTimelineResult {
   ketuInterceptionDetails: Record<string, string>;
   multiPlanetCombinations: { combo: string; description: Record<string, string> }[];
   planetSignifications: { symbol: string; name: string; domain: Record<string, string> }[];
+  saturnChains: SaturnChainsAudit;
 }
 
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -180,7 +206,7 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
     (p.house === h1 || p.house === h5 || p.house === h9)
   );
 
-  // Fallback: If no planets in 1-5-9 trine, include planets in 2nd house from Saturn
+  // Fallback 1: If no planets in 1-5-9 trine, include planets in 2nd house from Saturn
   let used2ndHouseAsFallback = false;
   if (trinePlanets.length === 0) {
     trinePlanets = kundali.planets.filter(p => 
@@ -188,6 +214,22 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
       p.house === h2Dest
     );
     used2ndHouseAsFallback = true;
+  }
+
+  // Fallback 2: If still no planets, include planets in 7th house (Opposite Aspect)
+  if (trinePlanets.length === 0) {
+    const h7Opp = ((satHouse + 6 - 1) % 12) + 1;
+    trinePlanets = kundali.planets.filter(p =>
+      !(p.name.includes('Saturn') || p.name.includes('Shani')) &&
+      p.house === h7Opp
+    );
+  }
+
+  // Fallback 3: If still no planets, include all non-Saturn planets in chart sorted by house proximity
+  if (trinePlanets.length === 0) {
+    trinePlanets = kundali.planets.filter(p =>
+      !(p.name.includes('Saturn') || p.name.includes('Shani'))
+    );
   }
 
   // Step 1 Identified Planets List
@@ -545,6 +587,8 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
     return Array.from(activePlanetTokens).some(token => sigLower.includes(token));
   });
 
+  const saturnChains = evaluateSaturnChains(kundali);
+
   return {
     saturnBase,
     lagnaRashi: kundali.lagnaRashi,
@@ -557,6 +601,115 @@ export function calculateBnnSaturnTimeline(kundali: KundaliResult, lang: string)
     hasKetuFirst: isKetuFirst,
     ketuInterceptionDetails,
     multiPlanetCombinations,
-    planetSignifications: filteredPlanetSignifications
+    planetSignifications: filteredPlanetSignifications,
+    saturnChains
+  };
+}
+
+/**
+ * Evaluates Saturn / Rahu / Ketu Chain & Saturn - Jupiter Chain for any Kundali
+ */
+export function evaluateSaturnChains(kundali: KundaliResult): SaturnChainsAudit {
+  const satP = kundali.planets.find(p => p.name.includes('Saturn') || p.name.includes('Shani'));
+  const rahuP = kundali.planets.find(p => p.name.includes('Rahu'));
+  const ketuP = kundali.planets.find(p => p.name.includes('Ketu'));
+  const jupP = kundali.planets.find(p => p.name.includes('Jupiter') || p.name.includes('Brihaspati') || p.name.includes('Guru'));
+
+  const satHouse = satP ? satP.house : 10;
+  const satDeg = satP ? satP.totalDegrees : 270;
+  const rahuDeg = rahuP ? rahuP.totalDegrees : 30;
+  const ketuDeg = ketuP ? ketuP.totalDegrees : 210;
+  const jupDeg = jupP ? jupP.totalDegrees : 120;
+
+  // Forward zodiac distances (0 to 360 degrees)
+  const distRahu = (rahuDeg - satDeg + 360) % 360;
+  const distKetu = (ketuDeg - satDeg + 360) % 360;
+
+  let rahuKetuChain: SaturnRahuKetuChainResult;
+
+  if (distRahu < distKetu) {
+    rahuKetuChain = {
+      chainType: 'SATURN_RAHU',
+      aheadPlanet: 'Rahu',
+      saturnHouse: satHouse,
+      aheadPlanetHouse: rahuP ? rahuP.house : 1,
+      distanceDegrees: Math.round(distRahu),
+      statusTitle: {
+        en: '🚀 Saturn ➔ Rahu Chain (Explosive Growth & MNC/Tech Expansion)',
+        hi: '🚀 शनि ➔ राहु शृंखला (तीव्र तकनीकी प्रगति व MNC विस्तार)',
+        gu: '🚀 શનિ ➔ રાહુ સાંકળ (અચાનક મોટી કારકિર્દી પ્રગતિ)'
+      },
+      summary: {
+        en: `🚀 Saturn (House ${satHouse}) is heading towards Rahu (House ${rahuP ? rahuP.house : 1}). In Bhrigu Nandi Nadi (BNN) & Lal Kitab rules, Saturn behind Rahu creates an EXPANSIVE CAREER CHAIN! Grants rapid professional growth, high MNC/foreign tech opportunities, IT/AI leadership, and out-of-the-box career elevation (Career me umda growth).`,
+        hi: `🚀 आपका शनि (भाव ${satHouse}) राहु (भाव ${rahuP ? rahuP.house : 1}) की ओर अग्रसर है। भृगु नंदी नाड़ी व लाल किताब नियमानुसार राहु से पूर्व शनि की स्थिति अत्यंत फलदायी राहु विस्तार शृंखला बनाती है! यह करियर में तीव्र वृद्धि, विदेश/MNC अवसर, IT/AI क्षेत्र में उच्च पद और अप्रत्याशित सफलता प्रदान करती है (करियर में उमदा ग्रोथ)।`,
+        gu: `🚀 તમારો શનિ રાહુ તરફ આગળ વધે છે. નાડી શાસ્ર મુજબ કારકિર્દીમાં અચાનક મોટી પ્રગતિ, વિદેશી એમએનસી તકો અને ટેકનોલોજી ક્ષેત્રે સફળતા મળે છે (ઉમદા ગ્રોથ).`
+      }
+    };
+  } else {
+    rahuKetuChain = {
+      chainType: 'SATURN_KETU',
+      aheadPlanet: 'Ketu',
+      saturnHouse: satHouse,
+      aheadPlanetHouse: ketuP ? ketuP.house : 7,
+      distanceDegrees: Math.round(distKetu),
+      statusTitle: {
+        en: '🛑 Saturn ➔ Ketu Chain (Career Interceptions & Niche Research Shift)',
+        hi: '🛑 शनि ➔ केतु शृंखला (करियर में धीमापन व शोध कार्यक्षेत्र)',
+        gu: '🛑 શનિ ➔ કેતુ સાંકળ (કારકિર્દીમાં ધીમાપો અને સંશોધન ક્ષેત્ર)'
+      },
+      summary: {
+        en: `🛑 Saturn (House ${satHouse}) is heading towards Ketu (House ${ketuP ? ketuP.house : 7}). In Bhrigu Nandi Nadi (BNN) & Lal Kitab rules, Saturn behind Ketu creates a CIRCUIT BREAKER CHAIN! Causes initial career delays, slow/sluggish pace (career manda), job interruptions, or dissatisfaction in routine work. To unlock success, shift towards Ketu fields: Scientific Research, Spiritual Healing, Data Recovery, Software Backend, or Niche Consulting.`,
+        hi: `🛑 आपका शनि (भाव ${satHouse}) केतु (भाव ${ketuP ? ketuP.house : 7}) की ओर अग्रसर है। भृगु नंदी नाड़ी व लाल किताब नियमानुसार केतु शनि के मार्ग में सर्किट ब्रेकर (गति अवरोधक) का कार्य करता है! इसके कारण शुरुआती करियर में धीमापन (करियर मंदा), नौकरी में अचानक रुकावट या असंतोष होता है। सफलता हेतु केतु के विशिष्ट क्षेत्रों में विशेषज्ञता अपनाएं: वैज्ञानिक अनुसंधान, आध्यात्मिक चिकित्सा, डेटा एनालिटिक्स व बैकएंड सॉफ्टवेयर, या स्वतंत्र परामर्श।`,
+        gu: `🛑 તમારો શનિ કેતુ તરફ આગળ વધે છે. શરૂઆતમાં કારકિર્દીમાં ધીમાપો (મંદા ફળ) અને વિરામ આવે છે. સંશોધન, ડેટા રિકવરી અને આધ્યાત્મિક ક્ષેત્રમાં સ્થિરતા મળે છે.`
+      }
+    };
+  }
+
+  const distSatToJup = (jupDeg - satDeg + 360) % 360;
+  const distJupToSat = (satDeg - jupDeg + 360) % 360;
+
+  let jupiterChain: SaturnJupiterChainResult;
+
+  if (distJupToSat < distSatToJup) {
+    jupiterChain = {
+      chainType: 'JUPITER_BEHIND',
+      jupiterPosition: 'BEHIND',
+      saturnHouse: satHouse,
+      jupiterHouse: jupP ? jupP.house : 9,
+      distanceDegrees: Math.round(distJupToSat),
+      statusTitle: {
+        en: '👑 Jupiter Behind Saturn Chain (Supreme Career Luck & Divine Protection)',
+        hi: '👑 गुरु शनि के पीछे (उत्कृष्ट भाग्य व ईश्वरीय सुरक्षा)',
+        gu: '👑 ગુરુ શનિની પાછળ (ઉત્તમ ભાગ્ય અને ઈશ્વરીય માર્ગદર્શન)'
+      },
+      summary: {
+        en: `👑 Jupiter (House ${jupP ? jupP.house : 9}) sits behind Saturn (House ${satHouse}). In Bhrigu Nandi Nadi (BNN) rules, Jupiter acts as a divine engine pushing your Karma forward! Grants natural good luck in career (Career me umda luck), smooth promotions, respect from executive seniors, mentorship, and effortless recovery from professional setbacks.`,
+        hi: `👑 आपका बृहस्पति/गुरु (भाव ${jupP ? jupP.house : 9}) शनि (भाव ${satHouse}) के पीछे स्थित है। भृगु नंदी नाड़ी नियमानुसार गुरु आपके कर्म (शनि) को पीछे से ईश्वरीय सुरक्षा व संबल प्रदान करता है! इसके कारण करियर में अत्यंत श्रेष्ठ भाग्य ('करियर में उमदा लक'), सुगम पदोन्नति, वरिष्ठ अधिकारियों का मार्गदर्शन व सम्मान, तथा किसी भी व्यावसायिक संकट से सहज उबार मिलता है।`,
+        gu: `👑 ગુરુ શનિની પાછળ હોવાથી શનિને ઈશ્વરીય બળ મળે છે. કારકિર્દીમાં ઉત્તમ ભાગ્ય ('ઉમદા લક') અને વડીલોનું માર્ગદર્શન રહે છે.`
+      }
+    };
+  } else {
+    jupiterChain = {
+      chainType: 'JUPITER_AHEAD',
+      jupiterPosition: 'AHEAD',
+      saturnHouse: satHouse,
+      jupiterHouse: jupP ? jupP.house : 11,
+      distanceDegrees: Math.round(distSatToJup),
+      statusTitle: {
+        en: '⚡ Jupiter Ahead of Saturn Chain (Hard Work First, Delayed Luck)',
+        hi: '⚡ गुरु शनि से आगे (कठोर परिश्रम पश्चात् भाग्यवृद्धि)',
+        gu: '⚡ ગુરુ શનિથી આગળ (સખત પરિશ્રમ પછી જ સ્થાયી સફળતા)'
+      },
+      summary: {
+        en: `⚡ Saturn (House ${satHouse}) is heading towards Jupiter (House ${jupP ? jupP.house : 11}) ahead. In Bhrigu Nandi Nadi (BNN) rules, Jupiter is positioned ahead of Saturn! Career luck is delayed and requires hard work (Career me manda luck / need hardwork). Success and recognition arrive after proving merit through relentless hard work, continuous learning, and self-reliance.`,
+        hi: `⚡ आपका शनि (भाव ${satHouse}) गुरु (भाव ${jupP ? jupP.house : 11}) की ओर आगे बढ़ रहा है। भृगु नंदी नाड़ी नियमानुसार गुरु शनि से आगे स्थित है! यह दर्शाता है कि करियर में भाग्य स्वतः नहीं मिलता ('करियर में मंदा लक / कठोर परिश्रम आवश्यक')। सफलता और प्रतिष्ठा निरंतर परिश्रम, निष्ठा और आत्मनिर्भरता से ही सिद्ध होती है। जब आप पूर्ण प्रयास कर लेते हैं, तब गुरु स्थायी पद व सम्मान प्रदान करता है।`,
+        gu: `⚡ ગુરુ શનિથી આગળ હોવાથી કારકિર્દીમાં નસીબ ધીમું રહે છે ('મંદા લક'). સખત પરિશ્રમ પછી જ સ્થાયી સફળતા મળે છે.`
+      }
+    };
+  }
+
+  return {
+    rahuKetuChain,
+    jupiterChain
   };
 }

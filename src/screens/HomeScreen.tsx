@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, CityLocation } from '../types/panchang';
 import { Header } from '../components/Header';
@@ -12,6 +12,9 @@ import { LanguageSelectionModal } from '../components/LanguageSelectionModal';
 import { BirthChartModal } from '../components/BirthChartModal';
 import { JainCalendarModal } from '../components/JainCalendarModal';
 import { LalKitabModal } from '../components/LalKitabModal';
+import { NavtaraModal } from '../components/NavtaraModal';
+import { KotaChakraModal } from '../components/KotaChakraModal';
+import { PaintBrushHeader } from '../components/PaintBrushHeader';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
@@ -48,6 +51,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showBirthChartModal, setShowBirthChartModal] = useState(false);
   const [showJainCalendarModal, setShowJainCalendarModal] = useState(false);
   const [showLalKitabModal, setShowLalKitabModal] = useState(false);
+  const [showNavtaraModal, setShowNavtaraModal] = useState(false);
+  const [showKotaChakraModal, setShowKotaChakraModal] = useState(false);
   const [lalKitabPayload, setLalKitabPayload] = useState<{
     dob?: string;
     tob?: string;
@@ -353,6 +358,53 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </View>
           </TouchableOpacity>
 
+          {/* 🌟 Section 8: Explore Vedic Astrology (Feature Expansion Grid) */}
+          <View style={styles.exploreSectionContainer}>
+            <PaintBrushHeader
+              title={language === 'gu' ? 'વૈદિક જ્યોતિષની શોધ કરો' : language === 'hi' ? 'वैदिक ज्योतिष का अन्वेषण करें' : 'Explore Vedic Astrology'}
+            />
+
+            <View style={styles.exploreGridRow}>
+              {/* Feature 1: Navtara */}
+              <TouchableOpacity
+                style={styles.exploreItemCard}
+                onPress={() => setShowNavtaraModal(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconWrapper}>
+                  <View style={styles.iconCircleBg}>
+                    <Image source={require('../../assets/navtara_icon.png')} style={styles.explore3DIcon} resizeMode="contain" />
+                  </View>
+                  <View style={styles.newBadgeChip}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                </View>
+                <Text style={styles.exploreItemTitle}>
+                  {language === 'gu' ? 'નવતારા' : language === 'hi' ? 'नवतारा' : 'Navtara'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Feature 2: Kota Chakra */}
+              <TouchableOpacity
+                style={styles.exploreItemCard}
+                onPress={() => setShowKotaChakraModal(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.iconWrapper}>
+                  <View style={styles.iconCircleBg}>
+                    <Image source={require('../../assets/kota_chakra_icon.png')} style={styles.explore3DIcon} resizeMode="contain" />
+                  </View>
+                  <View style={styles.newBadgeChip}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                </View>
+                <Text style={styles.exploreItemTitle}>
+                  {language === 'gu' ? 'કોટા ચક્ર' : language === 'hi' ? 'कोटा चक्र' : 'Kota Chakra'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
         </View>
       </ScrollView>
 
@@ -387,6 +439,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setShowJainCalendarModal(false)}
         selectedCity={selectedCity}
         panchang={panchang}
+      />
+
+      {/* 🌟 Navtara Chakra Modal */}
+      <NavtaraModal
+        visible={showNavtaraModal}
+        onClose={() => setShowNavtaraModal(false)}
+        defaultNakshatraIndex={panchang.nakshatra.number || 1}
+      />
+
+      {/* 🏰 Kota Chakra Modal */}
+      <KotaChakraModal
+        visible={showKotaChakraModal}
+        onClose={() => setShowKotaChakraModal(false)}
+        defaultNakshatraIndex={panchang.nakshatra.number || 1}
       />
     </View>
   );
@@ -583,5 +649,70 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 6,
     marginBottom: 4,
+  },
+
+  // Explore Vedic Astrology Grid Styles (Reference UI)
+  exploreSectionContainer: {
+    marginTop: 18,
+    marginBottom: 24,
+  },
+  exploreGridRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+    paddingHorizontal: 16,
+  },
+  exploreItemCard: {
+    width: 95,
+    alignItems: 'center',
+  },
+  iconWrapper: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  iconCircleBg: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FFF3E0',
+  },
+  explore3DIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  newBadgeChip: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    backgroundColor: '#E53935',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    elevation: 3,
+  },
+  newBadgeText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  exploreItemTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#212121',
+    textAlign: 'center',
+    lineHeight: 17,
   },
 });

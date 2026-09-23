@@ -21,5 +21,6 @@ upload_resp.json
 patch_repo.json
 *.png
 *.aab
+scratch/
 
 

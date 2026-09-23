@@ -1,0 +1,67 @@
+===================================================================
+SOULRISE PANCHANG - RELEASE NOTES (v1.0.8 / VersionCode 9)
+===================================================================
+
+-------------------------------------------------------------------
+ENGLISH RELEASE NOTES (Google Play Console)
+-------------------------------------------------------------------
+What's New in Version 1.0.8:
+
+🏰 Authentic 28-Nakshatra Kota Chakra & Life Event Insights:
+• Concentric 4-Zone Fort Diagram (Stambha, Madhya, Prakara, Bahya) with 8 entry/exit pathways.
+• Dynamic Kota Swami (Moon sign lord) & Kota Pala (Janma Nakshatra lord) info popups.
+• Transit Date Selection: Inspect historical/future dates to analyze planetary transit impact on your fort while keeping Janma Nakshatra anchored.
+• Deep Transit Insights: Automated analysis for Mind, Emotions, Career & Mother's Health (including Chandra-Ketu Grahan affliction alerts).
+
+🌟 Navtara Transit Engine:
+• Authentic 9-Tara matrix (Janma, Sampat, Vipat, Kshema, Pratyak, Sadhak, Vadha, Mitra, Ati-Mitra) for natal & transit planets.
+
+☸️ Jain Panchang Upgrades:
+• Enhanced Jain Tithi calculation accuracy, festival listings, and dedicated theme styling.
+
+✨ UI Polish & Fixes:
+• Redesigned Top Header Bar theme with streamlined options.
+• Improved Google Sign-In authentication flow.
+• User profile selector & confirmation dialogs.
+
+-------------------------------------------------------------------
+HINDI RELEASE NOTES (गूगल प्ले कंसोल के लिए)
+-------------------------------------------------------------------
+संस्करण 1.0.8 में नया क्या है:
+
+🏰 प्रामाणिक २८-नक्षत्र कोटा चक्र एवं गोचर विश्लेषण:
+• ४-दुर्ग क्षेत्र (स्तंभ, मध्य, प्राकार, बाह्य) एवं ८ प्रवेश/निकास मार्ग।
+• कोटा स्वामी एवं कोटा पाल की सटीक गणना एवं सूचना गाइड (ⓘ)।
+• गोचर तिथि चयन: अतीत या भविष्य की तिथि चुनकर अपने जीवन की घटनाओं और ग्रह प्रभाव का विश्लेषण करें।
+• गहरी जीवन घटना एवं ग्रह विश्लेषण: मन, भावनात्मक संतुलन, करियर एवं माताजी के स्वास्थ्य का विस्तृत विश्लेषण (चंद्र-केतु ग्रहण दोष चेतावनी सहित)।
+
+🌟 नवतारा गोचर चक्र:
+• जन्म एवं गोचर ग्रहों के लिए ९-तारा (जन्म, संपत, विपत, क्षेम, प्रत्यक, साधक, वध, मित्र, अति-मित्र) विश्लेषण।
+
+☸️ जैन पंचांग सुधार:
+• जैन तिथि, पर्व एवं त्यौहारों की सटीक गणना तथा आकर्षक स्वरूप।
+
+✨ इंटरफेस एवं सुरक्षा सुधार:
+• नया एवं आकर्षक टुडे टॉप बार थीम।
+• गूगल साइन-इन प्रक्रिया में सुधार एवं प्रोफाइल प्रबंधन।
+
+-------------------------------------------------------------------
+GUJARATI RELEASE NOTES (ગુગલ પ્લે કન્સોલ માટે)
+-------------------------------------------------------------------
+આવૃત્તિ 1.0.8 માં નવું શું છે:
+
+🏰 પ્રામાણિક ૨૮-નક્ષત્ર કોટા ચક્ર અને ગોચર વિશ્લેષણ:
+• ૪-દુર્ગ ક્ષેત્ર (સ્તંભ, મધ્ય, પ્રાકાર, બાહ્ય) અને ૮ પ્રવેશ/નિકાસ માર્ગો.
+• કોટા સ્વામી અને કોટા પાલની ગણતરી તથા માર્ગદર્શિકા (ⓘ).
+• ગોચર તારીખ પસંદગી: ભૂતકાળ કે ભવિષ્યની તારીખ પસંદ કરી તમારા જીવનની ઘટનાઓનું વિશ્લેષણ કરો.
+• મન, માતાજીના સ્વાસ્થ્ય અને કારકિર્દીનું ઊંડું વિશ્લેષણ (ચંદ્ર-કેતુ ગ્રહણ દોષ એલર્ટ સહિત).
+
+🌟 નવતારા ચક્ર:
+• જન્મ અને ગોચર ગ્રહો માટે ૯-તારા વિશ્લેષણ.
+
+☸️ જૈન પંચાંગ સુધારા:
+• જૈન તિથિ અને તહેવારોની સચોટ ગણતરી.
+
+✨ UI અને પ્રોફાઈલ સુધારા:
+• નવું ટુડે ટોપ બાર થીમ અને ગુગલ સાઇન-ઇન સુધારા.
+===================================================================

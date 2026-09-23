@@ -187,11 +187,22 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
   let mWorldFest = selectedModalDateIso ? getWorldFestivalForDate(selectedModalDateIso) : null;
 
   if (selectedModalDateIso) {
-    const parts = selectedModalDateIso.split('-');
-    mDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
+    try {
+      const parts = selectedModalDateIso.split('-');
+      if (parts.length === 3) {
+        const pY = parseInt(parts[0], 10);
+        const pM = parseInt(parts[1], 10) - 1;
+        const pD = parseInt(parts[2], 10);
+        if (!isNaN(pY) && !isNaN(pM) && !isNaN(pD)) {
+          mDate = new Date(pY, pM, pD, 12, 0, 0);
+        }
+      }
+    } catch (e) {
+      mDate = new Date();
+    }
     mTithiIdx = calculateTithiForDate(mDate);
     mTithiName = getLocalizedTithi((mTithiIdx % 15) + 1, language).name;
-    mMonthName = getHinduMonthName(mDate);
+    mMonthName = getHinduMonthName(mDate, lunarSystem);
     mPakshaFull = getLocalizedPakshaName(mTithiIdx <= 14 ? 'SHUKLA' : 'KRISHNA', language);
     
     // Strict Segregation: Hindu Rituals & Festivals only for HINDU mode!
@@ -271,8 +282,8 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
             {(() => {
               const startMonthDate = new Date(year, month, 1);
               const endMonthDate = new Date(year, month, 25);
-              const startData = getDharmaCalendarDayData(startMonthDate, calendarSystem, language);
-              const endData = getDharmaCalendarDayData(endMonthDate, calendarSystem, language);
+              const startData = getDharmaCalendarDayData(startMonthDate, calendarSystem, language, lunarSystem);
+              const endData = getDharmaCalendarDayData(endMonthDate, calendarSystem, language, lunarSystem);
 
               const shortEra = startData.eraTitle
                 .replace('Vikram Samvat', 'Vi.Sa.')
@@ -356,7 +367,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
             const realToday = new Date();
             const isTodayCell = dayNum === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear();
-            const cellDharma = getDharmaCalendarDayData(dateObj, calendarSystem, language);
+            const cellDharma = getDharmaCalendarDayData(dateObj, calendarSystem, language, lunarSystem);
 
             return (
               <TouchableOpacity
@@ -512,7 +523,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
               <ScrollView style={{ maxHeight: 420 }}>
                 {(() => {
-                  const mDharmaData = getDharmaCalendarDayData(mDate, calendarSystem, language);
+                  const mDharmaData = getDharmaCalendarDayData(mDate, calendarSystem, language, lunarSystem);
                   return (
                     <View style={styles.jainModalCard}>
                       <Text style={styles.jainModalTitle}>{mDharmaData.eraTitle}</Text>
@@ -545,7 +556,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
 
                 {/* Specific Festival / Event Banner if exists */}
                 {(() => {
-                  const mDharmaData = getDharmaCalendarDayData(mDate, calendarSystem, language);
+                  const mDharmaData = getDharmaCalendarDayData(mDate, calendarSystem, language, lunarSystem);
                   const fest = mDharmaData.festivalMatch || festMatchModal;
                   if (!fest) return null;
                   return (
@@ -691,7 +702,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ selectedCity = D
                       );
                       return;
                     }
-                    const dData = getDharmaCalendarDayData(mDate, calendarSystem, language);
+                    const dData = getDharmaCalendarDayData(mDate, calendarSystem, language, lunarSystem);
                     const defaultRemTitle = festMatchModal ? festMatchModal.name : `${dData.dayLabel} Reminder`;
                     const defaultUpcomingTime = getNextUpcomingTimeSlot(mDate);
                     setDateRemTitle(defaultRemTitle);

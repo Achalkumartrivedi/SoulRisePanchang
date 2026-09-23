@@ -70,11 +70,14 @@ export function analyzeMuhuratSafety(
   let activeChoghadiyaHindi = 'सामान्य';
   let isChoghadiyaAuspicious = true;
 
-  const dayChog = choghadiyas.dayChoghadiya;
-  const activeChogItem = dayChog.find((c: ChoghadiyaItem) => {
+  const allChog = [...(choghadiyas.dayChoghadiya || []), ...(choghadiyas.nightChoghadiya || [])];
+  const activeChogItem = allChog.find((c: ChoghadiyaItem) => {
     const sMin = parseTimeToMinutes(c.startTime);
     const eMin = parseTimeToMinutes(c.endTime);
-    return chosenMin >= sMin && chosenMin <= eMin;
+    if (sMin <= eMin) {
+      return chosenMin >= sMin && chosenMin < eMin;
+    }
+    return chosenMin >= sMin || chosenMin < eMin;
   });
 
   if (activeChogItem) {

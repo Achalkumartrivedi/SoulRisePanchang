@@ -24,7 +24,8 @@ export interface DharmaDayData {
 export function getDharmaCalendarDayData(
   date: Date,
   calendarSystem: CalendarSystem,
-  language: string = 'hi'
+  language: string = 'hi',
+  lunarSystem: 'AMANTA' | 'PURNIMANTA' = 'PURNIMANTA'
 ): DharmaDayData {
   const dateIso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const gDay = date.getDate();
@@ -254,7 +255,7 @@ export function getDharmaCalendarDayData(
     default: {
       const tithiIdx = calculateTithiForDate(date);
       const tithiName = getLocalizedTithi((tithiIdx % 15) + 1, language as any).name;
-      const hinduMonthName = getHinduMonthName(date);
+      const hinduMonthName = getHinduMonthName(date, lunarSystem);
       const pakshaFull = getLocalizedPakshaName(tithiIdx <= 14 ? 'SHUKLA' : 'KRISHNA', language as any);
       const hinduFest = FESTIVALS.find(f => f.dateIso === dateIso && f.category !== 'JAIN_FESTIVAL' && f.category !== 'WORLD_FESTIVAL');
 

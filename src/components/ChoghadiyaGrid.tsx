@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../theme/colors';
 import { ChoghadiyaItem } from '../types/panchang';
@@ -12,14 +12,35 @@ interface ChoghadiyaGridProps {
 
 export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, nightChoghadiya }) => {
   const { language, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'DAY' | 'NIGHT'>('DAY');
   const showHindiScript = language === 'hi' || language === 'hinglish';
 
-  const items = activeTab === 'DAY' ? dayChoghadiya : nightChoghadiya;
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
-  // Current time in minutes for live progression calculation
-  const now = new Date();
-  const currentMin = now.getHours() * 60 + now.getMinutes();
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 15000); // refresh every 15s for smooth live progression
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentMin = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+  // Auto-detect DAY vs NIGHT active tab on load
+  const [activeTab, setActiveTab] = useState<'DAY' | 'NIGHT'>(() => {
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+    if (nightChoghadiya && nightChoghadiya.length > 0) {
+      const isNightActive = nightChoghadiya.some(item => {
+        const sMin = parseTimeToMin(item.startTime);
+        const eMin = parseTimeToMin(item.endTime);
+        if (sMin <= eMin) return nowMin >= sMin && nowMin < eMin;
+        return nowMin >= sMin || nowMin < eMin;
+      });
+      if (isNightActive) return 'NIGHT';
+    }
+    return 'DAY';
+  });
+
+  const items = activeTab === 'DAY' ? dayChoghadiya : nightChoghadiya;
 
   return (
     <View style={styles.card}>
@@ -55,11 +76,24 @@ export const ChoghadiyaGrid: React.FC<ChoghadiyaGridProps> = ({ dayChoghadiya, n
           if (startMin <= endMin) {
             isActive = currentMin >= startMin && currentMin < endMin;
             if (isActive) {
-              percentElapsed = Math.min(100, Math.max(0, Math.round(((currentMin - startMin) / (endMin - startMin)) * 100)));
+              const totalDuration = endMin - startMin;
+              const elapsedMin = currentMin - startMin;
+              percentElapsed = totalDuration > 0
+                ? Math.min(100, Math.max(0, Math.round((elapsedMin / totalDuration) * 100)))
+                : 0;
             }
           } else {
-            // Overnight slot
+            // Overnight slot (e.g. 10:58 PM to 12:28 AM)
             isActive = currentMin >= startMin || currentMin < endMin;
+            if (isActive) {
+              const totalDuration = (1440 - startMin) + endMin;
+              const elapsedMin = currentMin >= startMin
+                ? (currentMin - startMin)
+                : ((1440 - startMin) + currentMin);
+              percentElapsed = totalDuration > 0
+                ? Math.min(100, Math.max(0, Math.round((elapsedMin / totalDuration) * 100)))
+                : 0;
+            }
           }
 
           return (

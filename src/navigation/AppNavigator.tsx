@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Alert } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, StatusBar, Alert, AppState, AppStateStatus, Linking } from 'react-native';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -53,81 +53,203 @@ export const AppNavigator: React.FC = () => {
   const [showFirstLaunchLangScreen, setShowFirstLaunchLangScreen] = useState<boolean | null>(null);
   const [isGuestMode, setIsGuestMode] = useState(false);
 
+  const selectedCityRef = useRef<CityLocation>(DEFAULT_CITIES[0]);
+  const isSyncingGpsRef = useRef(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+  // Keep selectedCityRef in sync with state
+  useEffect(() => {
+    selectedCityRef.current = selectedCity;
+  }, [selectedCity]);
+
+  // Robust GPS location fetcher (fast cached fix + fresh accurate fix with timeout + traveling detection)
+  const syncGpsLocation = useCallback(async (options?: { requestPermissionIfUndetermined?: boolean }) => {
+    if (isSyncingGpsRef.current) return;
+    isSyncingGpsRef.current = true;
+
+    try {
+      const savedUseGps = await AsyncStorage.getItem(GPS_STORAGE_KEY);
+      // If user explicitly chose a fixed manual city, respect user choice
+      if (savedUseGps === 'false') {
+        isSyncingGpsRef.current = false;
+        return;
+      }
+
+      let { status } = await Location.getForegroundPermissionsAsync();
+      let wasPrompted = false;
+      if (status !== 'granted') {
+        if (options?.requestPermissionIfUndetermined) {
+          const req = await Location.requestForegroundPermissionsAsync();
+          status = req.status;
+          wasPrompted = true;
+        }
+      }
+
+      if (status !== 'granted') {
+        isSyncingGpsRef.current = false;
+        if (wasPrompted) {
+          Alert.alert(
+            '📍 Location Permission Required / स्थान अनुमति आवश्यक',
+            'Without location permission, accurate local Tithi, Sunrise, Sunset, Muhurat and Planetary positions for your exact location cannot be calculated.\n\nस्थान अनुमति के बिना आपके सटीक क्षेत्र की सही तिथि, सूर्योदय और ग्रह स्थिति की सटीक गणना संभव नहीं है।\n\nWould you like to turn on location permission in device settings?',
+            [
+              {
+                text: 'Turn On in Settings (सेटिंग खोलें)',
+                onPress: () => {
+                  Linking.openSettings().catch(() => {});
+                }
+              },
+              {
+                text: 'No, Use Default (New Delhi)',
+                style: 'cancel',
+                onPress: async () => {
+                  const defaultCity = DEFAULT_CITIES[0];
+                  selectedCityRef.current = defaultCity;
+                  setSelectedCity(defaultCity);
+                  await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(defaultCity));
+                  await AsyncStorage.setItem(GPS_STORAGE_KEY, 'false');
+                  await updateLiveChoghadiyaNotification(defaultCity).catch(() => {});
+                  Alert.alert(
+                    '📍 Default Location Active',
+                    'Showing Panchang & Planetary info for New Delhi (नई दिल्ली) as default. You can change your location anytime from Settings or top header.'
+                  );
+                }
+              }
+            ],
+            { cancelable: false }
+          );
+        }
+        return;
+      }
+
+      const applyLocationFix = async (latitude: number, longitude: number) => {
+        const current = selectedCityRef.current;
+        const distKm = getDistanceFromLatLonInKm(current.latitude, current.longitude, latitude, longitude);
+        const isNotYetGps = !current.name.includes('(GPS)') && current.stateCountry !== 'GPS Location';
+
+        // Refresh geocode if user traveled > 1.5 km or current location is not yet GPS or is fallback New Delhi
+        if (distKm > 1.5 || isNotYetGps || current.name === 'New Delhi') {
+          let cityName = 'Current Location (GPS)';
+          let hindiName = 'वर्तमान स्थान';
+
+          try {
+            const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
+            if (geocode && geocode.length > 0) {
+              const place = geocode[0];
+              const name = place.city || place.subregion || place.district || place.region || 'Current Location';
+              cityName = `${name} (GPS)`;
+              hindiName = place.city || place.district || place.region || 'वर्तमान स्थान';
+            }
+          } catch (err) {
+            console.log('Reverse geocode error during sync:', err);
+            if (distKm < 5 && current.name && current.name.includes('(GPS)')) {
+              cityName = current.name;
+              hindiName = current.hindiName;
+            }
+          }
+
+          const userGpsCity: CityLocation = {
+            name: cityName,
+            hindiName,
+            stateCountry: 'GPS Location',
+            latitude,
+            longitude,
+            timeZoneId: current.timeZoneId || 'Asia/Kolkata'
+          };
+
+          selectedCityRef.current = userGpsCity;
+          setSelectedCity(userGpsCity);
+          await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
+          await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
+          await updateLiveChoghadiyaNotification(userGpsCity).catch(() => {});
+        }
+      };
+
+      // 1. FAST: Try getLastKnownPositionAsync first (Instantaneous, 0-50ms)
+      try {
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown && lastKnown.coords) {
+          await applyLocationFix(lastKnown.coords.latitude, lastKnown.coords.longitude);
+        }
+      } catch (e) {
+        console.log('getLastKnownPosition error:', e);
+      }
+
+      // 2. FRESH: Accurate current position with 6-second timeout
+      try {
+        const freshLocPromise = Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced
+        });
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000));
+        const freshLoc = await Promise.race([freshLocPromise, timeoutPromise]);
+        if (freshLoc && freshLoc.coords) {
+          await applyLocationFix(freshLoc.coords.latitude, freshLoc.coords.longitude);
+        }
+      } catch (e) {
+        console.log('getCurrentPosition error:', e);
+      }
+    } catch (err) {
+      console.log('syncGpsLocation error:', err);
+    } finally {
+      isSyncingGpsRef.current = false;
+    }
+  }, []);
+
+  // AppState listener (resumes from background, unlocks phone) & Periodic traveling sync (every 3 minutes)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        // User came back to the app from background / unlocked phone / traveling
+        syncGpsLocation({ requestPermissionIfUndetermined: false });
+      }
+      appStateRef.current = nextAppState;
+    });
+
+    const travelInterval = setInterval(() => {
+      if (appStateRef.current === 'active') {
+        syncGpsLocation({ requestPermissionIfUndetermined: false });
+      }
+    }, 3 * 60 * 1000);
+
+    return () => {
+      subscription.remove();
+      clearInterval(travelInterval);
+    };
+  }, [syncGpsLocation]);
+
+  // Initial App Launch: Immediate Cache Hydration + GPS Sync
   useEffect(() => {
     (async () => {
       try {
         const langDone = await AsyncStorage.getItem(FIRST_LAUNCH_LANG_KEY);
-        if (langDone !== 'true') {
-          setShowFirstLaunchLangScreen(true);
-        } else {
-          setShowFirstLaunchLangScreen(false);
-        }
+        setShowFirstLaunchLangScreen(langDone !== 'true');
 
         const authDone = await AsyncStorage.getItem(FIRST_LAUNCH_AUTH_KEY);
         if (authDone === 'true' || authDone === 'skipped') {
           setIsGuestMode(true);
         }
 
+        // 1. Immediately hydrate selectedCity from cache (Zero latency, never shows New Delhi if previously saved!)
         const savedCityJson = await AsyncStorage.getItem(CITY_STORAGE_KEY);
-        const savedUseGps = await AsyncStorage.getItem(GPS_STORAGE_KEY);
-
-        // If user manually selected a custom city in settings, preserve it!
-        if (savedCityJson && savedUseGps === 'false') {
-          const city = JSON.parse(savedCityJson);
-          setSelectedCity(city);
-          return;
-        }
-
-        // Otherwise auto-detect current GPS location on launch
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          let loc = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced
-          }).catch(async () => {
-            return await Location.getLastKnownPositionAsync();
-          });
-
-          if (loc) {
-            const latitude = loc.coords.latitude;
-            const longitude = loc.coords.longitude;
-
-            let cityName = 'GPS Location';
-            let hindiName = 'वर्तमान स्थान';
-
-            try {
-              const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
-              if (geocode && geocode.length > 0) {
-                const place = geocode[0];
-                const name = place.city || place.subregion || place.district || place.region || 'Current Location';
-                cityName = `${name} (GPS)`;
-                hindiName = place.city || place.district || place.region || 'वर्तमान स्थान';
-              }
-            } catch (err) {
-              console.log('Reverse geocode error:', err);
+        if (savedCityJson) {
+          try {
+            const cachedCity = JSON.parse(savedCityJson);
+            if (cachedCity && cachedCity.name && typeof cachedCity.latitude === 'number') {
+              setSelectedCity(cachedCity);
+              selectedCityRef.current = cachedCity;
             }
-
-            const userGpsCity: CityLocation = {
-              name: cityName,
-              hindiName,
-              stateCountry: 'GPS Location',
-              latitude,
-              longitude,
-              timeZoneId: 'Asia/Kolkata'
-            };
-
-            setSelectedCity(userGpsCity);
-            await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(userGpsCity));
-            await AsyncStorage.setItem(GPS_STORAGE_KEY, 'true');
-          } else if (savedCityJson) {
-            setSelectedCity(JSON.parse(savedCityJson));
+          } catch (err) {
+            console.log('Error parsing cached city on launch:', err);
           }
-        } else if (savedCityJson) {
-          setSelectedCity(JSON.parse(savedCityJson));
         }
+
+        // 2. Refresh GPS location (requests permission if fresh install)
+        await syncGpsLocation({ requestPermissionIfUndetermined: true });
       } catch (e) {
         console.log('App launch location init error:', e);
       } finally {
-        // Register all user reminders with Android OS local notifications
         try {
           const reminders = await getStoredReminders();
           await rescheduleAllReminders(reminders);
@@ -136,18 +258,19 @@ export const AppNavigator: React.FC = () => {
         }
       }
     })();
-  }, []);
+  }, [syncGpsLocation]);
 
   const { lunarSystem } = useCalendarSystem();
   const currentDateObj = new Date(currentDateIso + 'T00:00:00');
   const panchangData: PanchangDayData = calculatePanchang(currentDateObj, selectedCity, lunarSystem);
 
   const handleSelectCity = async (city: CityLocation) => {
+    selectedCityRef.current = city;
     setSelectedCity(city);
     setIsCityModalVisible(false);
     try {
       await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(city));
-      await AsyncStorage.setItem(GPS_STORAGE_KEY, city.stateCountry === 'GPS Location' ? 'true' : 'false');
+      await AsyncStorage.setItem(GPS_STORAGE_KEY, (city.stateCountry === 'GPS Location' || city.name.includes('(GPS)')) ? 'true' : 'false');
       await updateLiveChoghadiyaNotification(city);
     } catch (e) {
       console.log('Save city error:', e);
@@ -355,6 +478,7 @@ export const AppNavigator: React.FC = () => {
         onClose={() => setIsCityModalVisible(false)}
         selectedCity={selectedCity}
         onSelectCity={handleSelectCity}
+        persistToGlobalStorage={true}
       />
     </SafeAreaView>
   );
@@ -365,6 +489,18 @@ function formatDateIso(d: Date): string {
   const m = d.getMonth() + 1 < 10 ? `0${d.getMonth() + 1}` : `${d.getMonth() + 1}`;
   const day = d.getDate() < 10 ? `0${d.getDate()}` : `${d.getDate()}`;
   return `${y}-${m}-${day}`;
+}
+
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 const styles = StyleSheet.create({

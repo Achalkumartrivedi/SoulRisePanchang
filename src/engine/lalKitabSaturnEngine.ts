@@ -1,4 +1,5 @@
 import { KundaliResult, PlanetDetail } from './kundaliEngine';
+import { evaluateSaturnChains, SaturnChainsAudit } from './bnnSaturnTimelineEngine';
 
 export interface SaturnHouseDetail {
   house: number;
@@ -33,10 +34,12 @@ export interface SaturnAuditReport {
   houseGuide: SaturnHouseDetail;
   activeConjunctions: SaturnConjunctionDetail[];
   specialRulesEvaluated: SaturnSpecialRuleEvaluation[];
+  hasActivePoisonChannel: boolean;
   poisonReleaseChannel: { en: string; hi: string; gu: string };
   ageMilestones: number[];
   threeHouseGroup: { name: string; houses: number[]; description: { en: string; hi: string; gu: string } };
   universalRemedies: { en: string[]; hi: string[]; gu: string[] };
+  saturnChains: SaturnChainsAudit;
 }
 
 /**
@@ -988,10 +991,11 @@ export function evaluateLalKitabSaturn(kundali: KundaliResult, lang: string = 'e
     5: { en: 'Sun (Surya) - Affects state honors, administrative fame, and father.', hi: 'सूर्य - शासकीय सम्मान, प्रशासनिक साख और पिता पर प्रभाव छोड़ता है।', gu: 'સૂર્ય પર અસર.' }
   };
 
+  const hasActivePoisonChannel = Boolean(poisonMap[satHouse]);
   const poisonReleaseChannel = poisonMap[satHouse] || {
-    en: 'Saturn balances its karma directly within its own house and aspects without releasing poison to external channels.',
-    hi: 'शनि अपने भाव और दृष्टियों के माध्यम से सीधे कर्म फल को संतुलित करता है।',
-    gu: 'શનિ પોતાના ભાવમાં જ કર્મ ફળ સંતુલિત કરે છે.'
+    en: '',
+    hi: '',
+    gu: ''
   };
 
   // Three House Group
@@ -1035,9 +1039,11 @@ export function evaluateLalKitabSaturn(kundali: KundaliResult, lang: string = 'e
     houseGuide: satInfo,
     activeConjunctions,
     specialRulesEvaluated,
+    hasActivePoisonChannel,
     poisonReleaseChannel,
     ageMilestones: [7, 14, 21, 28, 36, 42, 48, 60],
     threeHouseGroup,
-    universalRemedies: UNIVERSAL_SATURN_REMEDIES
+    universalRemedies: UNIVERSAL_SATURN_REMEDIES,
+    saturnChains: evaluateSaturnChains(kundali)
   };
 }

@@ -114,8 +114,8 @@ android {
         applicationId 'com.soulrise.panchang'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.6"
+        versionCode 14
+        versionName "1.1.3"
     }
     signingConfigs {
         debug {
