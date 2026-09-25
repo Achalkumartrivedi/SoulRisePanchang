@@ -136,8 +136,8 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [showForm, setShowForm] = useState<boolean>(false);
 
   // Active Tab for Divisional & Global Charts
-  const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'SARVASHTAKAVARGA' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
-  const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'INTERPRETATIONS' | 'GLOBAL'>('PARTICULARS');
+  const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
+  const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'SARVASHTAKAVARGA' | 'HOUSES' | 'INTERPRETATIONS' | 'GLOBAL'>('PARTICULARS');
 
   // Kundali Result State (Null by default, generated ONLY when user clicks 'Get Kundali')
   const [kundali, setKundali] = useState<KundaliResult | null>(null);
@@ -550,23 +550,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[
-                    styles.chartTabBtn,
-                    { borderColor: '#E65100', backgroundColor: activeChartKey === 'SARVASHTAKAVARGA' ? Colors.maroon : '#FFF3E0' },
-                    activeChartKey === 'SARVASHTAKAVARGA' && styles.chartTabBtnActive
-                  ]}
-                  onPress={() => setActiveChartKey('SARVASHTAKAVARGA')}
-                >
-                  <Text style={[
-                    styles.chartTabText,
-                    { color: activeChartKey === 'SARVASHTAKAVARGA' ? '#FFD700' : '#BF360C' },
-                    activeChartKey === 'SARVASHTAKAVARGA' && styles.chartTabTextActive
-                  ]}>
-                    {loc.sarvashtakavargaTab || (isHi ? '📊 सर्वाष्टकवर्ग' : '📊 Sarvashtakavarga')}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
                   style={[styles.chartTabBtn, activeChartKey === 'MOON' && styles.chartTabBtnActive]}
                   onPress={() => setActiveChartKey('MOON')}
                 >
@@ -630,12 +613,8 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 </TouchableOpacity>
               </ScrollView>
 
-              {activeChartKey === 'SARVASHTAKAVARGA' ? (
-                <SarvashtakavargaView kundali={kundali} />
-              ) : (
-                <>
-                  {/* Chart Graphic Box */}
-                  {activeChart && (
+              {/* Chart Graphic Box */}
+              {activeChart && (
                 <View style={styles.chartGraphicBox}>
                   <View style={styles.chartGraphicHeaderRow}>
                     <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
@@ -720,6 +699,15 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </TouchableOpacity>
 
                   <TouchableOpacity
+                    style={[styles.detailSwitchBtn, activeDetailSection === 'SARVASHTAKAVARGA' && styles.detailSwitchBtnActive]}
+                    onPress={() => setActiveDetailSection('SARVASHTAKAVARGA')}
+                  >
+                    <Text style={[styles.detailSwitchText, activeDetailSection === 'SARVASHTAKAVARGA' && styles.detailSwitchTextActive]}>
+                      {loc.sarvashtakavargaTab || (isHi ? '📊 सर्वाष्टकवर्ग' : '📊 Sarvashtakavarga')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
                     style={[styles.detailSwitchBtn, activeDetailSection === 'HOUSES' && styles.detailSwitchBtnActive]}
                     onPress={() => setActiveDetailSection('HOUSES')}
                   >
@@ -747,6 +735,11 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                   </TouchableOpacity>
                 </View>
               </ScrollView>
+
+                    {/* Detail Section: Sarvashtakavarga Analysis */}
+                    {activeDetailSection === 'SARVASHTAKAVARGA' && (
+                      <SarvashtakavargaView kundali={kundali} />
+                    )}
 
                     {/* Detail Section 0: Astrological Predictions & Rules (Vedic & Lal Kitab) */}
                     {activeDetailSection === 'INTERPRETATIONS' && (
@@ -888,8 +881,6 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         <Text style={styles.magicBtnArrow}>➔</Text>
                       </View>
                     </TouchableOpacity>
-                  </>
-                )}
 
               </View>
             )}
