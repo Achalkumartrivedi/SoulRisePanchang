@@ -26,6 +26,7 @@ import { AddNewProfileModal } from './AddNewProfileModal';
 import { CitySelectionModal } from './CitySelectionModal';
 import { SoulPurposeModal } from './SoulPurposeModal';
 import { AstrologyInterpretationsView } from './AstrologyInterpretationsView';
+import { SarvashtakavargaView } from './SarvashtakavargaView';
 import { getUserProfile } from '../engine/userDatabase';
 import { AuthModal } from './AuthModal';
 import { Alert } from 'react-native';
@@ -81,6 +82,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
 }) => {
   const { language } = useLanguage();
   const loc = ASTROLOGY_LOCALIZATION[language] || ASTROLOGY_LOCALIZATION.en;
+  const isHi = language === 'hi' || language === 'hinglish';
 
   // Clean Default Input Values for New Downloads / Users (Empty by default)
   const [name, setName] = useState('');
@@ -134,7 +136,7 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
   const [showForm, setShowForm] = useState<boolean>(false);
 
   // Active Tab for Divisional & Global Charts
-  const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
+  const [activeChartKey, setActiveChartKey] = useState<'D1' | 'MOON' | 'SUN' | 'D2' | 'D9' | 'D10' | 'SARVASHTAKAVARGA' | 'WESTERN' | 'RUSSIAN' | 'THAI' | 'INDONESIAN'>('D1');
   const [activeDetailSection, setActiveDetailSection] = useState<'PARTICULARS' | 'PLANETS' | 'HOUSES' | 'INTERPRETATIONS' | 'GLOBAL'>('PARTICULARS');
 
   // Kundali Result State (Null by default, generated ONLY when user clicks 'Get Kundali')
@@ -548,6 +550,23 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  style={[
+                    styles.chartTabBtn,
+                    { borderColor: '#E65100', backgroundColor: activeChartKey === 'SARVASHTAKAVARGA' ? Colors.maroon : '#FFF3E0' },
+                    activeChartKey === 'SARVASHTAKAVARGA' && styles.chartTabBtnActive
+                  ]}
+                  onPress={() => setActiveChartKey('SARVASHTAKAVARGA')}
+                >
+                  <Text style={[
+                    styles.chartTabText,
+                    { color: activeChartKey === 'SARVASHTAKAVARGA' ? '#FFD700' : '#BF360C' },
+                    activeChartKey === 'SARVASHTAKAVARGA' && styles.chartTabTextActive
+                  ]}>
+                    {loc.sarvashtakavargaTab || (isHi ? '📊 सर्वाष्टकवर्ग' : '📊 Sarvashtakavarga')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={[styles.chartTabBtn, activeChartKey === 'MOON' && styles.chartTabBtnActive]}
                   onPress={() => setActiveChartKey('MOON')}
                 >
@@ -611,8 +630,12 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                 </TouchableOpacity>
               </ScrollView>
 
-              {/* Chart Graphic Box */}
-              {activeChart && (
+              {activeChartKey === 'SARVASHTAKAVARGA' ? (
+                <SarvashtakavargaView kundali={kundali} />
+              ) : (
+                <>
+                  {/* Chart Graphic Box */}
+                  {activeChart && (
                 <View style={styles.chartGraphicBox}>
                   <View style={styles.chartGraphicHeaderRow}>
                     <Text style={styles.chartGraphicTitle}>{activeChart.title}</Text>
@@ -865,9 +888,11 @@ export const BirthChartModal: React.FC<BirthChartModalProps> = ({
                         <Text style={styles.magicBtnArrow}>➔</Text>
                       </View>
                     </TouchableOpacity>
-
-                  </View>
+                  </>
                 )}
+
+              </View>
+            )}
               </ScrollView>
             </SafeAreaView>
 
@@ -1591,7 +1616,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chartTabsScroll: {
-    flexDirection: 'row',
     marginBottom: 12,
   },
   chartTabBtn: {

@@ -19,6 +19,7 @@ export interface AstrologyLocalization {
   d2Hora: string;
   d9Navamsha: string;
   d10Dashamsha: string;
+  sarvashtakavargaTab?: string;
   westernNatal: string;
   russianCosmogram: string;
   thaiSuryayatra: string;
@@ -73,6 +74,7 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     d2Hora: 'D2 Hora (Wealth)',
     d9Navamsha: 'D9 Navamsha',
     d10Dashamsha: 'D10 Dashamsha',
+    sarvashtakavargaTab: '📊 Sarvashtakavarga',
     westernNatal: '🌌 Western Natal',
     russianCosmogram: '🪆 Russian Cosmogram',
     thaiSuryayatra: '🛕 Thai Suryayatra',
@@ -122,6 +124,7 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     d2Hora: 'D2 होरा (धन)',
     d9Navamsha: 'D9 नवमांश',
     d10Dashamsha: 'D10 दशमांश',
+    sarvashtakavargaTab: '📊 सर्वाष्टकवर्ग',
     westernNatal: '🌌 पाश्चात्य जन्मपत्री',
     russianCosmogram: '🪆 रूसी कॉस्मोग्राम',
     thaiSuryayatra: '🛕 थाई सूर्ययात्र',
@@ -171,6 +174,7 @@ export const ASTROLOGY_LOCALIZATION: Record<LanguageCode, AstrologyLocalization>
     d2Hora: 'D2 હોરા (ધન)',
     d9Navamsha: 'D9 નવમાંશ',
     d10Dashamsha: 'D10 દશમાંશ',
+    sarvashtakavargaTab: '📊 સર્વાષ્ટકવર્ગ',
     westernNatal: '🌌 પશ્ચિમી નેટલ ચાર્ટ',
     russianCosmogram: '🪆 રશિયન કોસ્મોગ્રામ',
     thaiSuryayatra: '🛕 થાઈ સૂર્યયાત્રા',
