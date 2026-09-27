@@ -15,6 +15,7 @@ import { LalKitabModal } from '../components/LalKitabModal';
 import { NavtaraModal } from '../components/NavtaraModal';
 import { KotaChakraModal } from '../components/KotaChakraModal';
 import { PaintBrushHeader } from '../components/PaintBrushHeader';
+import { VedicDimensionsWidget } from '../components/VedicDimensionsWidget';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
@@ -131,6 +132,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </View>
           </View>
         </View>
+
+        {/* 1.5 ⭐ Vedic Dimensions (Real-Time Precision: Choghadiya Countdown & Graha Sthiti) */}
+        <VedicDimensionsWidget
+          panchang={panchang}
+          onPressChoghadiya={() => toggleSection('CHOGHADIYA')}
+          onPressPlanets={() => toggleSection('PLANETS')}
+        />
 
         {/* 2. Popular Features Section Header */}
         <View style={styles.popularHeaderRow}>
@@ -281,7 +289,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           {/* ☸️ Section 5.5: Jain Calendar & Panchang (જૈન પંચાંગ અને કૅલેન્ડર) */}
           <TouchableOpacity
-            style={[styles.featureCardContainer, { backgroundColor: '#FFF8E7', borderColor: '#FFE082', borderWidth: 1.5 }]}
+            style={[styles.featureCardContainer, { backgroundColor: '#26060B', borderColor: 'rgba(255, 215, 0, 0.35)', borderWidth: 1.2 }]}
             onPress={() => setShowJainCalendarModal(true)}
             activeOpacity={0.8}
           >
@@ -289,51 +297,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <View style={styles.featureHeaderLeft}>
                 <Text style={styles.featureIcon}>☸️</Text>
                 <View style={{ flex: 1, paddingRight: 6 }}>
-                  <View style={[styles.titleRow, { flexWrap: 'wrap', gap: 4 }]}>
-                    <Text style={[styles.featureTitle, { color: '#800000', fontWeight: 'bold', flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit>
+                  <View style={[styles.titleRow, { flexWrap: 'wrap', gap: 6, alignItems: 'center' }]}>
+                    <Text style={[styles.featureTitle, { color: '#FFF8E7', fontWeight: 'bold', flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit>
                       જૈન પંચાંગ અને કૅલેન્ડર
                     </Text>
-                    <View style={[styles.comingSoonBadge, { backgroundColor: '#800000', marginLeft: 0 }]}>
-                      <Text style={[styles.comingSoonText, { color: '#FFE082' }]}>જૈન વિધિ</Text>
+                    <View style={[styles.comingSoonBadge, { backgroundColor: '#FFD700', borderColor: '#FFD700', marginLeft: 0 }]}>
+                      <Text style={[styles.comingSoonText, { color: '#210206' }]}>જૈન વિધિ</Text>
                     </View>
                   </View>
-                  <Text style={[styles.featureSub, { color: '#5D4037' }]} numberOfLines={1} adjustsFontSizeToFit>
+                  <Text style={[styles.featureSub, { color: '#E6C280' }]} numberOfLines={1} adjustsFontSizeToFit>
                     વીર નિર્વાણ સંવત ૨૫૫૧ • પચ્ચક્ખાણ • જૈન પર્વ અને વિધિ
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.expandArrow, { color: '#800000' }]}>➔</Text>
+              <Text style={[styles.expandArrow, { color: '#FFD700' }]}>➔</Text>
             </View>
           </TouchableOpacity>
 
-          {/* Section 6 (Future Expansion): Western Astrology - Kept in code, hidden from screen */}
-          {/*
-          <View style={styles.featureCardContainer}>
-            <TouchableOpacity
-              style={styles.featureHeaderDisabled}
-              activeOpacity={0.9}
-            >
-              <View style={styles.featureHeaderLeft}>
-                <Text style={styles.featureIcon}>🌌</Text>
-                <View>
-                  <View style={styles.titleRow}>
-                    <Text style={styles.featureTitleMuted}>Western Astrology & Natal Chart</Text>
-                    <View style={styles.comingSoonBadge}>
-                      <Text style={styles.comingSoonText}>{t('comingSoon')}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.featureSubMuted}>
-                    Tropical zodiac placements, house cusps & synastry
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-          */}
-
           {/* Section 7: AI Kundli Details */}
           <TouchableOpacity
-            style={[styles.featureCardContainer, { backgroundColor: '#FFF5F5', borderColor: '#FEB2B2', borderWidth: 1.5 }]}
+            style={[styles.featureCardContainer, { backgroundColor: '#26060B', borderColor: 'rgba(255, 215, 0, 0.35)', borderWidth: 1.2 }]}
             onPress={() => setShowLalKitabModal(true)}
             activeOpacity={0.8}
           >
@@ -341,20 +324,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <View style={styles.featureHeaderLeft}>
                 <Text style={styles.featureIcon}>📕</Text>
                 <View>
-                  <View style={styles.titleRow}>
-                    <Text style={[styles.featureTitle, { color: '#9B2C2C', fontWeight: 'bold' }]}>
+                  <View style={[styles.titleRow, { gap: 6, alignItems: 'center' }]}>
+                    <Text style={[styles.featureTitle, { color: '#FFF8E7', fontWeight: 'bold' }]}>
                       {showHindiScript ? 'AI Kundli Details' : 'AI Kundli Details'}
                     </Text>
-                    <View style={[styles.comingSoonBadge, { backgroundColor: '#DD6B20' }]}>
+                    <View style={[styles.comingSoonBadge, { backgroundColor: '#FF8F00', borderColor: '#FFA000' }]}>
                       <Text style={[styles.comingSoonText, { color: '#FFFFFF' }]}>LIVE</Text>
                     </View>
                   </View>
-                  <Text style={[styles.featureSub, { color: '#742A2A' }]}>
+                  <Text style={[styles.featureSub, { color: '#E6C280' }]}>
                     Saturn 1-5-9 Trine Timeline, Ketu Breaks & Remedies
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.expandArrow, { color: '#9B2C2C' }]}>➔</Text>
+              <Text style={[styles.expandArrow, { color: '#FFD700' }]}>➔</Text>
             </View>
           </TouchableOpacity>
 
@@ -461,19 +444,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.creamBg,
+    backgroundColor: '#170205',
   },
   scrollContent: {
     paddingBottom: 40,
   },
   heroCard: {
-    backgroundColor: Colors.maroon,
-    borderRadius: 20,
+    backgroundColor: '#26060B',
+    borderRadius: 22,
     padding: 16,
     marginHorizontal: 16,
     marginTop: 14,
     marginBottom: 14,
-    elevation: 4,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 215, 0, 0.28)',
+    elevation: 6,
+    shadowColor: 'rgba(255, 215, 0, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
   },
   heroTop: {
     flexDirection: 'row',
@@ -483,16 +472,16 @@ const styles = StyleSheet.create({
   heroTithiName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#FFF8E7',
   },
   heroPakshaText: {
     fontSize: 12,
-    color: '#FFE0B2',
+    color: '#E6C280',
     marginTop: 2,
     fontWeight: '500',
   },
   heroActiveTag: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 215, 0, 0.16)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -508,9 +497,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.28)',
     borderRadius: 14,
     padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(230, 194, 128, 0.14)',
   },
   astroItem: {
     alignItems: 'center',
@@ -520,14 +511,14 @@ const styles = StyleSheet.create({
   },
   astroLabel: {
     fontSize: 10,
-    color: '#FFE0B2',
+    color: '#C8B89E',
     marginTop: 2,
     fontWeight: '600',
   },
   astroVal: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#FFF8E7',
     marginTop: 2,
   },
 
@@ -540,11 +531,11 @@ const styles = StyleSheet.create({
   popularHeaderTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.maroon,
+    color: '#FFF8E7',
   },
   popularHeaderSub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: '#E6C280',
     marginTop: 2,
   },
 
@@ -554,29 +545,33 @@ const styles = StyleSheet.create({
   },
   featureCardContainer: {
     marginBottom: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.cardBg,
-    elevation: 2,
+    borderColor: 'rgba(255, 215, 0, 0.22)',
+    backgroundColor: '#26060B',
+    elevation: 4,
+    shadowColor: 'rgba(255, 215, 0, 0.12)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
   },
   featureHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 14,
-    backgroundColor: '#FAF5EE',
-    borderRadius: 16,
+    backgroundColor: '#26060B',
+    borderRadius: 20,
   },
   featureHeaderActive: {
-    backgroundColor: Colors.maroon,
+    backgroundColor: '#350A12',
   },
   featureHeaderDisabled: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 14,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#1F060A',
   },
   featureHeaderLeft: {
     flexDirection: 'row',
@@ -594,7 +589,7 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: Colors.textPrimary,
+    color: '#FFF8E7',
   },
   featureTitleActive: {
     color: '#FFD700',
@@ -602,30 +597,30 @@ const styles = StyleSheet.create({
   featureTitleMuted: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.textMuted,
+    color: '#8C676E',
   },
   featureSub: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: '#C8B89E',
     marginTop: 2,
   },
   featureSubActive: {
-    color: '#FFE0B2',
+    color: '#E6C280',
   },
   featureSubMuted: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: '#8C676E',
     marginTop: 2,
   },
   expandArrow: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.maroon,
+    color: '#FFD700',
     marginLeft: 8,
   },
   comingSoonBadge: {
-    backgroundColor: '#FFF3E0',
-    borderColor: '#FFB74D',
+    backgroundColor: 'rgba(255, 215, 0, 0.18)',
+    borderColor: '#FFD700',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 6,
@@ -635,17 +630,17 @@ const styles = StyleSheet.create({
   comingSoonText: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#E65100',
+    color: '#FFD700',
   },
   featureBody: {
     paddingTop: 8,
     paddingBottom: 12,
-    backgroundColor: Colors.creamBg,
+    backgroundColor: '#1E0509',
   },
   sectionHeaderTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: Colors.maroon,
+    color: '#FFF8E7',
     marginHorizontal: 16,
     marginTop: 6,
     marginBottom: 4,
@@ -674,44 +669,44 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#26060B',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#FFF3E0',
+    elevation: 6,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    borderWidth: 2,
+    borderColor: '#FFD700',
   },
   explore3DIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
   },
   newBadgeChip: {
     position: 'absolute',
     top: -2,
     right: -4,
-    backgroundColor: '#E53935',
+    backgroundColor: '#FFD700',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: '#210206',
     elevation: 3,
   },
   newBadgeText: {
     fontSize: 8,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: '#210206',
     letterSpacing: 0.2,
   },
   exploreItemTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#212121',
+    color: '#FFF8E7',
     textAlign: 'center',
     lineHeight: 17,
   },

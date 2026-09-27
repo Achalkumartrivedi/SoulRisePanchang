@@ -368,7 +368,7 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.maroon} />
+      <StatusBar barStyle="light-content" backgroundColor="#170205" />
 
       <View style={styles.contentArea}>
         {activeTab === 'TODAY' && (
@@ -506,32 +506,34 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#170205',
   },
   contentArea: {
     flex: 1,
-    backgroundColor: Colors.creamBg,
+    backgroundColor: '#170205',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: Colors.cardBg,
+    backgroundColor: '#26060B',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingVertical: 6,
+    borderTopColor: 'rgba(255, 215, 0, 0.28)',
+    paddingVertical: 8,
     paddingBottom: 8,
-    elevation: 8,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 10,
+    shadowColor: 'rgba(255, 215, 0, 0.22)',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
+    borderRadius: 14,
   },
   tabItemActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
     transform: [{ scale: 1.05 }],
   },
   tabIcon: {
@@ -541,10 +543,10 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: Colors.textMuted,
+    color: '#8C676E',
   },
   tabLabelActive: {
-    color: Colors.maroon,
+    color: '#FFD700',
     fontWeight: 'bold',
   },
 });
