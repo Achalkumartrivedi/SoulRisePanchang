@@ -100,6 +100,182 @@ export interface HouseSAVDiagnostic {
   isEffortHeavy: boolean;
 }
 
+export interface PurusharthaTrikonaItem {
+  id: 'DHARMA' | 'ARTHA' | 'KAMA' | 'MOKSHA';
+  nameEn: string;
+  nameHi: string;
+  nameGu: string;
+  houses: number[];
+  elementEn: string;
+  elementHi: string;
+  elementGu: string;
+  directionEn: string;
+  directionHi: string;
+  directionGu: string;
+  points: number;
+  benchmark: number; // 84
+  diffFromBenchmark: number;
+  percentage: number;
+  status: 'DOMINANT' | 'BALANCED' | 'DEFICIENT';
+  descriptionEn: string;
+  descriptionHi: string;
+  descriptionGu: string;
+}
+
+export interface DirectionalRelocationAnalysis {
+  eastPoints: number;
+  southPoints: number;
+  westPoints: number;
+  northPoints: number;
+  bestDirection: 'EAST' | 'SOUTH' | 'WEST' | 'NORTH';
+  bestDirectionEn: string;
+  bestDirectionHi: string;
+  bestDirectionGu: string;
+  vulnerableDirection: 'EAST' | 'SOUTH' | 'WEST' | 'NORTH';
+  vulnerableDirectionEn: string;
+  vulnerableDirectionHi: string;
+  vulnerableDirectionGu: string;
+  citySectorRecommendationEn: string;
+  citySectorRecommendationHi: string;
+  citySectorRecommendationGu: string;
+  vastuRecommendationEn: string;
+  vastuRecommendationHi: string;
+  vastuRecommendationGu: string;
+}
+
+export interface SadeSatiSAVPhase {
+  phaseNumber: 1 | 2 | 3;
+  titleEn: string;
+  titleHi: string;
+  titleGu: string;
+  relativeHouseEn: string;
+  relativeHouseHi: string;
+  houseNumber: number;
+  rashiIndex: number;
+  rashiNameEn: string;
+  rashiNameHi: string;
+  rashiNameGu: string;
+  savPoints: number;
+  saturnBavPoints: number;
+  statusEn: string;
+  statusHi: string;
+  isVulnerable: boolean;
+}
+
+export interface SadeSatiSAVAnalysis {
+  moonHouse: number;
+  moonRashiIndex: number;
+  moonRashiNameEn: string;
+  moonRashiNameHi: string;
+  moonRashiNameGu: string;
+  phases: SadeSatiSAVPhase[];
+  total3SignPoints: number;
+  benchmark: number; // 84
+  classification: 'CONSTRUCTIVE_ELEVATION' | 'MODERATE_PROGRESS' | 'HIGH_FRICTION_RESTRUCTURING';
+  titleEn: string;
+  titleHi: string;
+  titleGu: string;
+  descriptionEn: string;
+  descriptionHi: string;
+  descriptionGu: string;
+}
+
+export interface LifeVerticalsAnalysis {
+  jobVsBusiness: {
+    h6Points: number;
+    h10Points: number;
+    verdict: 'EMPLOYMENT_PREFERRED' | 'BUSINESS_PREFERRED' | 'HYBRID_CAPABLE';
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+  executionVsLuck: {
+    h9Points: number;
+    h10Points: number;
+    verdict: 'SELF_EFFORT_DRIVEN' | 'LUCK_SUPPORTED' | 'BALANCED';
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+  wealthLock: {
+    h2Points: number;
+    h11Points: number;
+    isLocked: boolean;
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+  marriageAgency: {
+    h1Points: number;
+    h7Points: number;
+    h2Points: number;
+    h7RangeStatus: 'HEALTHY' | 'INSTABILITY_RISK' | 'OVER_EXPANDED';
+    relationalAgency: 'SELF_AUTONOMY' | 'PARTNER_DOMINANT' | 'EQUAL_PARTNERSHIP';
+    isTransactionalWarning: boolean;
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+  domesticAndYogas: {
+    h4Points: number;
+    h5Points: number;
+    h6Points: number;
+    h12Points: number;
+    hasDomesticPeace: boolean;
+    hasTripleCrownYoga: boolean;
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+}
+
+export interface QuantumJumpTransition {
+  fromHouse: number;
+  toHouse: number;
+  fromPoints: number;
+  toPoints: number;
+  delta: number;
+  type: 'ROCKET' | 'CLIFF';
+  titleEn: string;
+  titleHi: string;
+  titleGu: string;
+  descriptionEn: string;
+  descriptionHi: string;
+  descriptionGu: string;
+}
+
+export interface EighthFromStabilityItem {
+  referenceHouse: number;
+  referenceNameEn: string;
+  referenceNameHi: string;
+  referencePoints: number;
+  vulnerabilityHouse: number;
+  vulnerabilityNameEn: string;
+  vulnerabilityNameHi: string;
+  vulnerabilityPoints: number;
+  deltaStability: number;
+  status: 'STABLE_SHIELDED' | 'NEUTRAL' | 'CRITICAL_VULNERABILITY';
+  destabilizingFactorEn: string;
+  destabilizingFactorHi: string;
+  recommendationEn: string;
+  recommendationHi: string;
+}
+
 export interface SarvashtakavargaResult {
   totalPoints: number; // Invariant 337
   averagePerHouse: number; // 28.08
@@ -134,6 +310,12 @@ export interface SarvashtakavargaResult {
       explanationHi: string;
     };
   };
+  purusharthaTrikonas: PurusharthaTrikonaItem[];
+  directionalRelocation: DirectionalRelocationAnalysis;
+  sadeSatiAnalysis: SadeSatiSAVAnalysis;
+  lifeVerticals: LifeVerticalsAnalysis;
+  quantumJumps: QuantumJumpTransition[];
+  eighthFromStability: EighthFromStabilityItem[];
 }
 
 // Classical Parashari BPHS Bhinnashtakavarga (BAV) Rules
@@ -221,6 +403,12 @@ const RASHI_NAMES_HI = [
   'मेष', 'वृषभ', 'मिथुन', 'कर्क',
   'सिंह', 'कन्या', 'तुला', 'वृश्चिक',
   'धनु', 'मकर', 'कुंभ', 'मीन'
+];
+
+const RASHI_NAMES_GU = [
+  'મેષ', 'વૃષભ', 'મિથુન', 'કર્ક',
+  'સિંહ', 'કન્યા', 'તુલા', 'વૃશ્ચિક',
+  'ધન', 'મકર', 'કુંભ', 'મીન'
 ];
 
 interface ClassicalHouseMeta {
@@ -658,6 +846,616 @@ export function calculateSarvashtakavarga(kundali: KundaliResult): Sarvashtakava
     ? `आपके त्रिक भावों (6ठे + 8वें + 12वें भाव) का कुल योग ${dusthanaSum} अंक है, जो शास्त्रीय 76-अंक की सीमा से कम है। कानूनी विवाद, अप्रत्याशित हानियाँ और लंबी बीमारियाँ आपके जीवन को आसानी से अस्थिर नहीं कर सकतीं।`
     : `आपके त्रिक भावों (6ठे + 8वें + 12वें भाव) का कुल योग ${dusthanaSum} अंक है, जो 76 अंक से अधिक है। तनाव, पाचन स्वास्थ्य और कानूनी/व्यावसायिक समझौतों में पारदर्शिता और नियमित स्वास्थ्य दिनचर्या बनाए रखना आवश्यक है।`;
 
+  // 1. Purushartha Trikonas & Directional Vector
+  const dharmaPoints = houses[0].points + houses[4].points + houses[8].points; // 1, 5, 9
+  const arthaPoints = houses[1].points + houses[5].points + houses[9].points; // 2, 6, 10
+  const kamaPoints = houses[2].points + houses[6].points + houses[10].points; // 3, 7, 11
+  const mokshaPoints = houses[3].points + houses[7].points + houses[11].points; // 4, 8, 12
+
+  const purusharthaTrikonas: PurusharthaTrikonaItem[] = [
+    {
+      id: 'DHARMA',
+      nameEn: 'Dharma Trikona (Self & Ethics)',
+      nameHi: 'धर्म त्रिकोण (आदर्श, विवेक व भाग्य)',
+      nameGu: 'ધર્મ ત્રિકોણ (આદર્શ, વિવેક અને ભાગ્ય)',
+      houses: [1, 5, 9],
+      elementEn: 'Fire',
+      elementHi: 'अग्नि तत्व',
+      elementGu: 'અગ્નિ તત્વ',
+      directionEn: 'East',
+      directionHi: 'पूर्व',
+      directionGu: 'પૂર્વ',
+      points: dharmaPoints,
+      benchmark: 84,
+      diffFromBenchmark: dharmaPoints - 84,
+      percentage: Math.round((dharmaPoints / 337) * 1000) / 10,
+      status: dharmaPoints >= 88 ? 'DOMINANT' : dharmaPoints >= 80 ? 'BALANCED' : 'DEFICIENT',
+      descriptionEn: dharmaPoints >= 84
+        ? `Robust moral compass, intuitive intellect, and protective Purva Punya (+${dharmaPoints - 84} pts vs benchmark).`
+        : `Requires deliberate ethical grounding and active cultivation of spiritual mentorship (${dharmaPoints} pts).`,
+      descriptionHi: dharmaPoints >= 84
+        ? `उच्च नैतिक बल, दूरदर्शी बुद्धि और पूर्व-पुण्य का स्वाभाविक संरक्षण (मानक से +${dharmaPoints - 84} अंक अधिक)।`
+        : `आदर्शों, विवेक और आध्यात्मिक मार्गदर्शन को सचेत रूप से सुदृढ़ करने की आवश्यकता (${dharmaPoints} अंक)।`,
+      descriptionGu: dharmaPoints >= 84
+        ? `ઉચ્ચ નૈતિક બળ, દીર્ઘદ્રષ્ટિ અને પૂર્વ પુણ્યનું કુદરતી રક્ષણ (માનકથી +${dharmaPoints - 84} અંક વધુ).`
+        : `વિવેક અને આધ્યાત્મિક માર્ગદર્શનને સજાગતાથી મજબૂત કરવાની જરૂર (${dharmaPoints} અંક).`
+    },
+    {
+      id: 'ARTHA',
+      nameEn: 'Artha Trikona (Wealth & Career)',
+      nameHi: 'अर्थ त्रिकोण (धन, कर्म व साधन)',
+      nameGu: 'અર્થ ત્રિકોણ (ધન, કર્મ અને સાધન)',
+      houses: [2, 6, 10],
+      elementEn: 'Earth',
+      elementHi: 'पृथ्वी तत्व',
+      elementGu: 'પૃથ્વી તત્વ',
+      directionEn: 'South',
+      directionHi: 'दक्षिण',
+      directionGu: 'દક્ષિણ',
+      points: arthaPoints,
+      benchmark: 84,
+      diffFromBenchmark: arthaPoints - 84,
+      percentage: Math.round((arthaPoints / 337) * 1000) / 10,
+      status: arthaPoints >= 88 ? 'DOMINANT' : arthaPoints >= 80 ? 'BALANCED' : 'DEFICIENT',
+      descriptionEn: arthaPoints >= 84
+        ? `High economic efficiency, disciplined enterprise, and sustained professional stamina (+${arthaPoints - 84} pts).`
+        : `Financial consolidation requires systematic effort, budget automation, and resilience (${arthaPoints} pts).`,
+      descriptionHi: arthaPoints >= 84
+        ? `प्रबल आर्थिक क्षमता, व्यावहारिक कार्यशैली और सतत व्यावसायिक स्थिरता (मानक से +${arthaPoints - 84} अंक अधिक)।`
+        : `वित्तीय संचय व व्यावसायिक स्थायित्व के लिए सुनियोजित बजट और निरंतर अनुशासन जरूरी (${arthaPoints} अंक)।`,
+      descriptionGu: arthaPoints >= 84
+        ? `પ્રબળ આર્થિક ક્ષમતા અને સતત વ્યાવસાયિક સ્થિરતા (માનકથી +${arthaPoints - 84} અંક વધુ).`
+        : `નાણાકીય બચત અને વ્યાવસાયિક સ્થિરતા માટે આયોજનબદ્ધ શિસ્ત જરૂરી (${arthaPoints} અંક).`
+    },
+    {
+      id: 'KAMA',
+      nameEn: 'Kama Trikona (Desire & Network)',
+      nameHi: 'काम त्रिकोण (आकांक्षा, संबंध व लाभ)',
+      nameGu: 'કામ ત્રિકોણ (આકાંક્ષા, સંબંધ અને લાભ)',
+      houses: [3, 7, 11],
+      elementEn: 'Air',
+      elementHi: 'वायु तत्व',
+      elementGu: 'વાયુ તત્વ',
+      directionEn: 'West',
+      directionHi: 'पश्चिम',
+      directionGu: 'પશ્ચિમ',
+      points: kamaPoints,
+      benchmark: 84,
+      diffFromBenchmark: kamaPoints - 84,
+      percentage: Math.round((kamaPoints / 337) * 1000) / 10,
+      status: kamaPoints >= 88 ? 'DOMINANT' : kamaPoints >= 80 ? 'BALANCED' : 'DEFICIENT',
+      descriptionEn: kamaPoints >= 84
+        ? `Strong social influence, entrepreneurial courage, and fruitful relationship monetization (+${kamaPoints - 84} pts).`
+        : `Partnerships and commercial ambitions require structured negotiations and patient nurturing (${kamaPoints} pts).`,
+      descriptionHi: kamaPoints >= 84
+        ? `सशक्त सामाजिक प्रभाव, व्यावसायिक साहस और संपर्कों से प्रचुर लाभ (मानक से +${kamaPoints - 84} अंक अधिक)।`
+        : `साझेदारी और महत्वाकांक्षाओं में धैर्यपूर्वक अनुबंध और संबंधों को समय देने की आवश्यकता (${kamaPoints} अंक)।`,
+      descriptionGu: kamaPoints >= 84
+        ? `મજબૂત સામાજિક પ્રભાવ અને ભાગીદારીથી ઉત્તમ લાભ (માનકથી +${kamaPoints - 84} અંક વધુ).`
+        : `સંબંધો અને આકાંક્ષાઓમાં ધીરજપૂર્વક યોજના બનાવવી જરૂરી (${kamaPoints} અંક).`
+    },
+    {
+      id: 'MOKSHA',
+      nameEn: 'Moksha Trikona (Peace & Liberation)',
+      nameHi: 'मोक्ष त्रिकोण (शांति, साधना व वैराग्य)',
+      nameGu: 'મોક્ષ ત્રિકોણ (શાંતિ, સાધના અને મુક્તિ)',
+      houses: [4, 8, 12],
+      elementEn: 'Water',
+      elementHi: 'जल तत्व',
+      elementGu: 'જળ તત્વ',
+      directionEn: 'North',
+      directionHi: 'उत्तर',
+      directionGu: 'ઉત્તર',
+      points: mokshaPoints,
+      benchmark: 84,
+      diffFromBenchmark: mokshaPoints - 84,
+      percentage: Math.round((mokshaPoints / 337) * 1000) / 10,
+      status: mokshaPoints >= 88 ? 'DOMINANT' : mokshaPoints >= 80 ? 'BALANCED' : 'DEFICIENT',
+      descriptionEn: mokshaPoints >= 84
+        ? `Deep psychological tranquility, natural intuition, restorative sleep, and peaceful later life (+${mokshaPoints - 84} pts).`
+        : `Prioritize stress detox, mindfulness, quality rest, and emotional boundary setting (${mokshaPoints} pts).`,
+      descriptionHi: mokshaPoints >= 84
+        ? `गहरी आंतरिक शांति, तीव्र अंतर्ज्ञान, सुखद निद्रा और आध्यात्मिक संतोष (मानक से +${mokshaPoints - 84} अंक अधिक)।`
+        : `तनाव मुक्ति, ध्यान और भावनात्मक सीमाओं के संरक्षण पर विशेष ध्यान देना श्रेयस्कर रहेगा (${mokshaPoints} अंक)।`,
+      descriptionGu: mokshaPoints >= 84
+        ? `ઊંડી આંતરિક શાંતિ, ઉત્તમ ઊંઘ અને આધ્યાત્મિક સંતોષ (માનકથી +${mokshaPoints - 84} અંક વધુ).`
+        : `માનસિક શાંતિ અને નિયમિત આરામ પર ધ્યાન આપવું હિતાવહ રહેશે (${mokshaPoints} અંક).`
+    }
+  ];
+
+  // 2. Spatial Directional Alignment & Astro-Cartography
+  const dirScores: {
+    dir: 'EAST' | 'SOUTH' | 'WEST' | 'NORTH';
+    en: string;
+    hi: string;
+    gu: string;
+    pts: number;
+    trineEn: string;
+    trineHi: string;
+  }[] = [
+    { dir: 'EAST', en: 'East', hi: 'पूर्व', gu: 'પૂર્વ', pts: dharmaPoints, trineEn: 'Dharma', trineHi: 'धर्म' },
+    { dir: 'SOUTH', en: 'South', hi: 'दक्षिण', gu: 'દક્ષિણ', pts: arthaPoints, trineEn: 'Artha', trineHi: 'अर्थ' },
+    { dir: 'WEST', en: 'West', hi: 'पश्चिम', gu: 'પશ્ચિમ', pts: kamaPoints, trineEn: 'Kama', trineHi: 'काम' },
+    { dir: 'NORTH', en: 'North', hi: 'उत्तर', gu: 'ઉત્તર', pts: mokshaPoints, trineEn: 'Moksha', trineHi: 'मोक्ष' }
+  ];
+
+  const sortedDirs = [...dirScores].sort((a, b) => b.pts - a.pts);
+  const bestDir = sortedDirs[0];
+  const vulnerableDir = sortedDirs[sortedDirs.length - 1];
+
+  const directionalRelocation: DirectionalRelocationAnalysis = {
+    eastPoints: dharmaPoints,
+    southPoints: arthaPoints,
+    westPoints: kamaPoints,
+    northPoints: mokshaPoints,
+    bestDirection: bestDir.dir,
+    bestDirectionEn: bestDir.en,
+    bestDirectionHi: bestDir.hi,
+    bestDirectionGu: bestDir.gu,
+    vulnerableDirection: vulnerableDir.dir,
+    vulnerableDirectionEn: vulnerableDir.en,
+    vulnerableDirectionHi: vulnerableDir.hi,
+    vulnerableDirectionGu: vulnerableDir.gu,
+    citySectorRecommendationEn: `Your ${bestDir.en} direction is the most fruitful for you. Whichever place you choose to work, establish a business, or reside in your life—choosing the ${bestDir.en} sector of your chosen/staying/working city will be exceptionally beneficial, prosperous, and smooth for you.`,
+    citySectorRecommendationHi: `आपके लिए ${bestDir.hi} दिशा सर्वाधिक फलदायी और शुभ है। आप अपने जीवन में जिस भी शहर में काम, व्यवसाय या निवास चुनते हैं—उस शहर के ${bestDir.hi} क्षेत्र (${bestDir.en} Sector) को चुनना आपके लिए अत्यंत लाभकारी, समृद्ध और निर्बाध सफलता प्रदान करने वाला रहेगा।`,
+    citySectorRecommendationGu: `તમારા માટે ${bestDir.gu} દિશા સૌથી વધુ ફળદાયી અને શુભ છે. તમે તમારા જીવનમાં જે પણ શહેરમાં કામ, વ્યવસાય કે રહેવાનું પસંદ કરો છો—તે શહેરના ${bestDir.gu} ભાગ (${bestDir.en} Sector) ને પસંદ કરવો તમારા માટે અત્યંત લાભદાયી, સમૃદ્ધ અને અતિ ઉત્તમ રહેશે.`,
+    vastuRecommendationEn: `Position your primary work desk and bed in the ${bestDir.en} quadrant, face ${bestDir.en} during strategic work or study, and avoid key contracts or investments aligned strictly towards ${vulnerableDir.en} (${vulnerableDir.pts} pts).`,
+    vastuRecommendationHi: `कार्य या अध्ययन के समय अपना मुख ${bestDir.hi} की ओर रखें, अपने निवास या कार्यालय में प्रमुख केबिन ${bestDir.hi} भाग में बनाएं, तथा ${vulnerableDir.hi} दिशा (${vulnerableDir.pts} अंक) में महत्वपूर्ण वित्तीय निर्णयों से बचें।`,
+    vastuRecommendationGu: `કાર્ય કે અભ્યાસ કરતી વખતે મુખ ${bestDir.gu} તરફ રાખો, અને ઓફિસ/ઘરમાં મુખ્ય બેઠક ${bestDir.gu} ભાગમાં રાખો.`
+  };
+
+  // 3. Sade Sati SAV Stress-Test via Natal Moon
+  const moonRashi = planetRashiMap.Moon;
+  const moonHouseNum = ((moonRashi - lagnaRashi + 12) % 12) + 1;
+
+  const phase1Rashi = (moonRashi + 11) % 12;
+  const phase1House = ((moonHouseNum - 2 + 12) % 12) + 1;
+  const phase1Sav = savBySign[phase1Rashi];
+  const phase1SaturnBav = bav['Saturn'] ? bav['Saturn'][phase1Rashi] : 4;
+
+  const phase2Rashi = moonRashi;
+  const phase2House = moonHouseNum;
+  const phase2Sav = savBySign[phase2Rashi];
+  const phase2SaturnBav = bav['Saturn'] ? bav['Saturn'][phase2Rashi] : 4;
+
+  const phase3Rashi = (moonRashi + 1) % 12;
+  const phase3House = (moonHouseNum % 12) + 1;
+  const phase3Sav = savBySign[phase3Rashi];
+  const phase3SaturnBav = bav['Saturn'] ? bav['Saturn'][phase3Rashi] : 4;
+
+  const total3SignPoints = phase1Sav + phase2Sav + phase3Sav;
+
+  let ssClassification: 'CONSTRUCTIVE_ELEVATION' | 'MODERATE_PROGRESS' | 'HIGH_FRICTION_RESTRUCTURING' = 'MODERATE_PROGRESS';
+  let ssTitleEn = 'Moderate & Productive Transit';
+  let ssTitleHi = 'संतुलित एवं श्रमसाध्य साढ़ेसाती';
+  let ssTitleGu = 'સંતુલિત અને પરિશ્રમજન્ય સાડાસાતી';
+  let ssDescEn = `The 3 signs around your Moon hold ${total3SignPoints} points (Benchmark: 84). Saturn requires disciplined routines, but normal efforts yield consistent progress without acute crises.`;
+  let ssDescHi = `चंद्रमा के तीनों भावों का कुल योग ${total3SignPoints} बिंदु है (मानक: 84)। शनि आपसे नियमित अनुशासन की अपेक्षा करते हैं, पर सामान्य प्रयास से काम में निरंतर प्रगति बनी रहती है।`;
+  let ssDescGu = `ચંદ્રના ત્રણ ભાવોનો સરવાળો ${total3SignPoints} બિંદુ છે (માનક: 84). શનિ શિસ્તની અપેક્ષા રાખે છે અને સામાન્ય પ્રયાસોથી પ્રગતિ શક્ય બને છે.`;
+
+  if (total3SignPoints >= 88) {
+    ssClassification = 'CONSTRUCTIVE_ELEVATION';
+    ssTitleEn = 'Constructive Elevation & Asset Growth (Fortified)';
+    ssTitleHi = 'कल्याणकारी व पदोन्नति प्रदाता साढ़ेसाती (सुरक्षित)';
+    ssTitleGu = 'કલ્યાણકારી અને પદોન્નતિ આપનાર સાડાસાતી';
+    ssDescEn = `Exceptional 3-sign score of ${total3SignPoints} points (>>84 benchmark). Saturn acts as a constructive builder—bringing institutional leadership, durable property acquisition, and public maturity rather than hardships.`;
+    ssDescHi = `चंद्रमा के तीनों भावों का कुल योग ${total3SignPoints} अंक अत्यंत श्रेष्ठ है (मानक 84 से बहुत अधिक)। शनि यहाँ कष्ट देने के बजाय प्रशासनिक सम्मान, स्थायी संपत्ति और अधिकार प्रदान करते हैं।`;
+    ssDescGu = `ચંદ્રના ત્રણ ભાવોનો સરવાળો ${total3SignPoints} અંક અત્યંત શ્રેષ્ઠ છે. શનિ અહીં કષ્ટને બદલે વહીવટી સન્માન અને સ્થાયી સંપત્તિ આપે છે.`;
+  } else if (total3SignPoints <= 77 || phase1Sav <= 22 || phase2Sav <= 22 || phase3Sav <= 22) {
+    ssClassification = 'HIGH_FRICTION_RESTRUCTURING';
+    ssTitleEn = 'Vulnerable Stress-Test (Restructuring Phase)';
+    ssTitleHi = 'संवेदनशील व सतर्कता योग्य साढ़ेसाती';
+    ssTitleGu = 'સંવેદનશીલ અને સાવધાની રાખવા જેવી સાડાસાતી';
+    ssDescEn = `Score of ${total3SignPoints} points (<80 baseline) or specific sign deficiency. Saturn demands defensive pacing, health vigilance, debt avoidance, and spiritual remedies to buffer against acute stress.`;
+    ssDescHi = `कुल योग ${total3SignPoints} अंक (मानक 84 से कम) या किसी भाव में कमी है। शनि के इस गोचर में स्वास्थ्य, कर्ज से बचाव और धैर्यवान रक्षात्मक नीति अपनाना अत्यंत अनिवार्य है।`;
+    ssDescGu = `સરવાળો ${total3SignPoints} અંક ઓછો છે. શનિના આ ગોચરમાં સ્વાસ્થ્ય અને ધીરજ રાખવી અનિવાર્ય છે.`;
+  }
+
+  const sadeSatiAnalysis: SadeSatiSAVAnalysis = {
+    moonHouse: moonHouseNum,
+    moonRashiIndex: moonRashi,
+    moonRashiNameEn: RASHI_NAMES_EN[moonRashi],
+    moonRashiNameHi: RASHI_NAMES_HI[moonRashi],
+    moonRashiNameGu: RASHI_NAMES_GU[moonRashi],
+    phases: [
+      {
+        phaseNumber: 1,
+        titleEn: 'Rising Phase (1st Dhaiya - 12th from Moon)',
+        titleHi: 'उदय चरण (प्रथम ढैय्या - चंद्र से 12वां भाव)',
+        titleGu: 'પ્રથમ ઢૈય્યા (ચંદ્રથી 12મો ભાવ)',
+        relativeHouseEn: '12th from Moon',
+        relativeHouseHi: 'चंद्र से 12वां',
+        houseNumber: phase1House,
+        rashiIndex: phase1Rashi,
+        rashiNameEn: RASHI_NAMES_EN[phase1Rashi],
+        rashiNameHi: RASHI_NAMES_HI[phase1Rashi],
+        rashiNameGu: RASHI_NAMES_GU[phase1Rashi],
+        savPoints: phase1Sav,
+        saturnBavPoints: phase1SaturnBav,
+        statusEn: phase1Sav >= 30 ? 'Protected' : phase1Sav >= 25 ? 'Moderate' : 'High Friction',
+        statusHi: phase1Sav >= 30 ? 'श्रेष्ठ / सुरक्षित' : phase1Sav >= 25 ? 'मध्यम' : 'कठिन / सतर्क',
+        isVulnerable: phase1Sav <= 22 || phase1SaturnBav <= 2
+      },
+      {
+        phaseNumber: 2,
+        titleEn: 'Peak Phase (2nd Dhaiya - Moon Sign / 1st House)',
+        titleHi: 'शिखर चरण (द्वितीय ढैय्या - जन्म चंद्र राशि)',
+        titleGu: 'દ્વિતીય ઢૈય્યા (જન્મ ચંદ્ર રાશિ)',
+        relativeHouseEn: '1st (Natal Moon)',
+        relativeHouseHi: 'जन्म चंद्र राशि',
+        houseNumber: phase2House,
+        rashiIndex: phase2Rashi,
+        rashiNameEn: RASHI_NAMES_EN[phase2Rashi],
+        rashiNameHi: RASHI_NAMES_HI[phase2Rashi],
+        rashiNameGu: RASHI_NAMES_GU[phase2Rashi],
+        savPoints: phase2Sav,
+        saturnBavPoints: phase2SaturnBav,
+        statusEn: phase2Sav >= 30 ? 'Protected' : phase2Sav >= 25 ? 'Moderate' : 'High Friction',
+        statusHi: phase2Sav >= 30 ? 'श्रेष्ठ / सुरक्षित' : phase2Sav >= 25 ? 'मध्यम' : 'कठिन / सतर्क',
+        isVulnerable: phase2Sav <= 22 || phase2SaturnBav <= 2
+      },
+      {
+        phaseNumber: 3,
+        titleEn: 'Setting Phase (3rd Dhaiya - 2nd from Moon)',
+        titleHi: 'अस्त चरण (तृतीय ढैय्या - चंद्र से 2रा भाव)',
+        titleGu: 'તૃતીય ઢૈય્યા (ચંદ્રથી 2જો ભાવ)',
+        relativeHouseEn: '2nd from Moon',
+        relativeHouseHi: 'चंद्र से 2रा',
+        houseNumber: phase3House,
+        rashiIndex: phase3Rashi,
+        rashiNameEn: RASHI_NAMES_EN[phase3Rashi],
+        rashiNameHi: RASHI_NAMES_HI[phase3Rashi],
+        rashiNameGu: RASHI_NAMES_GU[phase3Rashi],
+        savPoints: phase3Sav,
+        saturnBavPoints: phase3SaturnBav,
+        statusEn: phase3Sav >= 30 ? 'Protected' : phase3Sav >= 25 ? 'Moderate' : 'High Friction',
+        statusHi: phase3Sav >= 30 ? 'श्रेष्ठ / सुरक्षित' : phase3Sav >= 25 ? 'मध्यम' : 'कठिन / सतर्क',
+        isVulnerable: phase3Sav <= 22 || phase3SaturnBav <= 2
+      }
+    ],
+    total3SignPoints,
+    benchmark: 84,
+    classification: ssClassification,
+    titleEn: ssTitleEn,
+    titleHi: ssTitleHi,
+    titleGu: ssTitleGu,
+    descriptionEn: ssDescEn,
+    descriptionHi: ssDescHi,
+    descriptionGu: ssDescGu
+  };
+
+  // 4. Life Verticals & Structural Ratios
+  const h1Pts = houses[0].points;
+  const h4Pts = houses[3].points;
+  const h5Pts = houses[4].points;
+  const h7Pts = houses[6].points;
+  const h9Pts = houses[8].points;
+
+  // 4A. Job vs Business (6th vs 10th)
+  let jvbVerdict: 'EMPLOYMENT_PREFERRED' | 'BUSINESS_PREFERRED' | 'HYBRID_CAPABLE' = 'HYBRID_CAPABLE';
+  let jvbTitleEn = 'Versatile Hybrid Potential';
+  let jvbTitleHi = 'नौकरी एवं स्वतंत्र उद्यम में समान सामर्थ्य';
+  let jvbTitleGu = 'નોકરી અને વ્યવસાયમાં સમાન ક્ષમતા';
+  let jvbDescEn = `Both 6th House (${h6Pts} pts) and 10th House (${h10Pts} pts) have equal bindu capacity. You can thrive in corporate leadership as well as independent consulting.`;
+  let jvbDescHi = `आपके 6ठे भाव (${h6Pts} अंक) और 10वें भाव (${h10Pts} अंक) दोनों में समान बिंदु हैं। आप संस्थागत सेवा और स्वतंत्र परामर्श दोनों में सफल हो सकते हैं।`;
+  let jvbDescGu = `તમારા 6ઠા અને 10મા ભાવ બંનેમાં સમાન બિંદુ છે. તમે બંને ક્ષેત્રોમાં સફળ થઈ શકો છો.`;
+
+  if (h6Pts > h10Pts) {
+    jvbVerdict = 'EMPLOYMENT_PREFERRED';
+    jvbTitleEn = 'Corporate Employment & Service Excellence';
+    jvbTitleHi = 'संस्थागत सेवा, नौकरी व प्रतियोगिता में श्रेष्ठ';
+    jvbTitleGu = 'નોકરી અને સ્પર્ધાત્મક ક્ષેત્રે શ્રેષ્ઠ';
+    jvbDescEn = `6th House of service & competitive execution (${h6Pts} pts) surpasses 10th House (${h10Pts} pts). You excel when backed by an institutional infrastructure, corporate ladder, or structured organization.`;
+    jvbDescHi = `सेवा व प्रतियोगिता का 6ठा भाव (${h6Pts} अंक) 10वें भाव (${h10Pts} अंक) से अधिक है। किसी बड़ी कंपनी, सरकारी सेवा या संगठित तंत्र में कार्य करना आपके लिए अधिक फलदायी रहेगा।`;
+    jvbDescGu = `સેવા અને નોકરીનો 6ઠ્ઠો ભાવ 10મા ભાવ કરતાં વધારે છે. મોટી સંસ્થામાં કામ કરવું વધુ ફળદાયી રહેશે.`;
+  } else if (h10Pts > h6Pts) {
+    jvbVerdict = 'BUSINESS_PREFERRED';
+    jvbTitleEn = 'Independent Business & Executive Leadership';
+    jvbTitleHi = 'स्वतंत्र व्यवसाय, उद्यमिता व नेतृत्व में श्रेष्ठ';
+    jvbTitleGu = 'સ્વતંત્ર વ્યવસાય અને નેતૃત્વમાં શ્રેષ્ઠ';
+    jvbDescEn = `10th House of status & autonomous initiative (${h10Pts} pts) exceeds 6th House (${h6Pts} pts). You possess high capacity for independent entrepreneurship, direct decision-making, and executive authority.`;
+    jvbDescHi = `कर्म व स्वायत्त निर्णय का 10वां भाव (${h10Pts} अंक) 6ठे भाव (${h6Pts} अंक) से बड़ा है। आपका सामर्थ्य स्वयं के व्यवसाय, निर्णय लेने और स्वतंत्र नेतृत्व में सर्वाधिक खिलता है।`;
+    jvbDescGu = `10મો ભાવ 6ઠા ભાવ કરતાં મોટો છે. સ્વતંત્ર વ્યવસાય અને નિર્ણય લેવાની ક્ષમતા તમારામાં ઉત્તમ છે.`;
+  }
+
+  // 4B. Execution vs Luck (10th vs 9th)
+  let evlVerdict: 'SELF_EFFORT_DRIVEN' | 'LUCK_SUPPORTED' | 'BALANCED' = 'BALANCED';
+  let evlTitleEn = 'Harmonious Karma-Bhagya Alignment';
+  let evlTitleHi = 'कर्म और भाग्य का संतुलित योग';
+  let evlTitleGu = 'કર્મ અને ભાગ્યનો સંતુલિત યોગ';
+  let evlDescEn = `Balanced interplay between 10th House (${h10Pts} pts) and 9th House (${h9Pts} pts). Your diligent execution is met with timely divine luck.`;
+  let evlDescHi = `10वें भाव (${h10Pts} अंक) और 9वें भाव (${h9Pts} अंक) में संतुलन है। आपके कठिन परिश्रम को समय पर ईश्वरीय कृपा व भाग्य का सहयोग मिलता है।`;
+  let evlDescGu = `10મા અને 9મા ભાવ વચ્ચે સંતુલન છે. તમારા પરિશ્રમને ભાગ્યનો સાથ મળશે.`;
+
+  if (h10Pts > h9Pts) {
+    evlVerdict = 'SELF_EFFORT_DRIVEN';
+    evlTitleEn = 'Self-Execution Driven Success (Purushartha)';
+    evlTitleHi = 'स्व-प्रयास व उद्यम-आधारित सफलता (कर्म प्रधान)';
+    evlTitleGu = 'સ્વ-પ્રયાસ આધારિત સફળતા';
+    evlDescEn = `10th House (${h10Pts} pts) exceeds 9th House of fortune (${h9Pts} pts). You achieve success through proactive execution and discipline rather than passive reliance on chance.`;
+    evlDescHi = `कर्म का 10वां भाव (${h10Pts} अंक) भाग्य के 9वें भाव (${h9Pts} अंक) से बड़ा है। आपकी सफलता केवल भाग्य के भरोसे नहीं, बल्कि आपकी निरंतर सक्रियता और कार्यकुशलता से निर्मित होती है।`;
+    evlDescGu = `10મો ભાવ 9મા ભાવથી મોટો છે. સફળતા તમારા પોતાના પરિશ્રમથી જ મળશે.`;
+  } else if (h9Pts > h10Pts + 2) {
+    evlVerdict = 'LUCK_SUPPORTED';
+    evlTitleEn = 'Providential Luck & Divine Grace';
+    evlTitleHi = 'प्रबल भाग्य व दैवीय अनुग्रह';
+    evlTitleGu = 'પ્રબળ ભાગ્ય અને ઈશ્વરીય કૃપા';
+    evlDescEn = `9th House of fortune (${h9Pts} pts) notably exceeds 10th House (${h10Pts} pts). Doors open effortlessly through fortuitous timing; ensure consistent daily execution to capitalize on luck.`;
+    evlDescHi = `भाग्य का 9वां भाव (${h9Pts} अंक) 10वें भाव (${h10Pts} अंक) से अधिक है। आपको अनुकूल अवसर अनायास प्राप्त होते हैं; इन अवसरों को स्थायी बनाने के लिए नियमित कर्मठता बनाए रखें।`;
+    evlDescGu = `ભાગ્યનો 9મો ભાવ વધારે છે. તમને સારા અવસરો આપોઆપ મળશે.`;
+  }
+
+  // 4C. Lifelong Wealth Lock (2nd >= 31 and 11th >= 31)
+  const isWealthLocked = h2Pts >= 31 && h11Pts >= 31;
+  const wealthLock = {
+    h2Points: h2Pts,
+    h11Points: h11Pts,
+    isLocked: isWealthLocked,
+    titleEn: isWealthLocked ? 'Lifelong Wealth Lock (Akhanda Dhana Yoga)' : 'Wealth Building in Progress',
+    titleHi: isWealthLocked ? 'अखंड धन संचय योग (सुरक्षित समृद्धि)' : 'प्रगतिशील धन संचय',
+    titleGu: isWealthLocked ? 'અખંડ ધન સંચય યોગ' : 'ધન સંચય પ્રગતિમાં છે',
+    descriptionEn: isWealthLocked
+      ? `Both 2nd House (${h2Pts} pts) and 11th House (${h11Pts} pts) meet the classical 31+ threshold. Enduring lifelong wealth accumulation, asset retention, and commercial expansion are structurally assured.`
+      : `2nd House (${h2Pts} pts) and 11th House (${h11Pts} pts). Wealth generation is active; focus on asset retention to build long-term multi-generational wealth.`,
+    descriptionHi: isWealthLocked
+      ? `दूसरे भाव (${h2Pts} अंक) और 11वें भाव (${h11Pts} अंक) दोनों 31 अंक से अधिक हैं! यह शास्त्रीय अखंड धन योग है, जो जीवनपर्यंत स्थायी संपत्ति, बचत और निरंतर धन आगमन की गारंटी देता है।`
+      : `धन का 2रा भाव (${h2Pts} अंक) और लाभ का 11वां भाव (${h11Pts} अंक)। नियमित आय को दीर्घकालिक स्थायी निवेश में परिवर्तित करने पर ध्यान केंद्रित करें।`,
+    descriptionGu: isWealthLocked
+      ? `2જા અને 11મા બંને ભાવોમાં 31થી વધુ અંક છે. આ અખંડ ધન સંચય યોગ છે.`
+      : `આવકને સ્થાયી સંપત્તિમાં રોકાણ કરવા પર ધ્યાન આપો.`
+  };
+
+  // 4D. Marriage & Relationship Agency (1st vs 7th, 7th range, and 2nd vs 7th transactional check)
+  const h7RangeStatus: 'HEALTHY' | 'INSTABILITY_RISK' | 'OVER_EXPANDED' =
+    h7Pts < 22 ? 'INSTABILITY_RISK' : h7Pts <= 30 ? 'HEALTHY' : 'OVER_EXPANDED';
+  const isTransactionalWarning = (h2Pts - h7Pts >= 8);
+  let relAgency: 'SELF_AUTONOMY' | 'PARTNER_DOMINANT' | 'EQUAL_PARTNERSHIP' = 'EQUAL_PARTNERSHIP';
+  let mrgTitleEn = 'Equal & Harmonious Partnership';
+  let mrgTitleHi = 'समान एवं संतुलित वैवाहिक साझेदारी';
+  let mrgTitleGu = 'સમાન અને સંતુલિત દાંપત્ય જીવન';
+  let mrgDescEn = `Healthy equilibrium between 1st House (${h1Pts} pts) and 7th House (${h7Pts} pts). Mutual respect and co-equal decision making prevail.`;
+  let mrgDescHi = `प्रथम भाव (${h1Pts} अंक) और सप्तम भाव (${h7Pts} अंक) में सुंदर संतुलन है। आपसी सम्मान और मिलकर निर्णय लेने की प्रवृत्ति बनी रहती है।`;
+  let mrgDescGu = `પ્રથમ અને સાતમા ભાવ વચ્ચે ઉત્તમ સંતુલન છે. પરસ્પર આદર જળવાઈ રહેશે.`;
+
+  if (h7Pts - h1Pts >= 5) {
+    relAgency = 'PARTNER_DOMINANT';
+    mrgTitleEn = 'Partner Dominance Dynamics';
+    mrgTitleHi = 'जीवनसाथी / साझेदार का प्रभावी प्रभाव';
+    mrgTitleGu = 'જીવનસાથીનો વિશેષ પ્રભાવ';
+    mrgDescEn = `7th House (${h7Pts} pts) exceeds 1st House (${h1Pts} pts) by 5+ points. Your spouse or business partner naturally wields stronger sway in negotiations; maintain clear personal boundaries.`;
+    mrgDescHi = `7वां भाव (${h7Pts} अंक) लग्न (${h1Pts} अंक) से 5 या अधिक अंक बड़ा है। जीवनसाथी या व्यापारिक साझेदार का प्रभाव अधिक रहता है; व्यक्तिगत स्वतंत्रता और सौहार्दपूर्ण संवाद बनाए रखें।`;
+    mrgDescGu = `સાતમો ભાવ લગ્ન ભાવ કરતાં મોટો હોવાથી જીવનસાથીનો પ્રભાવ વધુ રહેશે.`;
+  } else if (h1Pts > h7Pts) {
+    relAgency = 'SELF_AUTONOMY';
+    mrgTitleEn = 'Personal Autonomy in Relationships';
+    mrgTitleHi = 'संबंधों में स्वायत्तता एवं आत्म-नियंत्रण';
+    mrgTitleGu = 'સંબંધોમાં આત્મનિર્ભરતા';
+    mrgDescEn = `1st House (${h1Pts} pts) exceeds 7th House (${h7Pts} pts). You retain personal agency and leadership within marriage; practice active listening to nurture emotional closeness.`;
+    mrgDescHi = `लग्न भाव (${h1Pts} अंक) सप्तम भाव (${h7Pts} अंक) से बड़ा है। वैवाहिक जीवन में आपका निर्णय व नेतृत्व प्रमुख रहता है; परस्पर संवेदनशीलता बनाए रखना शुभ रहेगा।`;
+    mrgDescGu = `લગ્ન ભાવ સાતમા ભાવ કરતાં મોટો હોવાથી તમારો નિર્ણય પ્રમુખ રહેશે.`;
+  }
+
+  if (isTransactionalWarning) {
+    mrgDescEn += ` Note: 2nd House (${h2Pts} pts) heavily exceeds 7th House (${h7Pts} pts) by ≥8 points—avoid overly transactional or material expectations in romantic/marital matters.`;
+    mrgDescHi += ` सतर्कता: धन भाव (${h2Pts} अंक) सप्तम भाव (${h7Pts} अंक) से 8+ अंक अधिक होने से वैवाहिक रिश्तों में अत्यधिक आर्थिक अपेक्षाओं या हिसाब-किताब से बचना चाहिए।`;
+  }
+
+  const marriageAgency = {
+    h1Points: h1Pts,
+    h7Points: h7Pts,
+    h2Points: h2Pts,
+    h7RangeStatus,
+    relationalAgency: relAgency,
+    isTransactionalWarning,
+    titleEn: mrgTitleEn,
+    titleHi: mrgTitleHi,
+    titleGu: mrgTitleGu,
+    descriptionEn: mrgDescEn,
+    descriptionHi: mrgDescHi,
+    descriptionGu: mrgDescGu
+  };
+
+  // 4E. Domestic Peace & Triple Crown Yoga (4th, 5th, 6th >= 31)
+  const hasDomesticPeace = h4Pts >= 28 && h4Pts > h12Pts;
+  const hasTripleCrown = h4Pts >= 31 && h5Pts >= 31 && h6Pts >= 31;
+  const domesticAndYogas = {
+    h4Points: h4Pts,
+    h5Points: h5Pts,
+    h6Points: h6Pts,
+    h12Points: h12Pts,
+    hasDomesticPeace,
+    hasTripleCrownYoga: hasTripleCrown,
+    titleEn: hasTripleCrown ? 'Triple Fortified Raj Yoga (Houses 4-5-6 ≥ 31)' : hasDomesticPeace ? 'Fortified Domestic Peace & Property' : 'Dynamic Domestic Focus',
+    titleHi: hasTripleCrown ? 'त्रिविध राजयोग (भाव 4, 5, 6 में 31+ अंक)' : hasDomesticPeace ? 'गृह सुख, वाहन व आंतरिक शांति' : 'पारिवारिक संतुलन की आवश्यकता',
+    titleGu: hasTripleCrown ? 'ત્રિવિધ રાજયોગ (4, 5, 6 ભાવોમાં 31+ અંક)' : hasDomesticPeace ? 'ગૃહ સુખ અને સંપત્તિ' : 'કૌટુંબિક સંતુલનની જરૂર',
+    descriptionEn: hasTripleCrown
+      ? `Rare classical configuration: Houses 4 (${h4Pts} pts), 5 (${h5Pts} pts), and 6 (${h6Pts} pts) simultaneously exceed 31 points. Associated with public acclaim, administrative honors, and institutional recognition.`
+      : hasDomesticPeace
+      ? `4th House (${h4Pts} pts) exceeds 28 baseline and surpasses 12th House of expenditure (${h12Pts} pts), blessing you with solid property acquisition, maternal blessings, and mental peace.`
+      : `4th House has ${h4Pts} points. Prioritize emotional stability, peaceful domestic environment, and mindful property acquisitions.`,
+    descriptionHi: hasTripleCrown
+      ? `दुर्लभ शास्त्रीय योग: 4थे (${h4Pts} अंक), 5वें (${h5Pts} अंक) और 6ठे भाव (${h6Pts} अंक) तीनों में 31 से अधिक बिंदु हैं! यह सामाजिक मान-सम्मान, राजकीय पुरस्कार और व्यापक प्रतिष्ठा प्रदान करता है।`
+      : hasDomesticPeace
+      ? `4था भाव (${h4Pts} अंक) 28 के मानक से अधिक है और 12वें भाव (${h12Pts} अंक) से बड़ा है। यह भूमि, वाहन सुख, मातृ सुख और मानसिक शांति का स्पष्ट संकेत है।`
+      : `4थे भाव में ${h4Pts} बिंदु हैं। घर के वातावरण को शांत रखने और भावनात्मक संतुलन पर ध्यान देना हितकर रहेगा।`,
+    descriptionGu: hasTripleCrown
+      ? `દુર્લભ શાસ્ત્રીય રાજયોગ: 4, 5 અને 6 ત્રણેય ભાવોમાં 31થી વધુ અંક છે. આ સામાજિક માન-સન્માન અને પ્રતિષ્ઠા અપાવે છે.`
+      : hasDomesticPeace
+      ? `4થો ભાવ (${h4Pts} અંક) શ્રેષ્ઠ છે જે સુખ અને સ્થાયી સંપત્તિ દર્શાવે છે.`
+      : `માનસિક શાંતિ જાળવી રાખવી જરૂરી છે.`
+  };
+
+  const lifeVerticals: LifeVerticalsAnalysis = {
+    jobVsBusiness: {
+      h6Points: h6Pts,
+      h10Points: h10Pts,
+      verdict: jvbVerdict,
+      titleEn: jvbTitleEn,
+      titleHi: jvbTitleHi,
+      titleGu: jvbTitleGu,
+      descriptionEn: jvbDescEn,
+      descriptionHi: jvbDescHi,
+      descriptionGu: jvbDescGu
+    },
+    executionVsLuck: {
+      h9Points: h9Pts,
+      h10Points: h10Pts,
+      verdict: evlVerdict,
+      titleEn: evlTitleEn,
+      titleHi: evlTitleHi,
+      titleGu: evlTitleGu,
+      descriptionEn: evlDescEn,
+      descriptionHi: evlDescHi,
+      descriptionGu: evlDescGu
+    },
+    wealthLock,
+    marriageAgency,
+    domesticAndYogas
+  };
+
+  // 5. Quantum Jump Transitions (Adjacent House Differential |Delta| >= 10)
+  const quantumJumps: QuantumJumpTransition[] = [];
+  for (let i = 0; i < 12; i++) {
+    const fromH = houses[i];
+    const toH = houses[(i + 1) % 12];
+    const delta = toH.points - fromH.points;
+
+    if (delta >= 10) {
+      quantumJumps.push({
+        fromHouse: fromH.houseNumber,
+        toHouse: toH.houseNumber,
+        fromPoints: fromH.points,
+        toPoints: toH.points,
+        delta,
+        type: 'ROCKET',
+        titleEn: `Rocket Transition (House ${fromH.houseNumber} ➔ ${toH.houseNumber})`,
+        titleHi: `तीव्र उत्थान संक्रमण (भाव ${fromH.houseNumber} ➔ भाव ${toH.houseNumber})`,
+        titleGu: `તીવ્ર પ્રગતિ સંક્રમણ (ભાવ ${fromH.houseNumber} ➔ ભાવ ${toH.houseNumber})`,
+        descriptionEn: `Steep surge of +${delta} points when planets move from House ${fromH.houseNumber} (${fromH.points} pts) into House ${toH.houseNumber} (${toH.points} pts). Transiting planets bring sudden breakthroughs, rapid expansion, and immediate relief upon entry.`,
+        descriptionHi: `भाव ${fromH.houseNumber} (${fromH.points} अंक) से भाव ${toH.houseNumber} (${toH.points} अंक) में प्रवेश पर +${delta} अंकों की तीव्र वृद्धि! गोचर ग्रह जब यहाँ प्रवेश करेंगे तो अचानक सफलता, अप्रत्याशित लाभ और कार्यों में तीव्र गति मिलेगी।`,
+        descriptionGu: `ભાવ ${fromH.houseNumber} થી ભાવ ${toH.houseNumber} માં પ્રવેશ પર +${delta} અંકનો ઉછાળો! ગોચર ગ્રહો અહીં અચાનક સફળતા અને પ્રગતિ આપશે.`
+      });
+    } else if (delta <= -10) {
+      quantumJumps.push({
+        fromHouse: fromH.houseNumber,
+        toHouse: toH.houseNumber,
+        fromPoints: fromH.points,
+        toPoints: toH.points,
+        delta,
+        type: 'CLIFF',
+        titleEn: `Cliff Transition (House ${fromH.houseNumber} ➔ ${toH.houseNumber})`,
+        titleHi: `तीव्र ढलान / अवरोध संक्रमण (भाव ${fromH.houseNumber} ➔ भाव ${toH.houseNumber})`,
+        titleGu: `અવરોધ સંક્રમણ (ભાવ ${fromH.houseNumber} ➔ ભાવ ${toH.houseNumber})`,
+        descriptionEn: `Sharp drop of ${delta} points from House ${fromH.houseNumber} (${fromH.points} pts) down to House ${toH.houseNumber} (${toH.points} pts). The supportive environment drops abruptly upon planetary ingress; brace with defensive planning and patient pacing.`,
+        descriptionHi: `भाव ${fromH.houseNumber} (${fromH.points} अंक) से भाव ${toH.houseNumber} (${toH.points} अंक) में ${Math.abs(delta)} अंकों की तीव्र गिरावट! इस भाव में गोचर ग्रह के प्रवेश पर अचानक सहयोग कम हो सकता है; धैर्य और सावधानी रखें।`,
+        descriptionGu: `ભાવ ${fromH.houseNumber} થી ${toH.houseNumber} માં ${Math.abs(delta)} અંકનો ઘટાડો. સાવધાની રાખવી.`
+      });
+    }
+  }
+
+  // 6. 8th-From Structural Stability Audit (Bhavat Bhavam)
+  const eighthFromPairs = [
+    {
+      refH: 1,
+      refEn: '1st House (Vitality & Self)',
+      refHi: 'प्रथम भाव (स्वास्थ्य व व्यक्तित्व)',
+      vulnH: 8,
+      vulnEn: '8th House (Chronic Crises & Accidents)',
+      vulnHi: '8वां भाव (संकट व बाधाएं)',
+      destabEn: 'Physical exhaustion, sudden vitality drain, or accidents',
+      destabHi: 'अचानक शारीरिक कमजोरी, दुर्घटना या दीर्घकालिक स्वास्थ्य समस्या',
+      recEn: 'Protect daily routine; avoid reckless physical risks if vulnerable.',
+      recHi: 'नियमित दिनचर्या रखें; स्वास्थ्य के प्रति निरंतर सजग रहें।'
+    },
+    {
+      refH: 2,
+      refEn: '2nd House (Accumulated Wealth)',
+      refHi: 'द्वितीय भाव (संचित धन व परिवार)',
+      vulnH: 9,
+      vulnEn: '9th House (Ideological & Foreign Drain)',
+      vulnHi: '9वां भाव (वैचारिक व विदेशी व्यय)',
+      destabEn: 'Misguided ideological donations or speculative foreign ventures',
+      destabHi: 'अति-उदारता, वैचारिक दान या विदेश से जुड़े अवास्तविक निवेश',
+      recEn: 'Maintain written financial audits; avoid unvetted speculative funding.',
+      recHi: 'वित्तीय हिसाब-किताब लिखित रखें; बिना जांचे धन न लगाएं।'
+    },
+    {
+      refH: 4,
+      refEn: '4th House (Fixed Assets & Inner Peace)',
+      refHi: 'चतुर्थ भाव (गृह सुख, वाहन व शांति)',
+      vulnH: 11,
+      vulnEn: '11th House (Social Ambition Over-expansion)',
+      vulnHi: '11वां भाव (अति-महत्वाकांक्षा व सामाजिक खिंचाव)',
+      destabEn: 'Uncontrolled social obligations pulling focus away from home peace',
+      destabHi: 'अत्यधिक सामाजिक जिम्मेदारियाँ जो घरेलू शांति को भंग कर सकती हैं',
+      recEn: 'Set firm boundaries between public networking and domestic sanctuary.',
+      recHi: 'सामाजिक जीवन और पारिवारिक शांति के बीच स्पष्ट संतुलन बनाएं।'
+    },
+    {
+      refH: 7,
+      refEn: '7th House (Marriage & Alliances)',
+      refHi: 'सप्तम भाव (विवाह व साझेदारी)',
+      vulnH: 2,
+      vulnEn: '2nd House (Family & Monetary Disputes)',
+      vulnHi: 'द्वितीय भाव (पारिवारिक हस्तक्षेप व धन विवाद)',
+      destabEn: 'Family interference or transactional money conflicts in relationship',
+      destabHi: 'पारिवारिक हस्तक्षेप या संबंधों में धन संबंधी विवाद',
+      recEn: 'Keep marital discussions private; resolve financial matters transparently.',
+      recHi: 'वैवाहिक निर्णयों में गोपनीयता और धन के मामलों में पारदर्शिता रखें।'
+    },
+    {
+      refH: 10,
+      refEn: '10th House (Career & Public Status)',
+      refHi: 'दशम भाव (आजीविका, पद व सम्मान)',
+      vulnH: 5,
+      vulnEn: '5th House (Speculative Gambles & Diversions)',
+      vulnHi: 'पंचम भाव (सट्टा, भावुकता व ध्यान भटकाव)',
+      destabEn: 'Emotional gambles, creative diversions, or impulsive career breaks',
+      destabHi: 'सट्टेबाजी, अत्यधिक भावुक निर्णय या करियर से ध्यान भटकना',
+      recEn: 'Stick to core executive duties; avoid speculative disruptions.',
+      recHi: 'अपने मुख्य कार्य पर केंद्रित रहें; जल्दबाजी में करियर न बदलें।'
+    },
+    {
+      refH: 11,
+      refEn: '11th House (Gains & Cashflow)',
+      refHi: 'एकादश भाव (आय, लाभ व मित्र)',
+      vulnH: 6,
+      vulnEn: '6th House (Debts, Disputes & Legal Fees)',
+      vulnHi: 'षष्ठ भाव (ऋण, विवाद व कानूनी खर्च)',
+      destabEn: 'Lingering commercial liabilities, litigation, or vendor disputes',
+      destabHi: 'पुराने कर्ज, व्यावसायिक विवाद या साझेदारों से मतभेद',
+      recEn: 'Keep contracts ironclad; clear liabilities promptly.',
+      recHi: 'समझौते स्पष्ट रखें; अनावश्यक कर्ज और विवादों से दूर रहें।'
+    }
+  ];
+
+  const eighthFromStability: EighthFromStabilityItem[] = eighthFromPairs.map(pair => {
+    const refPts = houses[pair.refH - 1].points;
+    const vulnPts = houses[pair.vulnH - 1].points;
+    const deltaStability = refPts - vulnPts;
+
+    let status: 'STABLE_SHIELDED' | 'NEUTRAL' | 'CRITICAL_VULNERABILITY' = 'NEUTRAL';
+    if (deltaStability >= 5) status = 'STABLE_SHIELDED';
+    else if (deltaStability <= -5) status = 'CRITICAL_VULNERABILITY';
+
+    return {
+      referenceHouse: pair.refH,
+      referenceNameEn: pair.refEn,
+      referenceNameHi: pair.refHi,
+      referencePoints: refPts,
+      vulnerabilityHouse: pair.vulnH,
+      vulnerabilityNameEn: pair.vulnEn,
+      vulnerabilityNameHi: pair.vulnHi,
+      vulnerabilityPoints: vulnPts,
+      deltaStability,
+      status,
+      destabilizingFactorEn: pair.destabEn,
+      destabilizingFactorHi: pair.destabHi,
+      recommendationEn: pair.recEn,
+      recommendationHi: pair.recHi
+    };
+  });
+
   const signs = Array.from({ length: 12 }, (_, i) => ({
     rashiIndex: i,
     rashiName: RASHI_NAMES_EN[i],
@@ -699,6 +1497,12 @@ export function calculateSarvashtakavarga(kundali: KundaliResult): Sarvashtakava
         explanationEn: dusthanaExplEn,
         explanationHi: dusthanaExplHi
       }
-    }
+    },
+    purusharthaTrikonas,
+    directionalRelocation,
+    sadeSatiAnalysis,
+    lifeVerticals,
+    quantumJumps,
+    eighthFromStability
   };
 }

@@ -23,7 +23,16 @@ export const SarvashtakavargaView: React.FC<SarvashtakavargaViewProps> = ({ kund
   const [selectedHouseFilter, setSelectedHouseFilter] = useState<'ALL' | 'PROSPEROUS' | 'EFFORT'>('ALL');
 
   const savResult: SarvashtakavargaResult = calculateSarvashtakavarga(kundali);
-  const { houses, executiveSummary } = savResult;
+  const {
+    houses,
+    executiveSummary,
+    purusharthaTrikonas,
+    directionalRelocation,
+    sadeSatiAnalysis,
+    lifeVerticals,
+    quantumJumps,
+    eighthFromStability
+  } = savResult;
 
   const filteredHouses = houses.filter(h => {
     if (selectedHouseFilter === 'PROSPEROUS') return h.isProsperous;
@@ -389,6 +398,504 @@ export const SarvashtakavargaView: React.FC<SarvashtakavargaViewProps> = ({ kund
           </View>
         );
       })}
+
+      {/* 6. Four Spatial Directions & Locational Selection (Disha Points) */}
+      <View style={styles.card}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardSectionEmoji}>🧭</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardSectionTitle}>
+              {isHi
+                ? 'चतुर्दिक दिशा बिंदु एवं स्थान चयन (Astro-Cartography)'
+                : isGu
+                ? 'દિશા બિંદુ અને સ્થાન પસંદગી (Astro-Cartography)'
+                : 'Spatial Directions & Locational Selection (Disha Points)'}
+            </Text>
+            <Text style={styles.cardSectionSub}>
+              {isHi
+                ? '12 भावों का 4 मुख्य दिशाओं में विभाजन (कुल 337 बिंदु शास्त्रीय गणित)'
+                : isGu
+                ? '12 ભાવોનું 4 મુખ્ય દિશાઓમાં વિભાજન (કુલ 337 બિંદુ)'
+                : 'Mapping 12 Houses to Cardinal Directions (337 Classical Invariant Points)'}
+            </Text>
+          </View>
+        </View>
+
+        {/* 🌟 User's Requested Fruitful Direction Callout Box */}
+        <View style={styles.fruitfulDirectionBanner}>
+          <View style={styles.fruitfulBadgeRow}>
+            <Text style={styles.fruitfulCrownEmoji}>👑</Text>
+            <Text style={styles.fruitfulBadgeText}>
+              {isHi ? 'सर्वाधिक फलदायी दिशा' : isGu ? 'સૌથી વધુ ફળદાયી દિશા' : 'Most Auspicious Orientation'}
+            </Text>
+          </View>
+          <Text style={styles.fruitfulSentenceText}>
+            {isGu
+              ? directionalRelocation.citySectorRecommendationGu
+              : isHi
+              ? directionalRelocation.citySectorRecommendationHi
+              : directionalRelocation.citySectorRecommendationEn}
+          </Text>
+        </View>
+
+        {/* 4 Cardinal Directions Grid */}
+        <View style={styles.directionGrid}>
+          {/* East */}
+          <View style={[
+            styles.directionItemBox,
+            directionalRelocation.bestDirection === 'EAST' && styles.directionItemBoxBest,
+            directionalRelocation.vulnerableDirection === 'EAST' && styles.directionItemBoxVuln
+          ]}>
+            <View style={styles.directionItemHeader}>
+              <Text style={styles.directionName}>
+                {isHi ? 'पूर्व (East)' : isGu ? 'પૂર્વ (East)' : 'East (Purva)'}
+              </Text>
+              {directionalRelocation.bestDirection === 'EAST' && (
+                <View style={styles.bestPill}><Text style={styles.bestPillText}>⭐ Best</Text></View>
+              )}
+            </View>
+            <Text style={styles.directionFormula}>{isHi ? 'भाव 1, 5, 9 (धर्म • अग्नि)' : 'Houses 1, 5, 9 (Dharma)'}</Text>
+            <Text style={styles.directionPtsText}>{directionalRelocation.eastPoints} <Text style={styles.ptsUnit}>pts</Text></Text>
+          </View>
+
+          {/* South */}
+          <View style={[
+            styles.directionItemBox,
+            directionalRelocation.bestDirection === 'SOUTH' && styles.directionItemBoxBest,
+            directionalRelocation.vulnerableDirection === 'SOUTH' && styles.directionItemBoxVuln
+          ]}>
+            <View style={styles.directionItemHeader}>
+              <Text style={styles.directionName}>
+                {isHi ? 'दक्षिण (South)' : isGu ? 'દક્ષિણ (South)' : 'South (Dakshin)'}
+              </Text>
+              {directionalRelocation.bestDirection === 'SOUTH' && (
+                <View style={styles.bestPill}><Text style={styles.bestPillText}>⭐ Best</Text></View>
+              )}
+            </View>
+            <Text style={styles.directionFormula}>{isHi ? 'भाव 2, 6, 10 (अर्थ • पृथ्वी)' : 'Houses 2, 6, 10 (Artha)'}</Text>
+            <Text style={styles.directionPtsText}>{directionalRelocation.southPoints} <Text style={styles.ptsUnit}>pts</Text></Text>
+          </View>
+
+          {/* West */}
+          <View style={[
+            styles.directionItemBox,
+            directionalRelocation.bestDirection === 'WEST' && styles.directionItemBoxBest,
+            directionalRelocation.vulnerableDirection === 'WEST' && styles.directionItemBoxVuln
+          ]}>
+            <View style={styles.directionItemHeader}>
+              <Text style={styles.directionName}>
+                {isHi ? 'पश्चिम (West)' : isGu ? 'પશ્ચિમ (West)' : 'West (Paschim)'}
+              </Text>
+              {directionalRelocation.bestDirection === 'WEST' && (
+                <View style={styles.bestPill}><Text style={styles.bestPillText}>⭐ Best</Text></View>
+              )}
+            </View>
+            <Text style={styles.directionFormula}>{isHi ? 'भाव 3, 7, 11 (काम • वायु)' : 'Houses 3, 7, 11 (Kama)'}</Text>
+            <Text style={styles.directionPtsText}>{directionalRelocation.westPoints} <Text style={styles.ptsUnit}>pts</Text></Text>
+          </View>
+
+          {/* North */}
+          <View style={[
+            styles.directionItemBox,
+            directionalRelocation.bestDirection === 'NORTH' && styles.directionItemBoxBest,
+            directionalRelocation.vulnerableDirection === 'NORTH' && styles.directionItemBoxVuln
+          ]}>
+            <View style={styles.directionItemHeader}>
+              <Text style={styles.directionName}>
+                {isHi ? 'उत्तर (North)' : isGu ? 'ઉત્તર (North)' : 'North (Uttara)'}
+              </Text>
+              {directionalRelocation.bestDirection === 'NORTH' && (
+                <View style={styles.bestPill}><Text style={styles.bestPillText}>⭐ Best</Text></View>
+              )}
+            </View>
+            <Text style={styles.directionFormula}>{isHi ? 'भाव 4, 8, 12 (मोक्ष • जल)' : 'Houses 4, 8, 12 (Moksha)'}</Text>
+            <Text style={styles.directionPtsText}>{directionalRelocation.northPoints} <Text style={styles.ptsUnit}>pts</Text></Text>
+          </View>
+        </View>
+
+        {/* Vastu & Spatial Orientation Box */}
+        <View style={styles.vastuBox}>
+          <Text style={styles.vastuHeading}>{isHi ? '🏡 वास्तु एवं कार्यस्थल संरेखण (Vastu & Workspace):' : '🏡 Vastu & Workspace Orientation:'}</Text>
+          <Text style={styles.vastuText}>
+            {isGu
+              ? directionalRelocation.vastuRecommendationGu
+              : isHi
+              ? directionalRelocation.vastuRecommendationHi
+              : directionalRelocation.vastuRecommendationEn}
+          </Text>
+        </View>
+      </View>
+
+      {/* 7. Four Purushartha Trikonas (84-point baseline) */}
+      <View style={styles.card}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardSectionEmoji}>🏹</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardSectionTitle}>
+              {isHi
+                ? 'चार पुरुषार्थ त्रिकोण (84-अंक शास्त्रीय मानक)'
+                : isGu
+                ? 'ચાર પુરુષાર્થ ત્રિકોણ (84-અંક માનક)'
+                : 'The 4 Purushartha Trikonas (84-pt Benchmark)'}
+            </Text>
+            <Text style={styles.cardSectionSub}>
+              {isHi
+                ? 'प्रत्येक त्रिकोण का औसत मानक 84 बिंदु (28 × 3 भाव) है। 84+ अंक जीवन की प्रमुख ऊर्जा को दर्शाते हैं:'
+                : 'Standard baseline is 84 points per trine (28 × 3). Scores >84 define your primary life pursuit:'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.trikonaList}>
+          {purusharthaTrikonas.map(trine => {
+            const isAbove = trine.points >= 84;
+            return (
+              <View key={trine.id} style={styles.trikonaCard}>
+                <View style={styles.trikonaHeaderRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.trikonaName}>
+                      {isHi ? trine.nameHi : isGu ? trine.nameGu : trine.nameEn}
+                    </Text>
+                    <Text style={styles.trikonaMeta}>
+                      {isHi
+                        ? `भाव: ${trine.houses.join(', ')} • ${trine.elementHi} • दिशा: ${trine.directionHi}`
+                        : `Houses: ${trine.houses.join(', ')} • ${trine.elementEn} • Dir: ${trine.directionEn}`}
+                    </Text>
+                  </View>
+                  <View style={[styles.trikonaBadge, { backgroundColor: isAbove ? '#E8F5E9' : '#FFF3E0', borderColor: isAbove ? '#81C784' : '#FFB74D' }]}>
+                    <Text style={[styles.trikonaPtsNum, { color: isAbove ? '#2E7D32' : '#E65100' }]}>{trine.points}</Text>
+                    <Text style={[styles.trikonaPtsLabel, { color: isAbove ? '#1B5E20' : '#BF360C' }]}>{trine.percentage}%</Text>
+                  </View>
+                </View>
+                <Text style={styles.trikonaDesc}>
+                  {isHi ? trine.descriptionHi : isGu ? trine.descriptionGu : trine.descriptionEn}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* 8. Sade Sati Structural Stress-Test Dashboard */}
+      <View style={styles.card}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardSectionEmoji}>🪐</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardSectionTitle}>
+              {isHi
+                ? 'साढ़ेसाती संरचनात्मक सहनशीलता डैशबोर्ड'
+                : isGu
+                ? 'સાડાસાતી સહનશીલતા ડેશબોર્ડ'
+                : 'Sade Sati Structural Stress-Test Dashboard'}
+            </Text>
+            <Text style={styles.cardSectionSub}>
+              {isHi
+                ? `जन्म चंद्र: ${sadeSatiAnalysis.moonRashiNameHi} (भाव ${sadeSatiAnalysis.moonHouse}) • 3 भावों का कुल योग: ${sadeSatiAnalysis.total3SignPoints} अंक (मानक: 84)`
+                : `Natal Moon: ${sadeSatiAnalysis.moonRashiNameEn} (H${sadeSatiAnalysis.moonHouse}) • 3-Sign Sum: ${sadeSatiAnalysis.total3SignPoints} pts (Benchmark: 84)`}
+            </Text>
+          </View>
+        </View>
+
+        {/* Classification Banner */}
+        <View style={[
+          styles.sadeSatiBanner,
+          sadeSatiAnalysis.classification === 'CONSTRUCTIVE_ELEVATION' && { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
+          sadeSatiAnalysis.classification === 'MODERATE_PROGRESS' && { backgroundColor: '#FFF8E1', borderColor: '#FFE082' },
+          sadeSatiAnalysis.classification === 'HIGH_FRICTION_RESTRUCTURING' && { backgroundColor: '#FFEBEE', borderColor: '#EF9A9A' }
+        ]}>
+          <Text style={[
+            styles.sadeSatiBannerTitle,
+            sadeSatiAnalysis.classification === 'CONSTRUCTIVE_ELEVATION' && { color: '#1B5E20' },
+            sadeSatiAnalysis.classification === 'MODERATE_PROGRESS' && { color: '#F57F17' },
+            sadeSatiAnalysis.classification === 'HIGH_FRICTION_RESTRUCTURING' && { color: '#C62828' }
+          ]}>
+            {isHi ? sadeSatiAnalysis.titleHi : isGu ? sadeSatiAnalysis.titleGu : sadeSatiAnalysis.titleEn}
+          </Text>
+          <Text style={styles.sadeSatiBannerDesc}>
+            {isHi ? sadeSatiAnalysis.descriptionHi : isGu ? sadeSatiAnalysis.descriptionGu : sadeSatiAnalysis.descriptionEn}
+          </Text>
+        </View>
+
+        {/* 3 Dhaiya Phases */}
+        <View style={styles.dhaiyaList}>
+          {sadeSatiAnalysis.phases.map(phase => (
+            <View key={phase.phaseNumber} style={styles.dhaiyaCard}>
+              <View style={styles.dhaiyaHeaderRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.dhaiyaTitle}>
+                    {isHi ? phase.titleHi : isGu ? phase.titleGu : phase.titleEn}
+                  </Text>
+                  <Text style={styles.dhaiyaSub}>
+                    {isHi
+                      ? `राशि: ${phase.rashiNameHi} • जन्म लग्न से भाव: ${phase.houseNumber}`
+                      : `Sign: ${phase.rashiNameEn} • House: ${phase.houseNumber}`}
+                  </Text>
+                </View>
+                <View style={styles.dhaiyaPillRow}>
+                  <View style={styles.dhaiyaSavPill}>
+                    <Text style={styles.dhaiyaSavPillNum}>{phase.savPoints}</Text>
+                    <Text style={styles.dhaiyaSavPillLabel}>SAV</Text>
+                  </View>
+                  <View style={styles.dhaiyaBavPill}>
+                    <Text style={styles.dhaiyaBavPillNum}>{phase.saturnBavPoints}</Text>
+                    <Text style={styles.dhaiyaBavPillLabel}>Shani BAV</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* 9. Key Life Verticals Matrix */}
+      <View style={styles.card}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardSectionEmoji}>💼</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardSectionTitle}>
+              {isHi
+                ? 'मुख्य जीवन क्षेत्र एवं शास्त्रीय योग'
+                : isGu
+                ? 'મુખ્ય જીવન ક્ષેત્રો અને શાસ્ત્રીય યોગ'
+                : 'Key Life Verticals & Classical Yogas'}
+            </Text>
+            <Text style={styles.cardSectionSub}>
+              {isHi
+                ? 'आजीविका, धन संचय, वैवाहिक संतुलन और गृह शांति का गणितीय विश्लेषण'
+                : 'Analytical ratios governing career, wealth lock, marriage agency, and domestic peace'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Vertical 1: Job vs Business */}
+        <View style={styles.verticalBox}>
+          <View style={styles.verticalHeaderRow}>
+            <Text style={styles.verticalIcon}>👔</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.verticalTitle}>
+                {isHi ? lifeVerticals.jobVsBusiness.titleHi : isGu ? lifeVerticals.jobVsBusiness.titleGu : lifeVerticals.jobVsBusiness.titleEn}
+              </Text>
+              <Text style={styles.verticalCompareSub}>
+                {isHi
+                  ? `6ठा भाव (सेवा): ${lifeVerticals.jobVsBusiness.h6Points} pts vs 10वां भाव (व्यवसाय/कर्म): ${lifeVerticals.jobVsBusiness.h10Points} pts`
+                  : `6th House (Service): ${lifeVerticals.jobVsBusiness.h6Points} pts vs 10th House (Career): ${lifeVerticals.jobVsBusiness.h10Points} pts`}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.verticalDesc}>
+            {isHi ? lifeVerticals.jobVsBusiness.descriptionHi : isGu ? lifeVerticals.jobVsBusiness.descriptionGu : lifeVerticals.jobVsBusiness.descriptionEn}
+          </Text>
+        </View>
+
+        {/* Vertical 2: Self-Effort vs Luck */}
+        <View style={[styles.verticalBox, { marginTop: 10 }]}>
+          <View style={styles.verticalHeaderRow}>
+            <Text style={styles.verticalIcon}>⚡</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.verticalTitle}>
+                {isHi ? lifeVerticals.executionVsLuck.titleHi : isGu ? lifeVerticals.executionVsLuck.titleGu : lifeVerticals.executionVsLuck.titleEn}
+              </Text>
+              <Text style={styles.verticalCompareSub}>
+                {isHi
+                  ? `10वां भाव (कर्म/पुरुषार्थ): ${lifeVerticals.executionVsLuck.h10Points} pts vs 9वां भाव (भाग्य): ${lifeVerticals.executionVsLuck.h9Points} pts`
+                  : `10th House (Effort): ${lifeVerticals.executionVsLuck.h10Points} pts vs 9th House (Luck): ${lifeVerticals.executionVsLuck.h9Points} pts`}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.verticalDesc}>
+            {isHi ? lifeVerticals.executionVsLuck.descriptionHi : isGu ? lifeVerticals.executionVsLuck.descriptionGu : lifeVerticals.executionVsLuck.descriptionEn}
+          </Text>
+        </View>
+
+        {/* Vertical 3: Lifelong Wealth Lock */}
+        <View style={[styles.verticalBox, { marginTop: 10, backgroundColor: lifeVerticals.wealthLock.isLocked ? '#E8F5E9' : '#FFFDE7', borderColor: lifeVerticals.wealthLock.isLocked ? '#81C784' : '#FFF59D' }]}>
+          <View style={styles.verticalHeaderRow}>
+            <Text style={styles.verticalIcon}>💰</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.verticalTitle, { color: lifeVerticals.wealthLock.isLocked ? '#1B5E20' : '#F57F17' }]}>
+                {isHi ? lifeVerticals.wealthLock.titleHi : isGu ? lifeVerticals.wealthLock.titleGu : lifeVerticals.wealthLock.titleEn}
+              </Text>
+              <Text style={styles.verticalCompareSub}>
+                {isHi
+                  ? `2रा भाव (संचय): ${lifeVerticals.wealthLock.h2Points} pts • 11वां भाव (लाभ): ${lifeVerticals.wealthLock.h11Points} pts (मानक: ≥31)`
+                  : `2nd House (Dhana): ${lifeVerticals.wealthLock.h2Points} pts • 11th House (Gains): ${lifeVerticals.wealthLock.h11Points} pts (Threshold: ≥31)`}
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.verticalDesc, { color: '#37474F' }]}>
+            {isHi ? lifeVerticals.wealthLock.descriptionHi : isGu ? lifeVerticals.wealthLock.descriptionGu : lifeVerticals.wealthLock.descriptionEn}
+          </Text>
+        </View>
+
+        {/* Vertical 4: Marriage Agency & Equilibrium */}
+        <View style={[styles.verticalBox, { marginTop: 10 }]}>
+          <View style={styles.verticalHeaderRow}>
+            <Text style={styles.verticalIcon}>💍</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.verticalTitle}>
+                {isHi ? lifeVerticals.marriageAgency.titleHi : isGu ? lifeVerticals.marriageAgency.titleGu : lifeVerticals.marriageAgency.titleEn}
+              </Text>
+              <Text style={styles.verticalCompareSub}>
+                {isHi
+                  ? `1ला भाव (स्वयं): ${lifeVerticals.marriageAgency.h1Points} pts vs 7वां भाव (जीवनसाथी): ${lifeVerticals.marriageAgency.h7Points} pts`
+                  : `1st House (Self): ${lifeVerticals.marriageAgency.h1Points} pts vs 7th House (Partner): ${lifeVerticals.marriageAgency.h7Points} pts`}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.verticalDesc}>
+            {isHi ? lifeVerticals.marriageAgency.descriptionHi : isGu ? lifeVerticals.marriageAgency.descriptionGu : lifeVerticals.marriageAgency.descriptionEn}
+          </Text>
+        </View>
+
+        {/* Vertical 5: Domestic Peace & Triple Crown Yoga */}
+        <View style={[styles.verticalBox, { marginTop: 10 }]}>
+          <View style={styles.verticalHeaderRow}>
+            <Text style={styles.verticalIcon}>🏛️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.verticalTitle}>
+                {isHi ? lifeVerticals.domesticAndYogas.titleHi : isGu ? lifeVerticals.domesticAndYogas.titleGu : lifeVerticals.domesticAndYogas.titleEn}
+              </Text>
+              <Text style={styles.verticalCompareSub}>
+                {isHi
+                  ? `4था भाव: ${lifeVerticals.domesticAndYogas.h4Points} pts • 5वां भाव: ${lifeVerticals.domesticAndYogas.h5Points} pts • 6ठा भाव: ${lifeVerticals.domesticAndYogas.h6Points} pts`
+                  : `4th House: ${lifeVerticals.domesticAndYogas.h4Points} pts • 5th House: ${lifeVerticals.domesticAndYogas.h5Points} pts • 6th House: ${lifeVerticals.domesticAndYogas.h6Points} pts`}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.verticalDesc}>
+            {isHi ? lifeVerticals.domesticAndYogas.descriptionHi : isGu ? lifeVerticals.domesticAndYogas.descriptionGu : lifeVerticals.domesticAndYogas.descriptionEn}
+          </Text>
+        </View>
+      </View>
+
+      {/* 10. Quantum Jump Alerts (Adjacent House Transitions) */}
+      <View style={styles.card}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardSectionEmoji}>🚀</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardSectionTitle}>
+              {isHi
+                ? 'गोचर गतिशीलता: क्वांटम जंप अलर्ट (Rocket & Cliff)'
+                : isGu
+                ? 'ગોચર ક્વોન્ટમ જંપ એલર્ટ'
+                : 'Transit Dynamics: Quantum Jump Alerts'}
+            </Text>
+            <Text style={styles.cardSectionSub}>
+              {isHi
+                ? 'समीपवर्ती भावों में 10+ बिंदुओं का तीव्र अंतर गोचर ग्रहों के प्रभाव में अचानक बदलाव लाता है:'
+                : 'Adjacent houses with point differentials |Δ| ≥ 10 trigger abrupt momentum shifts during transits:'}
+            </Text>
+          </View>
+        </View>
+
+        {quantumJumps.length > 0 ? (
+          quantumJumps.map((qj, idx) => (
+            <View
+              key={idx}
+              style={[
+                styles.quantumBox,
+                qj.type === 'ROCKET' ? { backgroundColor: '#E8F5E9', borderColor: '#81C784' } : { backgroundColor: '#FFEBEE', borderColor: '#EF9A9A' },
+                idx > 0 && { marginTop: 8 }
+              ]}
+            >
+              <View style={styles.quantumHeaderRow}>
+                <Text style={styles.quantumIcon}>{qj.type === 'ROCKET' ? '🚀' : '⚠️'}</Text>
+                <Text style={[styles.quantumTitle, { color: qj.type === 'ROCKET' ? '#1B5E20' : '#B71C1C' }]}>
+                  {isHi ? qj.titleHi : isGu ? qj.titleGu : qj.titleEn}
+                </Text>
+              </View>
+              <Text style={styles.quantumDesc}>
+                {isHi ? qj.descriptionHi : isGu ? qj.descriptionGu : qj.descriptionEn}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <View style={styles.noQuantumBox}>
+            <Text style={styles.noQuantumEmoji}>🌱</Text>
+            <Text style={styles.noQuantumText}>
+              {isHi
+                ? 'सभी समीपवर्ती भावों में बिंदु परिवर्तन सामान्य (3-8 बिंदु) है। गोचर ग्रह किसी तीव्र झटके के बिना संतुलित रूप से फल प्रदान करेंगे।'
+                : 'Smooth linear transitions across all adjacent houses (|Δ| < 10 pts). Planetary transits proceed with steady momentum without abrupt shocks.'}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* 11. 8th-From Structural Stability Audit (Bhavat Bhavam) */}
+      <View style={styles.card}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardSectionEmoji}>🛡️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardSectionTitle}>
+              {isHi
+                ? 'भावत भावम: 8वां भाव सुरक्षा विश्लेषण (8th-From Audit)'
+                : isGu
+                ? 'ભાવત ભાવમ: 8મો ભાવ સુરક્ષા વિશ્લેષણ'
+                : '8th-From Structural Stability Audit (Bhavat Bhavam)'}
+            </Text>
+            <Text style={styles.cardSectionSub}>
+              {isHi
+                ? 'किसी भी भाव की स्थिरता उसके 8वें व्युत्पन्न भाव पर निर्भर करती है (मूल भाव > 8वां भाव = सुरक्षित):'
+                : 'A domain endures when its points exceed the house situated 8th from it:'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.eighthFromList}>
+          {eighthFromStability.map(item => {
+            const isShielded = item.status === 'STABLE_SHIELDED';
+            const isVuln = item.status === 'CRITICAL_VULNERABILITY';
+            return (
+              <View
+                key={item.referenceHouse}
+                style={[
+                  styles.eighthFromCard,
+                  isShielded && { borderColor: '#81C784', borderLeftColor: '#2E7D32', borderLeftWidth: 4 },
+                  isVuln && { borderColor: '#EF9A9A', borderLeftColor: '#C62828', borderLeftWidth: 4 }
+                ]}
+              >
+                <View style={styles.eighthFromHeaderRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.eighthFromTitle}>
+                      {isHi ? item.referenceNameHi : item.referenceNameEn}
+                    </Text>
+                    <Text style={styles.eighthFromVulnSub}>
+                      {isHi
+                        ? `व्युत्पन्न 8वां: ${item.vulnerabilityNameHi}`
+                        : `Derived 8th: ${item.vulnerabilityNameEn}`}
+                    </Text>
+                  </View>
+                  <View style={[
+                    styles.stabilityBadge,
+                    isShielded && { backgroundColor: '#E8F5E9' },
+                    isVuln && { backgroundColor: '#FFEBEE' }
+                  ]}>
+                    <Text style={[
+                      styles.stabilityBadgeText,
+                      isShielded && { color: '#1B5E20' },
+                      isVuln && { color: '#B71C1C' }
+                    ]}>
+                      {isShielded ? (isHi ? '🛡️ सुरक्षित' : '🛡️ Shielded') : isVuln ? (isHi ? '⚠️ सतर्कता' : '⚠️ Vulnerable') : (isHi ? '⚖️ संतुलित' : '⚖️ Neutral')}
+                    </Text>
+                    <Text style={styles.stabilityDeltaText}>
+                      Δ {item.deltaStability > 0 ? `+${item.deltaStability}` : item.deltaStability} pts
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.destabFactorText}>
+                  <Text style={{ fontWeight: '700' }}>{isHi ? 'संभावित जोखिम: ' : 'Destabilizing Risk: '}</Text>
+                  {isHi ? item.destabilizingFactorHi : item.destabilizingFactorEn}
+                </Text>
+                <Text style={styles.recommendationText}>
+                  <Text style={{ fontWeight: '700' }}>{isHi ? 'सलाह: ' : 'Guidance: '}</Text>
+                  {isHi ? item.recommendationHi : item.recommendationEn}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
     </View>
   );
 };
@@ -729,5 +1236,374 @@ const styles = StyleSheet.create({
   diagnosticText: {
     fontSize: 11.5,
     lineHeight: 16.5,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  cardSectionEmoji: {
+    fontSize: 22,
+  },
+  fruitfulDirectionBanner: {
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FFD54F',
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  fruitfulBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  fruitfulCrownEmoji: {
+    fontSize: 18,
+  },
+  fruitfulBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#E65100',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  fruitfulSentenceText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#3E2723',
+    fontWeight: '600',
+  },
+  directionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  directionItemBox: {
+    flex: 1,
+    minWidth: '47%',
+    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    padding: 10,
+  },
+  directionItemBoxBest: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#81C784',
+    borderWidth: 1.5,
+  },
+  directionItemBoxVuln: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FFB74D',
+  },
+  directionItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  directionName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  bestPill: {
+    backgroundColor: '#2E7D32',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  bestPillText: {
+    fontSize: 9.5,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  directionFormula: {
+    fontSize: 10.5,
+    color: '#757575',
+    marginBottom: 4,
+  },
+  directionPtsText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1A237E',
+  },
+  ptsUnit: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#616161',
+  },
+  vastuBox: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  vastuHeading: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#424242',
+    marginBottom: 2,
+  },
+  vastuText: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: '#616161',
+  },
+  trikonaList: {
+    gap: 8,
+  },
+  trikonaCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  trikonaHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  trikonaName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  trikonaMeta: {
+    fontSize: 11,
+    color: '#757575',
+    marginTop: 1,
+  },
+  trikonaBadge: {
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  trikonaPtsNum: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  trikonaPtsLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  trikonaDesc: {
+    fontSize: 11.5,
+    color: '#424242',
+    lineHeight: 16,
+  },
+  sadeSatiBanner: {
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  sadeSatiBannerTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  sadeSatiBannerDesc: {
+    fontSize: 11.5,
+    lineHeight: 16.5,
+    color: '#37474F',
+  },
+  dhaiyaList: {
+    gap: 8,
+  },
+  dhaiyaCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  dhaiyaHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dhaiyaTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  dhaiyaSub: {
+    fontSize: 11,
+    color: '#757575',
+    marginTop: 1,
+  },
+  dhaiyaPillRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dhaiyaSavPill: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignItems: 'center',
+  },
+  dhaiyaSavPillNum: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1565C0',
+  },
+  dhaiyaSavPillLabel: {
+    fontSize: 9,
+    color: '#1565C0',
+    fontWeight: '600',
+  },
+  dhaiyaBavPill: {
+    backgroundColor: '#EDE7F6',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignItems: 'center',
+  },
+  dhaiyaBavPillNum: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#4A148C',
+  },
+  dhaiyaBavPillLabel: {
+    fontSize: 9,
+    color: '#4A148C',
+    fontWeight: '600',
+  },
+  verticalBox: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  verticalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  verticalIcon: {
+    fontSize: 18,
+  },
+  verticalTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  verticalCompareSub: {
+    fontSize: 11,
+    color: '#757575',
+  },
+  verticalDesc: {
+    fontSize: 11.5,
+    lineHeight: 16.5,
+    color: '#424242',
+    marginTop: 2,
+  },
+  quantumBox: {
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+  },
+  quantumHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 3,
+  },
+  quantumIcon: {
+    fontSize: 15,
+  },
+  quantumTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  quantumDesc: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: '#37474F',
+  },
+  noQuantumBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F1F8E9',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#C5E1A5',
+  },
+  noQuantumEmoji: {
+    fontSize: 20,
+  },
+  noQuantumText: {
+    flex: 1,
+    fontSize: 11.5,
+    lineHeight: 16.5,
+    color: '#33691E',
+  },
+  eighthFromList: {
+    gap: 8,
+  },
+  eighthFromCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  eighthFromHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  eighthFromTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  eighthFromVulnSub: {
+    fontSize: 11,
+    color: '#757575',
+    marginTop: 1,
+  },
+  stabilityBadge: {
+    alignItems: 'flex-end',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  stabilityBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  stabilityDeltaText: {
+    fontSize: 10,
+    color: '#616161',
+    fontWeight: '600',
+  },
+  destabFactorText: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: '#C62828',
+    marginBottom: 4,
+  },
+  recommendationText: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: '#2E7D32',
   },
 });
