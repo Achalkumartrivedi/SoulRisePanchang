@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Rect, Line, Polygon } from 'react-native-svg';
 import { PanchangDayData, ChoghadiyaItem } from '../types/panchang';
 import { RoyalHeritageTheme, CHOGHADIYA_META } from '../theme/royalHeritage';
 import { useLanguage } from '../context/LanguageContext';
@@ -232,6 +232,36 @@ export const VedicDimensionsWidget: React.FC<VedicDimensionsWidgetProps> = ({
           </View>
         </TouchableOpacity>
       </View>
+
+      {/* Lagna Kundli Vedic Chart Banner Card */}
+      <TouchableOpacity
+        style={styles.lagnaKundliCard}
+        onPress={onPressPlanets}
+        activeOpacity={0.8}
+      >
+        <View style={styles.lagnaLeftRow}>
+          <View style={styles.lagnaIconBox}>
+            <Svg width={32} height={32} viewBox="0 0 40 40">
+              <Rect x="2" y="2" width="36" height="36" fill="none" stroke="#FFDCA1" strokeWidth="1.2" />
+              <Line x1="2" y1="2" x2="38" y2="38" stroke="#FFDCA1" strokeWidth="1.2" />
+              <Line x1="38" y1="2" x2="2" y2="38" stroke="#FFDCA1" strokeWidth="1.2" />
+              <Polygon points="20,2 38,20 20,38 2,20" fill="none" stroke="#FFDCA1" strokeWidth="1.2" />
+            </Svg>
+          </View>
+          <View style={styles.lagnaTextCol}>
+            <View style={styles.lagnaTitleRow}>
+              <Text style={styles.lagnaTitle}>Lagna Kundli</Text>
+              <View style={styles.lagnaSignBadge}>
+                <Text style={styles.lagnaSignBadgeText}>{sunSign} ({panchang.sunMoon.sunSign || 'Scorpio'})</Text>
+              </View>
+            </View>
+            <Text style={styles.lagnaDegreeText}>Ascendant degree 14°22' • Mars ruling</Text>
+          </View>
+        </View>
+        <View style={styles.lagnaExpandBtn}>
+          <Text style={styles.lagnaExpandIcon}>⤢</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -424,5 +454,84 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: RoyalHeritageTheme.accent.primaryGold,
     fontWeight: 'bold',
+  },
+
+  // Lagna Kundli Banner Card Styles
+  lagnaKundliCard: {
+    backgroundColor: '#37151C', // surface-container
+    borderRadius: 24,
+    padding: 14,
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 220, 161, 0.16)',
+    shadowColor: '#180207',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  lagnaLeftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  lagnaIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: '#431F26',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 184, 0, 0.25)',
+  },
+  lagnaTextCol: {
+    flex: 1,
+  },
+  lagnaTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  lagnaTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFDCA1',
+  },
+  lagnaSignBadge: {
+    backgroundColor: '#431F26',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+  },
+  lagnaSignBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#D5C5A5',
+  },
+  lagnaDegreeText: {
+    fontSize: 11.5,
+    color: '#D5C4AB',
+    marginTop: 2,
+  },
+  lagnaExpandBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#431F26',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  lagnaExpandIcon: {
+    fontSize: 14,
+    color: '#FFDCA1',
+    fontWeight: '700',
   },
 });

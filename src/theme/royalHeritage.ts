@@ -1,51 +1,58 @@
 // SoulRise Panchang - Royal Heritage Theme Tokens
 // Modern Indian Spiritual Luxury: Deep Maroon, Rich Burgundy, Imperial Vedic Gold
+// Extracted from Stitch Screen: ec0f305d25ce47909c87593f60b411b0
 
 export const RoyalHeritageTheme = {
   canvas: {
-    base: '#170205',          // Deepest Abyssal Maroon
-    elevated: '#24050A',      // Sacred Temple Maroon
-    radialGlow: '#3B0910',    // Diya warm bloom
-    cardWell: '#1F060A',      // Inset well background
+    base: '#280910',          // Deepest Abyssal Maroon (#280910)
+    lowest: '#21040B',        // Surface Container Lowest (#21040B)
+    elevated: '#321118',      // Surface Container Low (#321118)
+    radialGlow: '#4A121E',    // Diya warm bloom
   },
   surface: {
-    card: '#2E070D',          // Primary Velvet Burgundy
-    cardHover: '#380A12',     // Highlighted Surface
-    cardElevated: '#480E18',  // Modal / High Elevation Surface
-    cardTranslucent: 'rgba(46, 7, 13, 0.88)',
-    borderRim: 'rgba(255, 215, 0, 0.28)', // 1px Luminous Champagne Gold
-    borderSubtle: 'rgba(230, 194, 128, 0.16)',
-    shadowGlow: 'rgba(255, 215, 0, 0.18)',
-    glassChip: 'rgba(255, 255, 255, 0.08)',
-    glassChipBorder: 'rgba(255, 215, 0, 0.32)',
+    card: '#37151C',          // Primary Surface Container (#37151C)
+    cardHigh: '#431F26',      // Surface Container High (#431F26)
+    cardHighest: '#502930',   // Surface Container Highest (#502930)
+    cardHover: '#552E35',     // Surface Bright (#552E35)
+    borderRim: 'rgba(255, 220, 161, 0.16)', // Luminous Champagne Gold
+    borderGold: 'rgba(255, 184, 0, 0.35)',  // Amber Gold border
+    borderSubtle: 'rgba(81, 69, 45, 0.4)',  // Subtle divider border (#51452D)
+    shadowGlow: 'rgba(255, 184, 0, 0.15)',
+    glassChip: '#431F26',
+    glassChipBorder: 'rgba(255, 220, 161, 0.22)',
   },
   accent: {
-    primaryGold: '#FFD700',   // Imperial Vedic Gold
-    secondaryGold: '#E6C280', // Warm Champagne Gold
-    mutedGold: '#B3925D',     // Antique Temple Gold
-    goldGlow: 'rgba(255, 215, 0, 0.35)',
-    auspiciousJade: '#10B981',// Auspicious (Shubh / Amrit)
-    auspiciousJadeBg: 'rgba(16, 185, 129, 0.14)',
-    auspiciousJadeBorder: 'rgba(16, 185, 129, 0.4)',
-    inauspiciousRuby: '#EF4444', // Inauspicious (Rahu / Yamaganda / Kaal / Rog / Udveg)
-    inauspiciousRubyBg: 'rgba(239, 68, 68, 0.14)',
-    inauspiciousRubyBorder: 'rgba(239, 68, 68, 0.4)',
-    neutralAmber: '#FF9800',  // Neutral (Char)
-    neutralAmberBg: 'rgba(255, 152, 0, 0.14)',
-    neutralAmberBorder: 'rgba(255, 152, 0, 0.4)',
+    primaryGold: '#FFDCA1',   // Primary Luminous Gold
+    primaryFixed: '#FFDEA8',  // Fixed Light Gold
+    goldContainer: '#FFB800', // Amber Radiant Gold Container
+    secondaryGold: '#D5C5A5', // Warm Sandalwood Gold
+    mutedGold: '#9E8F78',     // Outline muted gold
+    goldGlow: 'rgba(255, 184, 0, 0.35)',
+    auspiciousJade: '#10B981',// Auspicious (Shubh / Amrit / Labh)
+    auspiciousJadeBg: 'rgba(16, 185, 129, 0.16)',
+    auspiciousJadeBorder: 'rgba(16, 185, 129, 0.45)',
+    inauspiciousRuby: '#FFB4AB', // Error text
+    inauspiciousRubyBg: '#93000A', // Error Container
+    inauspiciousRubyBorder: 'rgba(255, 180, 171, 0.4)',
+    neutralAmber: '#FFB800',  // Neutral (Char)
+    neutralAmberBg: 'rgba(255, 184, 0, 0.15)',
+    neutralAmberBorder: 'rgba(255, 184, 0, 0.4)',
   },
   typography: {
-    title: '#FFF8E7',         // Luminous Warm Ivory
-    subtitle: '#E6C280',      // Warm Champagne Gold
-    body: '#F3D299',          // Golden Parchment Body
-    caption: '#C8B89E',       // Sandalwood Muted
+    title: '#FFDCA1',         // Primary Headline Gold (#FFDCA1)
+    onSurface: '#FFD9DE',     // On Surface Warm Ivory (#FFD9DE)
+    onSurfaceVariant: '#D5C4AB', // Secondary Warm Muted (#D5C4AB)
+    subtitle: '#D5C5A5',      // Warm Champagne Gold (#D5C5A5)
+    body: '#D5C4AB',          // Warm Golden Body (#D5C4AB)
+    caption: '#D5C5A5',       // Sandalwood Caption (#D5C5A5)
     placeholder: '#8C676E',   // Inactive muted
-    darkContrast: '#210206',  // Text on bright gold buttons
+    darkContrast: '#412D00',  // Text on bright gold buttons
   },
   shapes: {
     headerBottomRadius: 28,   // Curved bottom crest
-    cardRadius: 22,           // Floating panel rounding
+    cardRadius: 28,           // Floating panel rounding (28px)
     pillRadius: 9999,         // Continuous pill curvature
+    innerCardRadius: 18,      // Inner telemetry cards (18px)
     circularAvatarRadius: 38, // Explore Vedic Astrology circular cards
   }
 };

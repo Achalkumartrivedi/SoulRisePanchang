@@ -91,46 +91,70 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Top Title Bar */}
+      {/* Top Title Bar: Brand + Quick City/SAN pills + Bell + Profile */}
       <View style={styles.topRow}>
         <View style={styles.titleArea}>
-          <Text style={styles.appTitle} numberOfLines={1} adjustsFontSizeToFit>🕉️ {t('appName')}</Text>
-          <Text style={styles.samvatSubtitle} numberOfLines={1} adjustsFontSizeToFit>
-            {language === 'hi' || language === 'hinglish' ? samvat.monthNameHindi : samvat.monthName} • {samvat.vikramSamvat} {language === 'hi' || language === 'hinglish' ? 'विक्रम' : 'Vikram Samvat'}
-          </Text>
+          <View style={styles.brandRow}>
+            <Text style={styles.brandStar}>✦</Text>
+            <Text style={styles.appTitle}>SoulRise</Text>
+          </View>
+          <View style={styles.quickChipsRow}>
+            <TouchableOpacity style={styles.quickChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
+              <Text style={styles.quickChipIcon}>📍</Text>
+              <Text style={styles.quickChipText}>{selectedCity.name.toUpperCase()}</Text>
+              <Text style={styles.quickChipArrow}>⌄</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.quickChip} onPress={() => {}} activeOpacity={0.75}>
+              <Text style={styles.quickChipText}>SAN</Text>
+              <Text style={styles.quickChipArrow}>⌄</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.actionsRow}>
-          {/* 🌐 Language Switcher Button */}
-          <TouchableOpacity style={styles.langBadge} onPress={onOpenLanguagePicker} activeOpacity={0.7}>
-            <Text style={styles.langFlag}>{currentLangObj.flag}</Text>
-            <Text style={styles.langText} numberOfLines={1} adjustsFontSizeToFit>{currentLangObj.name}</Text>
+        <View style={styles.headerRightActions}>
+          {/* Notification Bell with Golden Dot */}
+          <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
+            <Text style={styles.iconBellText}>🔔</Text>
+            <View style={styles.notificationDot} />
           </TouchableOpacity>
 
-          {/* 📍 City Location Button */}
-          <TouchableOpacity style={styles.cityBadge} onPress={onOpenCityPicker} activeOpacity={0.7}>
-            <Text style={styles.cityIcon}>📍</Text>
-            <View>
-              <Text style={styles.cityName} numberOfLines={1} adjustsFontSizeToFit>{selectedCity.name}</Text>
-            </View>
+          {/* Profile Avatar */}
+          <TouchableOpacity style={styles.avatarCircle} activeOpacity={0.75}>
+            <Text style={styles.avatarText}>👤</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Date Navigation Bar */}
-      <View style={styles.dateBar}>
-        <TouchableOpacity style={styles.arrowBtn} onPress={onPrevDay} activeOpacity={0.7}>
-          <Text style={styles.arrowText}>◀</Text>
+      {/* Scrubber / Pill Navigation Bar */}
+      <View style={styles.scrubberRow}>
+        {/* Language Pill */}
+        <TouchableOpacity style={styles.scrubberChip} onPress={onOpenLanguagePicker} activeOpacity={0.75}>
+          <Text style={styles.scrubberIcon}>文A</Text>
+          <Text style={styles.scrubberText}>ગુજરાતી / ENG</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.dateDisplay} onPress={openPicker} activeOpacity={0.8}>
-          <Text style={styles.dateText}>📅 {formattedDateStr} ▾</Text>
-          {isTodayActive && <Text style={styles.todayBadge}>{t('today')}</Text>}
+        {/* Location Pill */}
+        <TouchableOpacity style={styles.scrubberChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
+          <Text style={styles.scrubberIcon}>🧭</Text>
+          <Text style={styles.scrubberText} numberOfLines={1}>{selectedCity.name}, India</Text>
+          <Text style={styles.quickChipArrow}>⌄</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.arrowBtn} onPress={onNextDay} activeOpacity={0.7}>
-          <Text style={styles.arrowText}>▶</Text>
-        </TouchableOpacity>
+        {/* Date Selector Pill */}
+        <View style={styles.dateSelectorCapsule}>
+          <TouchableOpacity style={styles.arrowBtn} onPress={onPrevDay} activeOpacity={0.7}>
+            <Text style={styles.arrowText}>◀</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.dateTextTouch} onPress={openPicker} activeOpacity={0.8}>
+            <Text style={styles.datePillText}>📅 {dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })} ▾</Text>
+            {isTodayActive && <Text style={styles.todaySmallBadge}>Today</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.arrowBtn} onPress={onNextDay} activeOpacity={0.7}>
+            <Text style={styles.arrowText}>▶</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Full Date, Month & Year Selector Modal */}
@@ -227,128 +251,192 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#26060B',
-    paddingTop: 16,
-    paddingBottom: 16,
+    backgroundColor: '#21040B', // Surface Container Lowest
     paddingHorizontal: 16,
+    paddingBottom: 14,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 215, 0, 0.32)',
-    elevation: 10,
-    shadowColor: 'rgba(255, 215, 0, 0.25)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 220, 161, 0.16)',
+    elevation: 8,
+    shadowColor: '#180207',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-    flexWrap: 'wrap',
-    gap: 8,
+    marginBottom: 10,
   },
   titleArea: {
     flex: 1,
-    flexShrink: 1,
   },
-  appTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFF8E7',
-    letterSpacing: 0.4,
-  },
-  samvatSubtitle: {
-    fontSize: 11.5,
-    color: '#E6C280',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  actionsRow: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flexShrink: 0,
   },
-  langBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
-  },
-  langFlag: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  langText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFF8E7',
-  },
-  cityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.35)',
-  },
-  cityIcon: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  cityName: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFF8E7',
-  },
-  dateBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 2, 5, 0.72)',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.24)',
-  },
-  arrowBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  arrowText: {
+  brandStar: {
     fontSize: 16,
-    color: '#FFD700',
-    fontWeight: '800',
+    color: '#FFDCA1',
   },
-  dateDisplay: {
+  appTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFDCA1',
+    letterSpacing: 0.8,
+  },
+  quickChipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  quickChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#431F26', // surface-container-high
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  quickChipIcon: {
+    fontSize: 11,
+  },
+  quickChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#D5C5A5',
+    letterSpacing: 0.8,
+  },
+  quickChipArrow: {
+    fontSize: 10,
+    color: '#9E8F78',
+    marginLeft: 1,
+  },
+  headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    flexWrap: 'wrap',
+  },
+  iconCircleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    backgroundColor: '#37151C',
+  },
+  iconBellText: {
+    fontSize: 18,
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 7,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#FFB800',
+    shadowColor: '#FFB800',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  avatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFDCA1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FFB800',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  avatarText: {
+    fontSize: 16,
+  },
+  scrubberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: 4,
+  },
+  scrubberChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#431F26',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    shadowColor: '#180207',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scrubberIcon: {
+    fontSize: 12,
+    color: '#FFDCA1',
+    fontWeight: '700',
+  },
+  scrubberText: {
+    fontSize: 11,
+    color: '#D5C5A5',
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  dateSelectorCapsule: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#431F26',
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 184, 0, 0.25)',
+  },
+  dateTextTouch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
     justifyContent: 'center',
   },
-  dateText: {
-    fontSize: 14,
+  datePillText: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#FFF8E7',
+    color: '#FFDCA1',
   },
-  todayBadge: {
-    backgroundColor: '#FFD700',
-    color: '#210206',
-    fontSize: 10,
+  todaySmallBadge: {
+    backgroundColor: '#FFB800',
+    color: '#412D00',
+    fontSize: 8.5,
     fontWeight: '800',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 6,
+    textTransform: 'uppercase',
+  },
+  arrowBtn: {
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
+  },
+  arrowText: {
+    fontSize: 12,
+    color: '#FFB800',
+    fontWeight: '800',
   },
 
   // Modal Styles
