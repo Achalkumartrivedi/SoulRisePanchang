@@ -91,27 +91,33 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Top Title Bar: Brand + Quick City/SAN pills + Bell + Profile */}
+      {/* Top Title Bar: Brand Logo + Location Chip + Language Chip + Bell + Profile */}
       <View style={styles.topRow}>
         <View style={styles.titleArea}>
           <View style={styles.brandRow}>
             <Text style={styles.brandStar}>✦</Text>
             <Text style={styles.appTitle}>SoulRise</Text>
-          </View>
-          <View style={styles.quickChipsRow}>
-            <TouchableOpacity style={styles.quickChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
-              <Text style={styles.quickChipIcon}>📍</Text>
-              <Text style={styles.quickChipText}>{selectedCity.name.toUpperCase()}</Text>
-              <Text style={styles.quickChipArrow}>⌄</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quickChip} onPress={() => {}} activeOpacity={0.75}>
-              <Text style={styles.quickChipText}>SAN</Text>
-              <Text style={styles.quickChipArrow}>⌄</Text>
-            </TouchableOpacity>
+            <View style={styles.brandTag}>
+              <Text style={styles.brandTagText}>VIKRAM {samvat?.vikramSamvat || 2083}</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.headerRightActions}>
+          {/* Unified Location Chip */}
+          <TouchableOpacity style={styles.topActionChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
+            <Text style={styles.topActionChipIcon}>📍</Text>
+            <Text style={styles.topActionChipText} numberOfLines={1}>{selectedCity.name}</Text>
+            <Text style={styles.topActionChipArrow}>▼</Text>
+          </TouchableOpacity>
+
+          {/* Unified Language Chip */}
+          <TouchableOpacity style={styles.topActionChip} onPress={onOpenLanguagePicker} activeOpacity={0.75}>
+            <Text style={styles.topActionChipIcon}>🌐</Text>
+            <Text style={styles.topActionChipText}>{currentLangObj.code.toUpperCase()}</Text>
+            <Text style={styles.topActionChipArrow}>▼</Text>
+          </TouchableOpacity>
+
           {/* Notification Bell with Golden Dot */}
           <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
             <Text style={styles.iconBellText}>🔔</Text>
@@ -125,36 +131,32 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       </View>
 
-      {/* Scrubber / Pill Navigation Bar */}
+      {/* Scrubber / Temporal Navigation Bar */}
       <View style={styles.scrubberRow}>
-        {/* Language Pill */}
-        <TouchableOpacity style={styles.scrubberChip} onPress={onOpenLanguagePicker} activeOpacity={0.75}>
-          <Text style={styles.scrubberIcon}>文A</Text>
-          <Text style={styles.scrubberText}>ગુજરાતી / ENG</Text>
+        <TouchableOpacity style={styles.navArrowBtn} onPress={onPrevDay} activeOpacity={0.7}>
+          <Text style={styles.navArrowText}>◀</Text>
         </TouchableOpacity>
 
-        {/* Location Pill */}
-        <TouchableOpacity style={styles.scrubberChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
-          <Text style={styles.scrubberIcon}>🧭</Text>
-          <Text style={styles.scrubberText} numberOfLines={1}>{selectedCity.name}, India</Text>
-          <Text style={styles.quickChipArrow}>⌄</Text>
+        <TouchableOpacity style={styles.dateSelectorCapsule} onPress={openPicker} activeOpacity={0.8}>
+          <Text style={styles.calendarIcon}>📅</Text>
+          <Text style={styles.datePillText}>{formattedDateStr}</Text>
+          <Text style={styles.dateChevron}>▼</Text>
+          {isTodayActive && (
+            <View style={styles.todaySmallBadge}>
+              <Text style={styles.todaySmallBadgeText}>TODAY</Text>
+            </View>
+          )}
         </TouchableOpacity>
 
-        {/* Date Selector Pill */}
-        <View style={styles.dateSelectorCapsule}>
-          <TouchableOpacity style={styles.arrowBtn} onPress={onPrevDay} activeOpacity={0.7}>
-            <Text style={styles.arrowText}>◀</Text>
+        {!isTodayActive && (
+          <TouchableOpacity style={styles.todayReturnBtn} onPress={onToday} activeOpacity={0.75}>
+            <Text style={styles.todayReturnText}>TODAY</Text>
           </TouchableOpacity>
+        )}
 
-          <TouchableOpacity style={styles.dateTextTouch} onPress={openPicker} activeOpacity={0.8}>
-            <Text style={styles.datePillText}>📅 {dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })} ▾</Text>
-            {isTodayActive && <Text style={styles.todaySmallBadge}>Today</Text>}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.arrowBtn} onPress={onNextDay} activeOpacity={0.7}>
-            <Text style={styles.arrowText}>▶</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.navArrowBtn} onPress={onNextDay} activeOpacity={0.7}>
+          <Text style={styles.navArrowText}>▶</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Full Date, Month & Year Selector Modal */}
@@ -288,56 +290,73 @@ const styles = StyleSheet.create({
     color: '#FFDCA1',
     letterSpacing: 0.8,
   },
-  quickChipsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
+  brandTag: {
+    backgroundColor: 'rgba(255, 220, 161, 0.12)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 220, 161, 0.25)',
   },
-  quickChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#431F26', // surface-container-high
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  quickChipIcon: {
-    fontSize: 11,
-  },
-  quickChipText: {
-    fontSize: 10,
+  brandTagText: {
+    fontSize: 9.5,
     fontWeight: '700',
-    color: '#D5C5A5',
-    letterSpacing: 0.8,
-  },
-  quickChipArrow: {
-    fontSize: 10,
-    color: '#9E8F78',
-    marginLeft: 1,
+    color: '#FFDCA1',
+    letterSpacing: 0.6,
   },
   headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
+  },
+  topActionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#37151C',
+    paddingHorizontal: 9,
+    paddingVertical: 5.5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 220, 161, 0.22)',
+    shadowColor: '#180207',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  topActionChipIcon: {
+    fontSize: 12,
+  },
+  topActionChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D5C5A5',
+    maxWidth: 75,
+  },
+  topActionChipArrow: {
+    fontSize: 8,
+    color: '#FFDCA1',
+    marginLeft: 1,
   },
   iconCircleBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     backgroundColor: '#37151C',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 220, 161, 0.16)',
   },
   iconBellText: {
-    fontSize: 18,
+    fontSize: 16,
   },
   notificationDot: {
     position: 'absolute',
-    top: 7,
-    right: 8,
+    top: 6,
+    right: 7,
     width: 7,
     height: 7,
     borderRadius: 3.5,
@@ -362,81 +381,90 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   avatarText: {
-    fontSize: 16,
+    fontSize: 15,
   },
   scrubberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingTop: 4,
+    gap: 8,
+    paddingTop: 6,
   },
-  scrubberChip: {
+  navArrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#37151C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 184, 0, 0.25)',
+  },
+  navArrowText: {
+    fontSize: 13,
+    color: '#FFB800',
+    fontWeight: '800',
+  },
+  dateSelectorCapsule: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#431F26',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#37151C',
     borderRadius: 999,
+    paddingHorizontal: 12,
+    height: 36,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 184, 0, 0.35)',
     shadowColor: '#180207',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 2,
   },
-  scrubberIcon: {
-    fontSize: 12,
-    color: '#FFDCA1',
-    fontWeight: '700',
-  },
-  scrubberText: {
-    fontSize: 11,
-    color: '#D5C5A5',
-    fontWeight: '600',
-    letterSpacing: 0.2,
-  },
-  dateSelectorCapsule: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#431F26',
-    borderRadius: 999,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 184, 0, 0.25)',
-  },
-  dateTextTouch: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flex: 1,
-    justifyContent: 'center',
+  calendarIcon: {
+    fontSize: 13,
   },
   datePillText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
+    color: '#FFDCA1',
+  },
+  dateChevron: {
+    fontSize: 8.5,
     color: '#FFDCA1',
   },
   todaySmallBadge: {
     backgroundColor: '#FFB800',
-    color: '#412D00',
-    fontSize: 8.5,
-    fontWeight: '800',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
     borderRadius: 6,
-    textTransform: 'uppercase',
+    marginLeft: 3,
   },
-  arrowBtn: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  arrowText: {
-    fontSize: 12,
-    color: '#FFB800',
+  todaySmallBadgeText: {
+    color: '#412D00',
+    fontSize: 8,
     fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  todayReturnBtn: {
+    backgroundColor: '#FFB800',
+    paddingHorizontal: 10,
+    height: 36,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FFB800',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  todayReturnText: {
+    color: '#412D00',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
 
   // Modal Styles
