@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, StatusBar, Image } from 'react-native';
 import { Colors } from '../theme/colors';
 import { CityLocation, SamvatInfo } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
@@ -91,19 +91,31 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Top Title Bar: Brand Logo + Location Chip + Language Chip + Bell + Profile */}
-      <View style={styles.topRow}>
-        <View style={styles.titleArea}>
-          <View style={styles.brandRow}>
-            <Text style={styles.brandStar}>✦</Text>
-            <Text style={styles.appTitle}>SoulRise</Text>
-            <View style={styles.brandTag}>
-              <Text style={styles.brandTagText}>VIKRAM {samvat?.vikramSamvat || 2083}</Text>
-            </View>
+      {/* Royal Heritage Brand Crest Header: Exact Symbol, Name & Vedic Badge */}
+      <View style={styles.brandCrestHeader}>
+        <View style={styles.brandCrestLeft}>
+          <View style={styles.emblemWrapper}>
+            <Image
+              source={require('../assets/surya_emblem.png')}
+              style={styles.emblemImage}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.brandTypographyCol}>
+            <Text style={styles.brandTitleSoulRise}>SoulRise</Text>
+            <Text style={styles.brandTitlePanchang}>Panchang</Text>
+            <Text style={styles.brandSacredSubtitle}>SACRED SOLAR-LUNAR ALMANAC</Text>
           </View>
         </View>
 
-        <View style={styles.headerRightActions}>
+        <View style={styles.vedicBadgeCapsule}>
+          <Text style={styles.vedicBadgeText}>VEDIC</Text>
+        </View>
+      </View>
+
+      {/* Utility Actions Strip: Location, Language, Samvat, Notifications, Profile */}
+      <View style={styles.utilityStripRow}>
+        <View style={styles.utilityLeftGroup}>
           {/* Unified Location Chip */}
           <TouchableOpacity style={styles.topActionChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
             <Text style={styles.topActionChipIcon}>📍</Text>
@@ -117,6 +129,12 @@ export const Header: React.FC<HeaderProps> = ({
             <Text style={styles.topActionChipText}>{currentLangObj.code.toUpperCase()}</Text>
             <Text style={styles.topActionChipArrow}>▼</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.utilityRightGroup}>
+          <View style={styles.samvatMiniChip}>
+            <Text style={styles.samvatMiniText}>VIKRAM {samvat?.vikramSamvat || 2083}</Text>
+          </View>
 
           {/* Notification Bell with Golden Dot */}
           <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
@@ -266,48 +284,113 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 12,
   },
-  topRow: {
+  brandCrestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingTop: 2,
+    paddingBottom: 8,
   },
-  titleArea: {
-    flex: 1,
-  },
-  brandRow: {
+  brandCrestLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 12,
+    flex: 1,
   },
-  brandStar: {
-    fontSize: 16,
-    color: '#FFDCA1',
+  emblemWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    shadowColor: '#FFB800',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.65,
+    shadowRadius: 10,
+    elevation: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
-  appTitle: {
-    fontSize: 22,
+  emblemImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
+  brandTypographyCol: {
+    justifyContent: 'center',
+  },
+  brandTitleSoulRise: {
+    fontFamily: 'serif',
+    fontSize: 21,
     fontWeight: '700',
-    color: '#FFDCA1',
-    letterSpacing: 0.8,
+    color: '#FFF0D4',
+    letterSpacing: 0.4,
+    lineHeight: 24,
   },
-  brandTag: {
-    backgroundColor: 'rgba(255, 220, 161, 0.12)',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 220, 161, 0.25)',
-  },
-  brandTagText: {
-    fontSize: 9.5,
+  brandTitlePanchang: {
+    fontFamily: 'serif',
+    fontSize: 21,
     fontWeight: '700',
-    color: '#FFDCA1',
-    letterSpacing: 0.6,
+    color: '#FFF0D4',
+    letterSpacing: 0.4,
+    lineHeight: 24,
   },
-  headerRightActions: {
+  brandSacredSubtitle: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#CBB89D',
+    letterSpacing: 1.4,
+    marginTop: 3,
+  },
+  vedicBadgeCapsule: {
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 184, 0, 0.65)',
+    backgroundColor: 'rgba(255, 184, 0, 0.08)',
+    paddingHorizontal: 16,
+    paddingVertical: 5.5,
+    borderRadius: 999,
+    shadowColor: '#FFB800',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+  },
+  vedicBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFB800',
+    letterSpacing: 1.4,
+  },
+  utilityStripRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 220, 161, 0.08)',
+    marginBottom: 4,
+  },
+  utilityLeftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
+  },
+  utilityRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  samvatMiniChip: {
+    backgroundColor: 'rgba(255, 220, 161, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 220, 161, 0.18)',
+  },
+  samvatMiniText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#FFDCA1',
+    letterSpacing: 0.5,
   },
   topActionChip: {
     flexDirection: 'row',
