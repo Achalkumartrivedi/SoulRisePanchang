@@ -276,7 +276,132 @@ export interface EighthFromStabilityItem {
   recommendationHi: string;
 }
 
+export type SAVTradition = 'BPHS' | 'BRIHAT_JATAKA';
+
+export interface ThreePartsOfLifeItem {
+  partNumber: 1 | 2 | 3;
+  titleEn: string;
+  titleHi: string;
+  titleGu: string;
+  spanEn: string;
+  spanHi: string;
+  spanGu: string;
+  points: number;
+  benchmark: number; // 112.33
+  percentage: number;
+  isPeak: boolean;
+  isLeast: boolean;
+  status: 'EXCELLENT' | 'MODERATE' | 'VULNERABLE';
+  descriptionEn: string;
+  descriptionHi: string;
+  descriptionGu: string;
+}
+
+export interface ThreePartsOfLifeAnalysis {
+  method1RashiKhandas: {
+    parts: ThreePartsOfLifeItem[];
+    peakPart: ThreePartsOfLifeItem;
+    leastPart: ThreePartsOfLifeItem;
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+  method2BhavaKhandas: {
+    parts: ThreePartsOfLifeItem[];
+    peakPart: ThreePartsOfLifeItem;
+    leastPart: ThreePartsOfLifeItem;
+    titleEn: string;
+    titleHi: string;
+    titleGu: string;
+    descriptionEn: string;
+    descriptionHi: string;
+    descriptionGu: string;
+  };
+  synthesizedVerdict: {
+    goldenPhaseEn: string;
+    goldenPhaseHi: string;
+    goldenPhaseGu: string;
+    counselEn: string;
+    counselHi: string;
+    counselGu: string;
+  };
+}
+
+export interface MaterialSpiritualNatureAnalysis {
+  antarbhagaPoints: number;
+  antarbhagaPercentage: number;
+  antarbhagaHouses: number[]; // [1, 4, 5, 7, 9, 10]
+  bahirbhagaPoints: number;
+  bahirbhagaPercentage: number;
+  bahirbhagaHouses: number[]; // [2, 3, 6, 8, 11, 12]
+  verdict: 'SPIRITUAL_DOMINANT' | 'MATERIAL_DOMINANT' | 'BALANCED_HARMONY';
+  titleEn: string;
+  titleHi: string;
+  titleGu: string;
+  subtitleEn: string;
+  subtitleHi: string;
+  subtitleGu: string;
+  descriptionEn: string;
+  descriptionHi: string;
+  descriptionGu: string;
+  antarbhagaSignificationsEn: string;
+  antarbhagaSignificationsHi: string;
+  antarbhagaSignificationsGu: string;
+  bahirbhagaSignificationsEn: string;
+  bahirbhagaSignificationsHi: string;
+  bahirbhagaSignificationsGu: string;
+}
+
+export interface MisfortuneQuotientCalculation {
+  id: string;
+  titleEn: string;
+  titleHi: string;
+  titleGu: string;
+  fromEntity: string;
+  toEntity: string;
+  housesIncluded: number[];
+  sumPoints: number;
+  formulaStr: string;
+  quotientAge: number;
+  exactAgeStr: string;
+  significationEn: string;
+  significationHi: string;
+  significationGu: string;
+  afflictionType: 'CHRONIC_DISEASE' | 'ENDURANCE_TEST' | 'SURGERY_TRAUMA' | 'VITALITY_CRISIS';
+}
+
+export interface MaleficHouseAgeItem {
+  planetEn: string;
+  planetHi: string;
+  planetGu: string;
+  symbol: string;
+  houseNumber: number;
+  rashiNameEn: string;
+  rashiNameHi: string;
+  rashiNameGu: string;
+  savPoints: number;
+  age: number;
+  threatTypeEn: string;
+  threatTypeHi: string;
+  threatTypeGu: string;
+  warningEn: string;
+  warningHi: string;
+  warningGu: string;
+}
+
+export interface MisfortuneYearsAnalysis {
+  quotientCalculations: MisfortuneQuotientCalculation[];
+  maleficHouseAges: MaleficHouseAgeItem[];
+  remedialTipsEn: string[];
+  remedialTipsHi: string[];
+  remedialTipsGu: string[];
+}
+
 export interface SarvashtakavargaResult {
+  tradition: SAVTradition;
   totalPoints: number; // Invariant 337
   averagePerHouse: number; // 28.08
   houses: HouseSAVDiagnostic[]; // Houses 1 to 12
@@ -316,6 +441,9 @@ export interface SarvashtakavargaResult {
   lifeVerticals: LifeVerticalsAnalysis;
   quantumJumps: QuantumJumpTransition[];
   eighthFromStability: EighthFromStabilityItem[];
+  threePartsOfLife: ThreePartsOfLifeAnalysis;
+  materialSpiritualNature: MaterialSpiritualNatureAnalysis;
+  misfortuneYears: MisfortuneYearsAnalysis;
 }
 
 // Classical Parashari BPHS Bhinnashtakavarga (BAV) Rules
@@ -390,6 +518,16 @@ const PARASHARI_BAV_RULES: Record<string, Record<string, number[]>> = {
     Venus: [6, 11, 12],
     Saturn: [3, 5, 6, 11],
     Lagna: [1, 3, 4, 6, 10, 11]
+  }
+};
+
+// Acharya Varahamihira (Brihat Jataka / Phaladeepika) Variant Rules:
+// Mars gives to Venus in the 5th house instead of the 4th house.
+const BRIHAT_JATAKA_BAV_RULES: Record<string, Record<string, number[]>> = {
+  ...PARASHARI_BAV_RULES,
+  Venus: {
+    ...PARASHARI_BAV_RULES.Venus,
+    Mars: [3, 5, 6, 9, 11, 12]
   }
 };
 
@@ -678,8 +816,12 @@ const CLASSICAL_HOUSE_SPEC: Record<number, ClassicalHouseMeta> = {
 /**
  * Calculates complete Sarvashtakavarga (337 Bindus) and dynamic Diagnostics from Kundali
  */
-export function calculateSarvashtakavarga(kundali: KundaliResult): SarvashtakavargaResult {
+export function calculateSarvashtakavarga(
+  kundali: KundaliResult,
+  tradition: SAVTradition = 'BPHS'
+): SarvashtakavargaResult {
   const lagnaRashi = kundali.lagnaRashiIndex;
+  const ruleset = tradition === 'BRIHAT_JATAKA' ? BRIHAT_JATAKA_BAV_RULES : PARASHARI_BAV_RULES;
 
   // Extract 7 classical planetary sign positions (0 to 11)
   const planetRashiMap: Record<string, number> = {
@@ -712,7 +854,7 @@ export function calculateSarvashtakavarga(kundali: KundaliResult): Sarvashtakava
 
   for (const planet of classicalPlanets) {
     bav[planet] = new Array(12).fill(0);
-    const planetRules = PARASHARI_BAV_RULES[planet];
+    const planetRules = ruleset[planet];
 
     for (const ref of referenceEntities) {
       const refSign = planetRashiMap[ref];
@@ -1464,7 +1606,534 @@ export function calculateSarvashtakavarga(kundali: KundaliResult): Sarvashtakava
     band: getSAVBand(savBySign[i])
   }));
 
+  // ==========================================
+  // 7. Judging Three Parts of Life (Avastha Analysis)
+  // ==========================================
+  // Method 1: Rashi Khandas (Pisces-Gemini, Cancer-Libra, Scorpio-Aquarius)
+  // Part 1: Pisces (11), Aries (0), Taurus (1), Gemini (2)
+  const m1Part1Pts = savBySign[11] + savBySign[0] + savBySign[1] + savBySign[2];
+  // Part 2: Cancer (3), Leo (4), Virgo (5), Libra (6)
+  const m1Part2Pts = savBySign[3] + savBySign[4] + savBySign[5] + savBySign[6];
+  // Part 3: Scorpio (7), Sagittarius (8), Capricorn (9), Aquarius (10)
+  const m1Part3Pts = savBySign[7] + savBySign[8] + savBySign[9] + savBySign[10];
+
+  const m1Max = Math.max(m1Part1Pts, m1Part2Pts, m1Part3Pts);
+  const m1Min = Math.min(m1Part1Pts, m1Part2Pts, m1Part3Pts);
+
+  const m1Parts: ThreePartsOfLifeItem[] = [
+    {
+      partNumber: 1,
+      titleEn: 'First Part (Early Life & Youth)',
+      titleHi: 'प्रथम काल (बाल्यावस्था एवं युवावस्था)',
+      titleGu: 'પ્રથમ ભાગ (બાળપણ અને યુવાની)',
+      spanEn: 'Pisces to Gemini (Signs 12, 1, 2, 3)',
+      spanHi: 'मीन से मिथुन (राशि १२, १, २, ३)',
+      spanGu: 'મીન થી મિથુન (રાશિ ૧૨, ૧, ૨, ૩)',
+      points: m1Part1Pts,
+      benchmark: 112.33,
+      percentage: Number(((m1Part1Pts / 337) * 100).toFixed(1)),
+      isPeak: m1Part1Pts === m1Max,
+      isLeast: m1Part1Pts === m1Min,
+      status: m1Part1Pts >= 115 ? 'EXCELLENT' : m1Part1Pts >= 108 ? 'MODERATE' : 'VULNERABLE',
+      descriptionEn:
+        m1Part1Pts >= 112.33
+          ? 'Blessed childhood and formative youth with supportive parental environment, quick learning curve, and healthy vitality.'
+          : 'Early foundational years require greater parental patience, careful health nurturing, and disciplined schooling.',
+      descriptionHi:
+        m1Part1Pts >= 112.33
+          ? 'बाल्यावस्था व प्रारंभिक शिक्षा में उत्तम सहयोग, पारिवारिक सुरक्षा एवं सीखने की तीव्र क्षमता।'
+          : 'प्रारंभिक वर्षों में स्वास्थ्य व एकाग्रता के प्रति विशेष सजगता तथा निरंतर मार्गदर्शन की आवश्यकता।',
+      descriptionGu:
+        m1Part1Pts >= 112.33
+          ? 'બાળપણ અને શિક્ષણમાં ઉત્તમ પારિવારિક સુખ અને સરળ શરૂઆત.'
+          : 'શરૂઆતી વર્ષોમાં સ્વાસ્થ્ય અને અભ્યાસ માટે વિશેષ પ્રયાસો જરૂરી.'
+    },
+    {
+      partNumber: 2,
+      titleEn: 'Second Part (Middle Life & Enterprise)',
+      titleHi: 'मध्यम काल (युवावस्था से परिपक्वता / कर्म काल)',
+      titleGu: 'મધ્ય ભાગ (યુવાવસ્થાથી પ્રૌઢાવસ્થા / કર્મ કાળ)',
+      spanEn: 'Cancer to Libra (Signs 4, 5, 6, 7)',
+      spanHi: 'कर्क से तुला (राशि ४, ५, ६, ७)',
+      spanGu: 'કર્ક થી તુલા (રાશિ ૪, ૫, ૬, ૭)',
+      points: m1Part2Pts,
+      benchmark: 112.33,
+      percentage: Number(((m1Part2Pts / 337) * 100).toFixed(1)),
+      isPeak: m1Part2Pts === m1Max,
+      isLeast: m1Part2Pts === m1Min,
+      status: m1Part2Pts >= 115 ? 'EXCELLENT' : m1Part2Pts >= 108 ? 'MODERATE' : 'VULNERABLE',
+      descriptionEn:
+        m1Part2Pts >= 112.33
+          ? 'Core productive chapter marked by strong professional trajectory, marital establishment, and robust material compounding.'
+          : 'Middle career years demand relentless perseverance and defensive financial planning to overcome market friction.',
+      descriptionHi:
+        m1Part2Pts >= 112.33
+          ? 'कैरियर, आजीविका और पारिवारिक निर्माण का स्वर्णिમ काल; प्रयासों का प्रचुर व निरंतर फल।'
+          : 'कार्यक्षेत्र में निरंतर परिश्रम, धैर्य और वित्तीय सुरक्षा पर विशेष ध्यान देने का समय।',
+      descriptionGu:
+        m1Part2Pts >= 112.33
+          ? 'કારકિર્દી અને પરિવાર નિર્માણનો સુવર્ણ કાળ; પ્રચુર સફળતા.'
+          : 'મધ્યકાળમાં ધીરજ અને નાણાકીય આયોજન સાથે આગળ વધવું.'
+    },
+    {
+      partNumber: 3,
+      titleEn: 'Last Part (Mature Age & Spiritual Legacy)',
+      titleHi: 'अंतिम काल (प्रौढ़ावस्था, संचित यश एवं साधना)',
+      titleGu: 'અંતિમ ભાગ (પરિપક્વ વય, યશ અને સાધના)',
+      spanEn: 'Scorpio to Aquarius (Signs 8, 9, 10, 11)',
+      spanHi: 'वृश्चिक से कुंभ (राशि ८, ९, १०, ११)',
+      spanGu: 'વૃશ્ચિક થી કુંભ (રાશિ ૮, ૯, ૧૦, ૧૧)',
+      points: m1Part3Pts,
+      benchmark: 112.33,
+      percentage: Number(((m1Part3Pts / 337) * 100).toFixed(1)),
+      isPeak: m1Part3Pts === m1Max,
+      isLeast: m1Part3Pts === m1Min,
+      status: m1Part3Pts >= 115 ? 'EXCELLENT' : m1Part3Pts >= 108 ? 'MODERATE' : 'VULNERABLE',
+      descriptionEn:
+        m1Part3Pts >= 112.33
+          ? 'Serene, venerated senior years filled with accumulated wealth, spiritual peace, respected leadership, and familial contentment.'
+          : 'Mature years advise gradual transition towards contemplative pursuits, health mindfulness, and delegating worldly stresses.',
+      descriptionHi:
+        m1Part3Pts >= 112.33
+          ? 'जीवन का अंतिम चरण अत्यंत सुखद, मान-सम्मान, संचित संपत्ति और आध्यात्मिक शांति से परिपूर्ण।'
+          : 'परिपक्व उम्र में स्वास्थ्य का नियमित ध्यान रखें और भौतिक जिम्मेदारियों को अगली पीढ़ी को सौंपें।',
+      descriptionGu:
+        m1Part3Pts >= 112.33
+          ? 'જીવનનો ઉત્તરાર્ધ અત્યંત સુખમય, માન-સન્માન અને આધ્યાત્મિક શાંતિથી પરિપૂર્ણ.'
+          : 'ઉત્તરાર્ધમાં સ્વાસ્થ્ય અને સંતોષમય જીવનશૈલી પર ધ્યાન કેન્દ્રિત કરવું.'
+    }
+  ];
+
+  // Method 2: Bhava Khandas (Kendra, Panaphara, Apoklima)
+  const m2Part1Pts = houses[0].points + houses[3].points + houses[6].points + houses[9].points; // 1, 4, 7, 10
+  const m2Part2Pts = houses[1].points + houses[4].points + houses[7].points + houses[10].points; // 2, 5, 8, 11
+  const m2Part3Pts = houses[2].points + houses[5].points + houses[8].points + houses[11].points; // 3, 6, 9, 12
+
+  const m2Max = Math.max(m2Part1Pts, m2Part2Pts, m2Part3Pts);
+  const m2Min = Math.min(m2Part1Pts, m2Part2Pts, m2Part3Pts);
+
+  const m2Parts: ThreePartsOfLifeItem[] = [
+    {
+      partNumber: 1,
+      titleEn: 'First Part (Kendra Houses: 1, 4, 7, 10)',
+      titleHi: 'प्रथम काल (केन्द्र भाव: १, ४, ७, १०)',
+      titleGu: 'પ્રથમ ભાગ (કેન્દ્ર ભાવ: ૧, ૪, ૭, ૧૦)',
+      spanEn: 'Pillars of Self, Home, Spouse & Action',
+      spanHi: 'तनु, सुख, जाया एवं कर्म भाव',
+      spanGu: 'તન, સુખ, પત્ની અને કર્મ ભાવ',
+      points: m2Part1Pts,
+      benchmark: 112.33,
+      percentage: Number(((m2Part1Pts / 337) * 100).toFixed(1)),
+      isPeak: m2Part1Pts === m2Max,
+      isLeast: m2Part1Pts === m2Min,
+      status: m2Part1Pts >= 115 ? 'EXCELLENT' : m2Part1Pts >= 108 ? 'MODERATE' : 'VULNERABLE',
+      descriptionEn:
+        m2Part1Pts >= 112.33
+          ? 'Strong foundational pillars provide early momentum, family backing, and high executive initiative.'
+          : 'Early stages require conscious self-reinvention and resilient courage to establish basic pillars.',
+      descriptionHi:
+        m2Part1Pts >= 112.33
+          ? 'केन्द्र भावों की शक्ति से प्रारंभिक जीवन में स्वतः सुरक्षा, आत्मविश्वास और दिशा मिलती है।'
+          : 'प्रारंभिक दौर में आत्म-विश्वास व स्थिर आधार बनाने के लिए अधिक लगन की आवश्यकता।',
+      descriptionGu:
+        m2Part1Pts >= 112.33
+          ? 'કેન્દ્ર બળ મજબૂત હોવાથી શરૂઆતથી જ દૃઢ આધાર અને પ્રગતિ.'
+          : 'શરૂઆતના સમયમાં સ્થિરતા મેળવવા ધીરજ જરૂરી.'
+    },
+    {
+      partNumber: 2,
+      titleEn: 'Second Part (Panaphara Houses: 2, 5, 8, 11)',
+      titleHi: 'मध्यम काल (पणफर भाव: २, ५, ८, ११)',
+      titleGu: 'મધ્ય ભાગ (પણફર ભાવ: ૨, ૫, ૮, ૧૧)',
+      spanEn: 'Sustenance, Intellect, Wealth & Gains',
+      spanHi: 'धन, सुत, आयु एवं लाभ भाव',
+      spanGu: 'ધન, સંતાન, આયુ અને લાભ ભાવ',
+      points: m2Part2Pts,
+      benchmark: 112.33,
+      percentage: Number(((m2Part2Pts / 337) * 100).toFixed(1)),
+      isPeak: m2Part2Pts === m2Max,
+      isLeast: m2Part2Pts === m2Min,
+      status: m2Part2Pts >= 115 ? 'EXCELLENT' : m2Part2Pts >= 108 ? 'MODERATE' : 'VULNERABLE',
+      descriptionEn:
+        m2Part2Pts >= 112.33
+          ? 'Peak earning and resource-compounding phase. Intellect and investments blossom into durable wealth assets.'
+          : 'Middle stage requires disciplined cashflow management and defensive risk posture.',
+      descriptionHi:
+        m2Part2Pts >= 112.33
+          ? 'धन संचय, संतान सुख एवं लाभ अर्जन का चरम काल; बौद्धिक कौशल से वित्तीय समृद्धि।'
+          : 'मध्यम अवस्था में खर्चों पर नियंत्रण और वित्तीय समझदारी सर्वोपरि रहेगी।',
+      descriptionGu:
+        m2Part2Pts >= 112.33
+          ? 'સંપત્તિ સંગ્રહ અને લાભનો શ્રેષ્ઠ સમય; બુદ્ધિબળથી ધન વૃદ્ધિ.'
+          : 'આ સમયમાં નાણાકીય સાવચેતી રાખવી.'
+    },
+    {
+      partNumber: 3,
+      titleEn: 'Last Part (Apoklima Houses: 3, 6, 9, 12)',
+      titleHi: 'अंतिम काल (आपोक्लिम भाव: ३, ६, ९, १२)',
+      titleGu: 'અંતિમ ભાગ (આપોક્લિમ ભાવ: ૩, ૬, ૯, ૧૨)',
+      spanEn: 'Courage, Service, Dharma & Liberation',
+      spanHi: 'सहज, शत्रु, धर्म एवं मोक्ष भाव',
+      spanGu: 'પરાક્રમ, સેવા, ધર્મ અને મોક્ષ ભાવ',
+      points: m2Part3Pts,
+      benchmark: 112.33,
+      percentage: Number(((m2Part3Pts / 337) * 100).toFixed(1)),
+      isPeak: m2Part3Pts === m2Max,
+      isLeast: m2Part3Pts === m2Min,
+      status: m2Part3Pts >= 115 ? 'EXCELLENT' : m2Part3Pts >= 108 ? 'MODERATE' : 'VULNERABLE',
+      descriptionEn:
+        m2Part3Pts >= 112.33
+          ? 'Exalted spiritual maturity, virtuous philanthropic reputation, inner serenity, and honorable legacy.'
+          : 'Later years counsel letting go of competitive worldly frictions and embracing quiet spiritual devotion.',
+      descriptionHi:
+        m2Part3Pts >= 112.33
+          ? 'अत्युत्तम आध्यात्मिक उन्नति, धर्म-कर्म में यश, शांतिपूर्ण जीवन और स्थायी पारिवारिक सम्मान।'
+          : 'अंतिम दौर में विवादों व प्रतिस्पर्धा से दूर रहकर ईश्वरीय भक्ति व शांति का चयन करें।',
+      descriptionGu:
+        m2Part3Pts >= 112.33
+          ? 'આધ્યાત્મિક ઊંચાઈ, પરોપકાર અને સમાજમાં કાયમી આદર-સન્માન.'
+          : 'શાંતિ અને ભક્તિભાવથી જીવન જીવવું.'
+    }
+  ];
+
+  const peakM1 = m1Parts.find(p => p.isPeak) || m1Parts[0];
+  const leastM1 = m1Parts.find(p => p.isLeast) || m1Parts[2];
+  const peakM2 = m2Parts.find(p => p.isPeak) || m2Parts[0];
+  const leastM2 = m2Parts.find(p => p.isLeast) || m2Parts[2];
+
+  const threePartsOfLife: ThreePartsOfLifeAnalysis = {
+    method1RashiKhandas: {
+      parts: m1Parts,
+      peakPart: peakM1,
+      leastPart: leastM1,
+      titleEn: 'Method 1: Rashi Khandas (Classical Zodiacal Triad)',
+      titleHi: 'विधि १: राशि खंड (शास्त्रीय राशि त्रिखंड)',
+      titleGu: 'પદ્ધતિ ૧: રાશિ ખંડ (શાસ્ત્રીય ત્રિભાગ)',
+      descriptionEn: `Highest bindus in ${peakM1.titleEn} (${peakM1.points} pts) indicates your most harmonious and prosperous life chapter.`,
+      descriptionHi: `${peakM1.titleHi} (${peakM1.points} अंक) में सर्वाधिक बिंदु आपके जीवन के सबसे सुगम, समृद्ध व आनंदमयी काल को दर्शाते हैं।`,
+      descriptionGu: `${peakM1.titleGu} માં સૌથી વધુ બિંદુ જીવનનો સૌથી સુખદ સમય દર્શાવે છે.`
+    },
+    method2BhavaKhandas: {
+      parts: m2Parts,
+      peakPart: peakM2,
+      leastPart: leastM2,
+      titleEn: 'Method 2: Bhava Khandas (Kendra, Panaphara & Apoklima)',
+      titleHi: 'विधि २: भाव खंड (केन्द्र, पणफर एवं आपोक्लिम)',
+      titleGu: 'પદ્ધતિ ૨: ભાવ ખંડ (કેન્દ્ર, પણફર અને આપોક્લિમ)',
+      descriptionEn: `The ${peakM2.titleEn} dominates with ${peakM2.points} pts, confirming sustained growth and structural endurance.`,
+      descriptionHi: `${peakM2.titleHi} (${peakM2.points} अंक) में अधिकतम बल यह सुनिश्चित करता है कि जीवन के इस पड़ाव पर आपके संसाधन और सुख शीर्ष पर रहेंगे।`,
+      descriptionGu: `${peakM2.titleGu} માં ઉત્તમ બળ હોવાથી આ સમયમાં ઉત્તરોત્તર પ્રગતિ થશે.`
+    },
+    synthesizedVerdict: {
+      goldenPhaseEn: `🌟 Golden Phase of Life: ${peakM1.titleEn} (Rashi: ${peakM1.points} pts) & ${peakM2.titleEn} (Bhava: ${peakM2.points} pts)`,
+      goldenPhaseHi: `🌟 जीवन का स्वर्ण काल: ${peakM1.titleHi} (${peakM1.points} अंक) एवं ${peakM2.titleHi} (${peakM2.points} अंक)`,
+      goldenPhaseGu: `🌟 જીવનનો સુવર્ણ તબક્કો: ${peakM1.titleGu} અને ${peakM2.titleGu}`,
+      counselEn: `Classical Ashtakavarga states that life steadily unfolds its best gifts as you mature. Utilize periods of lower bindus for conscious discipline, and let the golden phase elevate your family and spiritual standing.`,
+      counselHi: `शास्त्रीय सर्वाष्टकवर्ग के अनुसार जीवन आगे बढ़ने के साथ अपने श्रेष्ठ वरदान प्रकट करता है। अल्प बिंदु वाले काल में संयम रखें और श्रेष्ठ काल में अपने कर्मों से स्थायी कीर्ति अर्जित करें।`,
+      counselGu: `જીવન જેમ પરિપક્વ થાય છે તેમ ઉત્તમ ફળ આપે છે. સુવર્ણ કાળમાં પૂરા ઉત્સાહથી કાર્ય કરવું.`
+    }
+  };
+
+  // ==========================================
+  // 8. Judging Materialistic vs Spiritualistic Nature
+  // ==========================================
+  const antarbhagaHouses = [1, 4, 5, 7, 9, 10]; // Kona (5, 9) + Kendra (1, 4, 7, 10)
+  const bahirbhagaHouses = [2, 3, 6, 8, 11, 12]; // Other houses
+
+  const antarbhagaPoints = antarbhagaHouses.reduce((acc, h) => acc + houses[h - 1].points, 0);
+  const bahirbhagaPoints = bahirbhagaHouses.reduce((acc, h) => acc + houses[h - 1].points, 0);
+
+  const antarbhagaPercentage = Number(((antarbhagaPoints / 337) * 100).toFixed(1));
+  const bahirbhagaPercentage = Number(((bahirbhagaPoints / 337) * 100).toFixed(1));
+
+  let natureVerdict: 'SPIRITUAL_DOMINANT' | 'MATERIAL_DOMINANT' | 'BALANCED_HARMONY' = 'BALANCED_HARMONY';
+  let natureTitleEn = 'Balanced Harmony (Antarbhaga & Bahirbhaga Balanced)';
+  let natureTitleHi = 'संतुलित समन्वय (आंतरिक एवं बाह्य संतुलन)';
+  let natureTitleGu = 'સંતુલિત સમન્વય (આંતરિક અને બાહ્ય સંતુલન)';
+  let natureSubEn = 'Healthy equilibrium between worldly obligations and inner spiritual peace.';
+  let natureSubHi = 'सांसारिक कर्तव्यों एवं अंतर्मुखी चेतना के बीच संतुलित समन्वय।';
+  let natureSubGu = 'સંસારી ફરજો અને આધ્યાત્મિક શાંતિ વચ્ચે ઉત્તમ સંતુલન.';
+  let natureDescEn =
+    'Your chart maintains a close symmetry between Antarbhaga (inner soul core) and Bahirbhaga (outer achievements). You can pursue wealth and career success without sacrificing your inner ethics and family peace.';
+  let natureDescHi =
+    'आपकी कुंडली में अंतर्भाग और बहिर्भाग में अद्भुत संतुलन है। आप सांसारिक धन और पद की प्राप्ति करते हुए भी अपने नैतिक मूल्यों और आंतरिक शांति को सहजता से बनाए रखने में सक्षम हैं।';
+  let natureDescGu =
+    'તમારી કુંડળીમાં અંતર્ભાગ અને બહિર્ભાગ વચ્ચે ઉત્તમ મેળ છે. તમે પ્રગતિ સાથે આંતરિક શાંતિ જાળવી શકશો.';
+
+  if (antarbhagaPoints - bahirbhagaPoints >= 6) {
+    natureVerdict = 'SPIRITUAL_DOMINANT';
+    natureTitleEn = 'Antarbhaga Dominant (Introspective & Dharmic Soul)';
+    natureTitleHi = 'अंतर्भाग प्रधान (आत्मोन्मुखी एवं धर्म-प्रेरित प्रकृति)';
+    natureTitleGu = 'અંતર્ભાગ પ્રધાન (આધ્યાત્મિક અને ધર્મપ્રેમી પ્રકૃતિ)';
+    natureSubEn = 'Natural inclination towards contemplation, introspection, philanthropy, and simple noble living.';
+    natureSubHi = 'आत्म-चिंतन, सादगी, परोपकार, धर्म और आंतरिक संतुष्टि की ओर स्वाभाविक झुकाव।';
+    natureSubGu = 'આત્મચિંતન, સાદગી, પરોપકાર અને ધર્મ પ્રત્યે વિશેષ આકર્ષણ.';
+    natureDescEn =
+      'Kendra and Trikona houses dominate your energy. Worldly power and vanity hold limited appeal; your greatest fulfillment springs from ethical purpose, intellectual knowledge, family values, and spiritual devotion.';
+    natureDescHi =
+      'केन्द्र व त्रिकोण भावों का प्रभाव अधिक होने से भौतिक दिखावे की अपेक्षा आंतरिक शांति, ज्ञान अर्जन, परोपकार और धार्मिक आचरण में अधिक आनंद मिलता है।';
+    natureDescGu =
+      'આધ્યાત્મિક સુખ, જ્ઞાન અને સદાચારમાં વધુ રસ રહેશે.';
+  } else if (bahirbhagaPoints - antarbhagaPoints >= 6) {
+    natureVerdict = 'MATERIAL_DOMINANT';
+    natureTitleEn = 'Bahirbhaga Dominant (Worldly & Material Enterprise)';
+    natureTitleHi = 'बहिर्भाग प्रधान (भौतिक एवं सांसारिक पुरुषार्थ)';
+    natureTitleGu = 'બહિર્ભાગ પ્રધાન (ભૌતિક અને વ્યવસાયિક ઉત્સાહ)';
+    natureSubEn = 'Driven by external accomplishments, commercial expansion, wealth acquisition, and tangible assets.';
+    natureSubHi = 'व्यावसायिक विस्तार, धन संचय, भौतिक प्रतिष्ठा और व्यावहारिक सफलता के प्रति दृढ़ संकल्प।';
+    natureSubGu = 'વ્યવસાયિક સફળતા, ધન પ્રાપ્તિ અને સામાજિક પ્રતિષ્ઠા માટે વિશેષ પરિશ્રમ.';
+    natureDescEn =
+      'The secondary and growth houses carry the strongest bindus. You thrive in competitive environments, enterprise management, negotiating transactions, and building durable financial empires.';
+    natureDescHi =
+      'बहिर्भाग के भावों में अधिक बिंदु होने के कारण आप व्यावहारिक जगत में अत्यंत कुशल, रणनीतिक विचारक और धन व संसाधनों के कुशल निर्माता हैं।';
+    natureDescGu =
+      'વેપાર, આર્થિક વ્યવહારો અને વ્યવહારિક ક્ષેત્રોમાં અગ્રેસર રહેશો.';
+  }
+
+  const materialSpiritualNature: MaterialSpiritualNatureAnalysis = {
+    antarbhagaPoints,
+    antarbhagaPercentage,
+    antarbhagaHouses,
+    bahirbhagaPoints,
+    bahirbhagaPercentage,
+    bahirbhagaHouses,
+    verdict: natureVerdict,
+    titleEn: natureTitleEn,
+    titleHi: natureTitleHi,
+    titleGu: natureTitleGu,
+    subtitleEn: natureSubEn,
+    subtitleHi: natureSubHi,
+    subtitleGu: natureSubGu,
+    descriptionEn: natureDescEn,
+    descriptionHi: natureDescHi,
+    descriptionGu: natureDescGu,
+    antarbhagaSignificationsEn: 'Core Identity (H1), Mental Peace (H4), Intellect & Punya (H5), Partnership (H7), Fortune (H9), Career Authority (H10).',
+    antarbhagaSignificationsHi: 'लग्न (१), सुख (४), बुद्धि व पूर्वपुण्य (५), जाया (७), भाग्य (९), कर्म सत्ता (१०)।',
+    antarbhagaSignificationsGu: 'લગ્ન (૧), સુખ (૪), બુદ્ધિ (૫), પત્ની (૭), ભાગ્ય (૯), કર્મ (૧૦).',
+    bahirbhagaSignificationsEn: 'Liquid Wealth (H2), Courage (H3), Debt & Routine (H6), Transformation (H8), Cashflow & Social Circles (H11), Moksha & Foreign (H12).',
+    bahirbhagaSignificationsHi: 'धन (२), पराक्रम (३), ऋण व सेवा (६), गूढ़ ज्ञान (८), लाभ (११), व्यय व मोक्ष (१२)।',
+    bahirbhagaSignificationsGu: 'ધન (૨), પરાક્રમ (૩), સેવા (૬), રહસ્ય (૮), લાભ (૧૧), મોક્ષ (૧૨).'
+  };
+
+  // ==========================================
+  // 9. Judging Years of Misfortune (7/27 Rule & Malefic House Ages)
+  // ==========================================
+  const saturnPlanet = kundali.planets.find(p => p.name.includes('Saturn') || p.name.includes('Shani'));
+  const marsPlanet = kundali.planets.find(p => p.name.includes('Mars') || p.name.includes('Mangala'));
+  const rahuPlanet = kundali.planets.find(p => p.name.includes('Rahu'));
+
+  const saturnRashi = saturnPlanet ? saturnPlanet.rashiIndex : 8;
+  const marsRashi = marsPlanet ? marsPlanet.rashiIndex : 0;
+  const rahuRashi = rahuPlanet ? rahuPlanet.rashiIndex : 10;
+
+  function sumRangeInclusive(startSign: number, targetSign: number): { sum: number; houses: number[] } {
+    let sum = 0;
+    const houseList: number[] = [];
+    let cur = startSign;
+    while (true) {
+      sum += savBySign[cur];
+      const hNum = ((cur - lagnaRashi + 12) % 12) + 1;
+      houseList.push(hNum);
+      if (cur === targetSign) break;
+      cur = (cur + 1) % 12;
+    }
+    return { sum, houses: houseList };
+  }
+
+  // 1. Ascendant to Saturn
+  const lToSat = sumRangeInclusive(lagnaRashi, saturnRashi);
+  const qAge1 = Math.floor((lToSat.sum * 7) / 27);
+  const exactAge1 = ((lToSat.sum * 7) / 27).toFixed(1);
+
+  // 2. Saturn to Ascendant
+  const satToL = sumRangeInclusive(saturnRashi, lagnaRashi);
+  const qAge2 = Math.floor((satToL.sum * 7) / 27);
+  const exactAge2 = ((satToL.sum * 7) / 27).toFixed(1);
+
+  // 3. Ascendant to Mars
+  const lToMar = sumRangeInclusive(lagnaRashi, marsRashi);
+  const qAge3 = Math.floor((lToMar.sum * 7) / 27);
+  const exactAge3 = ((lToMar.sum * 7) / 27).toFixed(1);
+
+  // 4. Mars to Ascendant
+  const marToL = sumRangeInclusive(marsRashi, lagnaRashi);
+  const qAge4 = Math.floor((marToL.sum * 7) / 27);
+  const exactAge4 = ((marToL.sum * 7) / 27).toFixed(1);
+
+  const quotientCalculations: MisfortuneQuotientCalculation[] = [
+    {
+      id: 'L_TO_SATURN',
+      titleEn: 'Ascendant ➔ Saturn (Age Quotient)',
+      titleHi: 'लग्न से शनि (संकट / रोग वर्ष)',
+      titleGu: 'લગ્ન થી શનિ (રોગ / કષ્ટ વય)',
+      fromEntity: 'Ascendant (Lagna)',
+      toEntity: 'Saturn (Shani)',
+      housesIncluded: lToSat.houses,
+      sumPoints: lToSat.sum,
+      formulaStr: `(${lToSat.sum} × 7) ÷ 27 = ${exactAge1}`,
+      quotientAge: qAge1,
+      exactAgeStr: exactAge1,
+      afflictionType: 'CHRONIC_DISEASE',
+      significationEn:
+        'Indicates a sensitive life window for bodily fatigue, joint/bone stiffness, or mental burden. Maintain disciplined health and bone wellness.',
+      significationHi:
+        'आयु के इस वर्ष में शारीरिक थकान, जोड़ों के दर्द अथवा दीर्घकालिक मानसिक दबाव की संभावना रहती है। स्वास्थ्य के प्रति विशेष सावधानी रखें।',
+      significationGu:
+        'આ વયમાં શારીરિક થાક કે સાંધાના દુખાવા અંગે સાવધાની રાખવી.'
+    },
+    {
+      id: 'SATURN_TO_L',
+      titleEn: 'Saturn ➔ Ascendant (Karmic Endurance)',
+      titleHi: 'शनि से लग्न (कर्म परीक्षण वर्ष)',
+      titleGu: 'શનિ થી લગ્ન (કર્મ કસોટી વય)',
+      fromEntity: 'Saturn (Shani)',
+      toEntity: 'Ascendant (Lagna)',
+      housesIncluded: satToL.houses,
+      sumPoints: satToL.sum,
+      formulaStr: `(${satToL.sum} × 7) ÷ 27 = ${exactAge2}`,
+      quotientAge: qAge2,
+      exactAgeStr: exactAge2,
+      afflictionType: 'ENDURANCE_TEST',
+      significationEn:
+        'Karmic testing phase requiring patience, structural restructuring, and resisting hasty shortcuts.',
+      significationHi:
+        'धैर्य और सहनशीलता का समय; इस वर्ष में कार्यक्षेत्र में देरी या अधिक परिश्रम का सामना हो सकता है।',
+      significationGu:
+        'આ સમયમાં ધીરજ અને સખત મહેનત જરૂરી.'
+    },
+    {
+      id: 'L_TO_MARS',
+      titleEn: 'Ascendant ➔ Mars (Surgery / Trauma Alert)',
+      titleHi: 'लग्न से मंगल (शल्य / दुर्घटना वर्ष)',
+      titleGu: 'લગ્ન થી મંગળ (શસ્ત્રક્રિયા / ઈજા વય)',
+      fromEntity: 'Ascendant (Lagna)',
+      toEntity: 'Mars (Mangala)',
+      housesIncluded: lToMar.houses,
+      sumPoints: lToMar.sum,
+      formulaStr: `(${lToMar.sum} × 7) ÷ 27 = ${exactAge3}`,
+      quotientAge: qAge3,
+      exactAgeStr: exactAge3,
+      afflictionType: 'SURGERY_TRAUMA',
+      significationEn:
+        'Classical window for surgical procedures, blood/bile vitality imbalances, cuts, burns, or acute athletic trauma. Exercise defensive driving.',
+      significationHi:
+        'आयु के इस वर्ष में शल्य चिकित्सा (ऑपरेशन), चोट, रक्त विकार या आकस्मिक दुर्घटना की संभावना; वाहन चलाने में सावधानी बरतें।',
+      significationGu:
+        'આ વયમાં ઓપરેશન, વાગવા કે અકસ્માતથી સાવચેત રહેવું.'
+    },
+    {
+      id: 'MARS_TO_L',
+      titleEn: 'Mars ➔ Ascendant (Vitality Flare-up)',
+      titleHi: 'मंगल से लग्न (ऊर्जा / पित्त प्रकोप वर्ष)',
+      titleGu: 'મંગળ થી લગ્ન (પિત્ત પ્રકોપ વય)',
+      fromEntity: 'Mars (Mangala)',
+      toEntity: 'Ascendant (Lagna)',
+      housesIncluded: marToL.houses,
+      sumPoints: marToL.sum,
+      formulaStr: `(${marToL.sum} × 7) ÷ 27 = ${exactAge4}`,
+      quotientAge: qAge4,
+      exactAgeStr: exactAge4,
+      afflictionType: 'VITALITY_CRISIS',
+      significationEn:
+        'High metabolic heat, impulsive decisions, or sudden arguments. Channel energy into rigorous physical fitness and meditation.',
+      significationHi:
+        'अत्यधिक क्रोध, जल्दबाजी के निर्णय अथवा पित्त जनित समस्याओं से बचाव रखें; नियमित व्यायाम से ऊर्जा संतुलित करें।',
+      significationGu:
+        'ક્રોધ અને ઉતાવળા નિર્ણયોથી બચવું.'
+    }
+  ];
+
+  // Malefic House Occupancy Bindu Ages
+  const rahuHouse = ((rahuRashi - lagnaRashi + 12) % 12) + 1;
+  const marsHouse = ((marsRashi - lagnaRashi + 12) % 12) + 1;
+  const saturnHouse = ((saturnRashi - lagnaRashi + 12) % 12) + 1;
+
+  const rahuSavPts = houses[rahuHouse - 1].points;
+  const marsSavPts = houses[marsHouse - 1].points;
+  const saturnSavPts = houses[saturnHouse - 1].points;
+
+  const maleficHouseAges: MaleficHouseAgeItem[] = [
+    {
+      planetEn: 'Rahu',
+      planetHi: 'राहु',
+      planetGu: 'રાહુ',
+      symbol: '☊',
+      houseNumber: rahuHouse,
+      rashiNameEn: RASHI_NAMES_EN[rahuRashi],
+      rashiNameHi: RASHI_NAMES_HI[rahuRashi],
+      rashiNameGu: RASHI_NAMES_GU[rahuRashi],
+      savPoints: rahuSavPts,
+      age: rahuSavPts,
+      threatTypeEn: 'Toxic Exposure, Food Allergies & Phobias',
+      threatTypeHi: 'विषाक्तता, एलर्जी, भ्रांति एवं आकस्मिक संकट',
+      threatTypeGu: 'ઝેરી તત્વો, એલર્જી અને ભ્રમણા',
+      warningEn: `In life year ${rahuSavPts} (matching House ${rahuHouse} points: ${rahuSavPts}), exercise caution regarding dietary purity, unverified medications, and deceptive schemes.`,
+      warningHi: `जीवन के ${rahuSavPts}वें वर्ष में (राहु स्थित भाव ${rahuHouse} के बिंदु: ${rahuSavPts}) खान-पान की स्वच्छता, अज्ञात दवाओं और धोखाधड़ी से सतर्क रहें।`,
+      warningGu: `જીવનના ${rahuSavPts}મા વર્ષે ખોરાકની શુદ્ધતા અને છેતરપિંડીથી સાવધાન રહેવું.`
+    },
+    {
+      planetEn: 'Mars (Mangala)',
+      planetHi: 'मंगल',
+      planetGu: 'મંગળ',
+      symbol: '♂️',
+      houseNumber: marsHouse,
+      rashiNameEn: RASHI_NAMES_EN[marsRashi],
+      rashiNameHi: RASHI_NAMES_HI[marsRashi],
+      rashiNameGu: RASHI_NAMES_GU[marsRashi],
+      savPoints: marsSavPts,
+      age: marsSavPts,
+      threatTypeEn: 'Surgical Operations, Burns & Mechanical Injuries',
+      threatTypeHi: 'शल्य क्रिया (ऑपरेशन), चोट, अग्नि व रक्त विकार',
+      threatTypeGu: 'શસ્ત્રક્રિયા, દાઝવું અને રક્ત વિકાર',
+      warningEn: `In life year ${marsSavPts} (matching House ${marsHouse} points: ${marsSavPts}), guard against sports injuries, heat exhausts, and surgical interventions.`,
+      warningHi: `जीवन के ${marsSavPts}वें वर्ष में (मंगल स्थित भाव ${marsHouse} के बिंदु: ${marsSavPts}) चोट, कटने-जलने अथवा सर्जरी के प्रति सचेत रहें।`,
+      warningGu: `જીવનના ${marsSavPts}મા વર્ષે ઈજા કે શસ્ત્રક્રિયા અંગે સાવચેતી રાખવી.`
+    },
+    {
+      planetEn: 'Saturn (Shani)',
+      planetHi: 'शनि',
+      planetGu: 'શનિ',
+      symbol: '♄',
+      houseNumber: saturnHouse,
+      rashiNameEn: RASHI_NAMES_EN[saturnRashi],
+      rashiNameHi: RASHI_NAMES_HI[saturnRashi],
+      rashiNameGu: RASHI_NAMES_GU[saturnRashi],
+      savPoints: saturnSavPts,
+      age: saturnSavPts,
+      threatTypeEn: 'Chronic Ailments, Fatigue & Career Obstacles',
+      threatTypeHi: 'दीर्घकालिक रोग, अवसाद, कार्य बाधा व थकान',
+      threatTypeGu: 'લાંબી માંદગી, થાક અને કામમાં અડચણો',
+      warningEn: `In life year ${saturnSavPts} (matching House ${saturnHouse} points: ${saturnSavPts}), prioritize joint mobility, spine health, and patient steady pacing.`,
+      warningHi: `जीवन के ${saturnSavPts}वें वर्ष में (शनि स्थित भाव ${saturnHouse} के बिंदु: ${saturnSavPts}) जोड़ों के दर्द, मानसिक तनाव और काम में देरी से धैर्य न खोएं।`,
+      warningGu: `જીવનના ${saturnSavPts}મા વર્ષે સ્વાસ્થ્ય અને ધૈર્ય જાળવવું.`
+    }
+  ];
+
+  const misfortuneYears: MisfortuneYearsAnalysis = {
+    quotientCalculations,
+    maleficHouseAges,
+    remedialTipsEn: [
+      'Recite the Maha Mrityunjaya Mantra (ॐ त्र्यम्बकं यजामहे) daily during Saturn-related sensitivity years.',
+      'Chant the Hanuman Chalisa or Mangal Kavach on Tuesdays during Mars-related surgery/injury windows.',
+      'Avoid unverified chemical medications, extreme intoxicants, or impulsive nocturnal risks during Rahu years.',
+      'Practice regular Pranayama and maintain seasonal Ayurvedic detoxification (Panchakarma) to neutralize latent vata/pitta imbalances.'
+    ],
+    remedialTipsHi: [
+      'शनि के संवेदनशील वर्षों में प्रतिदिन महामृत्युंजय मंत्र का जप करें अथवा भगवान शिव का जलाभिषेक करें।',
+      'मंगल के शल्य/चोट वर्षों में मंगलवार को हनुमान चालीसा का पाठ करें और सिंदूर अर्पित करें।',
+      'राहु वर्ष में अज्ञात दवाओं, अत्यधिक बासी भोजन और जोखिम भरे रात के सफर से बचें।',
+      'प्राणायाम और संतुलित दिनचर्या अपनाएं जिससे वात व पित्त का प्रकोप शांत रहे।'
+    ],
+    remedialTipsGu: [
+      'શનિ સંબંધિત વર્ષોમાં મહામૃત્યુંજય મંત્રનો જાપ કરવો.',
+      'મંગળ સંબંધિત વર્ષોમાં હનુમાન ચાલીસાનો પાઠ કરવો.',
+      'રાહુ સંબંધિત વર્ષોમાં ખોરાક અને મુસાફરીમાં સાવચેત રહેવું.',
+      'પ્રાણાયામ અને સાત્વિક આહાર રાખવો.'
+    ]
+  };
+
   return {
+    tradition,
     totalPoints: 337,
     averagePerHouse: 28.08,
     houses,
@@ -1503,6 +2172,9 @@ export function calculateSarvashtakavarga(kundali: KundaliResult): Sarvashtakava
     sadeSatiAnalysis,
     lifeVerticals,
     quantumJumps,
-    eighthFromStability
+    eighthFromStability,
+    threePartsOfLife,
+    materialSpiritualNature,
+    misfortuneYears
   };
 }

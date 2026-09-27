@@ -4,6 +4,7 @@ import { KundaliResult } from '../engine/kundaliEngine';
 import {
   calculateSarvashtakavarga,
   SarvashtakavargaResult,
+  SAVTradition,
   SAV_BANDS
 } from '../engine/sarvashtakavargaEngine';
 import { SarvashtakavargaNorthChartSVG } from './SarvashtakavargaNorthChartSVG';
@@ -19,10 +20,11 @@ export const SarvashtakavargaView: React.FC<SarvashtakavargaViewProps> = ({ kund
   const isHi = language === 'hi' || language === 'hinglish';
   const isGu = language === 'gu';
 
+  const [selectedTradition, setSelectedTradition] = useState<SAVTradition>('BPHS');
   const [isGuideExpanded, setIsGuideExpanded] = useState(false);
   const [selectedHouseFilter, setSelectedHouseFilter] = useState<'ALL' | 'PROSPEROUS' | 'EFFORT'>('ALL');
 
-  const savResult: SarvashtakavargaResult = calculateSarvashtakavarga(kundali);
+  const savResult: SarvashtakavargaResult = calculateSarvashtakavarga(kundali, selectedTradition);
   const {
     houses,
     executiveSummary,
@@ -31,7 +33,10 @@ export const SarvashtakavargaView: React.FC<SarvashtakavargaViewProps> = ({ kund
     sadeSatiAnalysis,
     lifeVerticals,
     quantumJumps,
-    eighthFromStability
+    eighthFromStability,
+    threePartsOfLife,
+    materialSpiritualNature,
+    misfortuneYears
   } = savResult;
 
   const filteredHouses = houses.filter(h => {
@@ -69,6 +74,73 @@ export const SarvashtakavargaView: React.FC<SarvashtakavargaViewProps> = ({ kund
             ? 'प्रत्येक भाव में अंकित संख्या सर्वाष्टकवर्ग के शुभ बिंदुओं को दर्शाती है:'
             : 'Numbers inside each house represent the composite Sarvashtakavarga benefic bindus:'}
         </Text>
+
+        {/* 🎛️ Responsive Classical Tradition Toggle: BPHS (Popular Default) vs Brihat Jataka */}
+        <View style={styles.traditionToggleWrapper}>
+          <Text style={styles.traditionToggleHeader}>
+            {isHi ? 'शास्त्रीय गणना पद्धति (Classical Tradition):' : isGu ? 'શાસ્ત્રીય ગણતરી પદ્ધતિ:' : 'Calculation Tradition:'}
+          </Text>
+          <View style={styles.traditionButtonsRow}>
+            <TouchableOpacity
+              style={[
+                styles.traditionBtn,
+                selectedTradition === 'BPHS' && styles.traditionBtnActive
+              ]}
+              onPress={() => setSelectedTradition('BPHS')}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.traditionBtnText,
+                  selectedTradition === 'BPHS' && styles.traditionBtnTextActive
+                ]}
+              >
+                🏛️ BPHS (Parashara)
+              </Text>
+              {selectedTradition === 'BPHS' && (
+                <View style={styles.traditionActiveDot} />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.traditionBtn,
+                selectedTradition === 'BRIHAT_JATAKA' && styles.traditionBtnActive
+              ]}
+              onPress={() => setSelectedTradition('BRIHAT_JATAKA')}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.traditionBtnText,
+                  selectedTradition === 'BRIHAT_JATAKA' && styles.traditionBtnTextActive
+                ]}
+              >
+                📜 Brihat Jataka
+              </Text>
+              {selectedTradition === 'BRIHAT_JATAKA' && (
+                <View style={styles.traditionActiveDot} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Dynamic tradition badge & explanation */}
+          <View style={styles.traditionExplanationBox}>
+            <Text style={styles.traditionExplanationText}>
+              {selectedTradition === 'BPHS'
+                ? (isHi
+                    ? '✨ महर्षि पराशर सिद्धांत (BPHS): शुक्र को मंगल से चतुर्थ भाव में बिंदु (कर्क H10 = 24 अंक, सिंह H11 = 26 अंक)'
+                    : isGu
+                    ? '✨ મહર્ષિ પરાશર સિદ્ધાંત (BPHS): શુક્રને મંગળથી ૪થા ભાવમાં બિંદુ (કર્ક H10 = 24, સિંહ H11 = 26)'
+                    : '✨ Sage Parashara BPHS Standard • Venus gets bindu in 4th from Mars (Cancer H10 = 24 pts, Leo H11 = 26 pts)')
+                : (isHi
+                    ? '✨ आचार्य वराहमिहिर सिद्धांत (Brihat Jataka): शुक्र को मंगल से पंचम भाव में बिंदु (कर्क H10 = 23 अंक, सिंह H11 = 27 अंक)'
+                    : isGu
+                    ? '✨ આચાર્ય વરાહમિહિર સિદ્ધાંત (Brihat Jataka): શુક્રને મંગળથી ૫મા ભાવમાં બિંદુ (કર્ક H10 = 23, સિંહ H11 = 27)'
+                    : '✨ Acharya Varahamihira Classical Variant • Venus gets bindu in 5th from Mars (Cancer H10 = 23 pts, Leo H11 = 27 pts)')}
+            </Text>
+          </View>
+        </View>
 
         <SarvashtakavargaNorthChartSVG houses={houses} isHindi={isHi} />
       </View>
@@ -896,6 +968,437 @@ export const SarvashtakavargaView: React.FC<SarvashtakavargaViewProps> = ({ kund
           })}
         </View>
       </View>
+
+      {/* 7. 🌅 Judging Three Parts of Life (अवस्था विश्लेषण) */}
+      <View style={styles.card}>
+        <Text style={styles.cardSectionTitle}>
+          {isHi ? '🌅 जीवन के तीन काल (Three Parts of Life - Avastha Analysis)' : '🌅 Judging Three Parts of Life'}
+        </Text>
+        <Text style={styles.cardSectionSub}>
+          {isHi
+            ? 'राशि एवं भाव त्रिखंड द्वारा जीवन के बाल्यावस्था, मध्यम काल और अंतिम काल की सुगमता व समृद्धि का शास्त्रीय आकलन:'
+            : 'Evaluation of Early, Middle, and Later life phases through classical Zodiacal and Bhava triads:'}
+        </Text>
+
+        {/* 🌟 Golden Phase Callout Banner */}
+        <View style={styles.goldenPhaseBanner}>
+          <Text style={styles.goldenPhaseEmoji}>🌟</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.goldenPhaseTitle}>
+              {isHi
+                ? threePartsOfLife.synthesizedVerdict.goldenPhaseHi
+                : isGu
+                ? threePartsOfLife.synthesizedVerdict.goldenPhaseGu
+                : threePartsOfLife.synthesizedVerdict.goldenPhaseEn}
+            </Text>
+            <Text style={styles.goldenPhaseCounsel}>
+              {isHi
+                ? threePartsOfLife.synthesizedVerdict.counselHi
+                : isGu
+                ? threePartsOfLife.synthesizedVerdict.counselGu
+                : threePartsOfLife.synthesizedVerdict.counselEn}
+            </Text>
+          </View>
+        </View>
+
+        {/* Method 1: Rashi Khandas */}
+        <View style={styles.methodCard}>
+          <Text style={styles.methodTitle}>
+            {isHi ? threePartsOfLife.method1RashiKhandas.titleHi : isGu ? threePartsOfLife.method1RashiKhandas.titleGu : threePartsOfLife.method1RashiKhandas.titleEn}
+          </Text>
+          <Text style={styles.methodSub}>
+            {isHi ? threePartsOfLife.method1RashiKhandas.descriptionHi : isGu ? threePartsOfLife.method1RashiKhandas.descriptionGu : threePartsOfLife.method1RashiKhandas.descriptionEn}
+          </Text>
+
+          <View style={styles.partsList}>
+            {threePartsOfLife.method1RashiKhandas.parts.map(part => {
+              const isPeak = part.isPeak;
+              const isLeast = part.isLeast;
+              return (
+                <View
+                  key={part.partNumber}
+                  style={[
+                    styles.partCard,
+                    isPeak && { borderColor: '#81C784', backgroundColor: '#F1F8E9' },
+                    isLeast && { borderColor: '#FFCCBC', backgroundColor: '#FBE9E7' }
+                  ]}
+                >
+                  <View style={styles.partTopRow}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.partTitle}>
+                          {isHi ? part.titleHi : isGu ? part.titleGu : part.titleEn}
+                        </Text>
+                        {isPeak && (
+                          <View style={[styles.partBadge, { backgroundColor: '#2E7D32' }]}>
+                            <Text style={styles.partBadgeText}>{isHi ? '👑 चरमोत्कर्ष' : '👑 Peak'}</Text>
+                          </View>
+                        )}
+                        {isLeast && (
+                          <View style={[styles.partBadge, { backgroundColor: '#D84315' }]}>
+                            <Text style={styles.partBadgeText}>{isHi ? '⚠️ धैर्य काल' : '⚠️ Patience'}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.partSpanSub}>
+                        {isHi ? part.spanHi : isGu ? part.spanGu : part.spanEn}
+                      </Text>
+                    </View>
+
+                    <View style={styles.partPointsCol}>
+                      <Text style={[styles.partPointsVal, isPeak && { color: '#2E7D32' }, isLeast && { color: '#D84315' }]}>
+                        {part.points} pts
+                      </Text>
+                      <Text style={styles.partBenchmarkText}>
+                        {part.percentage}% (मानक ११२)
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Progress Bar */}
+                  <View style={styles.partProgressBarBg}>
+                    <View
+                      style={[
+                        styles.partProgressBarFill,
+                        {
+                          width: `${Math.min(100, (part.points / 130) * 100)}%`,
+                          backgroundColor: isPeak ? '#2E7D32' : isLeast ? '#D84315' : '#E65100'
+                        }
+                      ]}
+                    />
+                  </View>
+
+                  <Text style={styles.partDesc}>
+                    {isHi ? part.descriptionHi : isGu ? part.descriptionGu : part.descriptionEn}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Method 2: Bhava Khandas */}
+        <View style={[styles.methodCard, { marginTop: 12 }]}>
+          <Text style={styles.methodTitle}>
+            {isHi ? threePartsOfLife.method2BhavaKhandas.titleHi : isGu ? threePartsOfLife.method2BhavaKhandas.titleGu : threePartsOfLife.method2BhavaKhandas.titleEn}
+          </Text>
+          <Text style={styles.methodSub}>
+            {isHi ? threePartsOfLife.method2BhavaKhandas.descriptionHi : isGu ? threePartsOfLife.method2BhavaKhandas.descriptionGu : threePartsOfLife.method2BhavaKhandas.descriptionEn}
+          </Text>
+
+          <View style={styles.partsList}>
+            {threePartsOfLife.method2BhavaKhandas.parts.map(part => {
+              const isPeak = part.isPeak;
+              const isLeast = part.isLeast;
+              return (
+                <View
+                  key={part.partNumber}
+                  style={[
+                    styles.partCard,
+                    isPeak && { borderColor: '#81C784', backgroundColor: '#F1F8E9' },
+                    isLeast && { borderColor: '#FFCCBC', backgroundColor: '#FBE9E7' }
+                  ]}
+                >
+                  <View style={styles.partTopRow}>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.partTitle}>
+                          {isHi ? part.titleHi : isGu ? part.titleGu : part.titleEn}
+                        </Text>
+                        {isPeak && (
+                          <View style={[styles.partBadge, { backgroundColor: '#2E7D32' }]}>
+                            <Text style={styles.partBadgeText}>{isHi ? '👑 चरमोत्कर्ष' : '👑 Peak'}</Text>
+                          </View>
+                        )}
+                        {isLeast && (
+                          <View style={[styles.partBadge, { backgroundColor: '#D84315' }]}>
+                            <Text style={styles.partBadgeText}>{isHi ? '⚠️ धैर्य काल' : '⚠️ Patience'}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.partSpanSub}>
+                        {isHi ? part.spanHi : isGu ? part.spanGu : part.spanEn}
+                      </Text>
+                    </View>
+
+                    <View style={styles.partPointsCol}>
+                      <Text style={[styles.partPointsVal, isPeak && { color: '#2E7D32' }, isLeast && { color: '#D84315' }]}>
+                        {part.points} pts
+                      </Text>
+                      <Text style={styles.partBenchmarkText}>
+                        {part.percentage}% (मानक ११२)
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Progress Bar */}
+                  <View style={styles.partProgressBarBg}>
+                    <View
+                      style={[
+                        styles.partProgressBarFill,
+                        {
+                          width: `${Math.min(100, (part.points / 130) * 100)}%`,
+                          backgroundColor: isPeak ? '#2E7D32' : isLeast ? '#D84315' : '#E65100'
+                        }
+                      ]}
+                    />
+                  </View>
+
+                  <Text style={styles.partDesc}>
+                    {isHi ? part.descriptionHi : isGu ? part.descriptionGu : part.descriptionEn}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
+      {/* 8. ⚖️ Materialistic vs Spiritualistic Nature (अंतर्भाग बनाम बहिर्भाग) */}
+      <View style={styles.card}>
+        <Text style={styles.cardSectionTitle}>
+          {isHi ? '⚖️ अंतर्भाग बनाम बहिर्भाग (Material vs Spiritual Nature)' : '⚖️ Material vs Spiritual Orientation'}
+        </Text>
+        <Text style={styles.cardSectionSub}>
+          {isHi
+            ? 'आत्मिक शांति व धर्म (अंतर्भाग) बनाम भौतिक महत्वाकांक्षा व सांसारिक प्रतिष्ठा (बहिर्भाग) का सूक्ष्म विभाजन:'
+            : 'Evaluating inner contemplative dharma (Antarbhaga) against outward worldly enterprise (Bahirbhaga):'}
+        </Text>
+
+        {/* Nature Verdict Box */}
+        <View
+          style={[
+            styles.natureVerdictBox,
+            materialSpiritualNature.verdict === 'SPIRITUAL_DOMINANT' && { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
+            materialSpiritualNature.verdict === 'MATERIAL_DOMINANT' && { backgroundColor: '#FFF8E1', borderColor: '#FFD54F' },
+            materialSpiritualNature.verdict === 'BALANCED_HARMONY' && { backgroundColor: '#F3E5F5', borderColor: '#CE93D8' }
+          ]}
+        >
+          <Text style={styles.natureVerdictTitle}>
+            {isHi ? materialSpiritualNature.titleHi : isGu ? materialSpiritualNature.titleGu : materialSpiritualNature.titleEn}
+          </Text>
+          <Text style={styles.natureVerdictSub}>
+            {isHi ? materialSpiritualNature.subtitleHi : isGu ? materialSpiritualNature.subtitleGu : materialSpiritualNature.subtitleEn}
+          </Text>
+          <Text style={styles.natureVerdictDesc}>
+            {isHi ? materialSpiritualNature.descriptionHi : isGu ? materialSpiritualNature.descriptionGu : materialSpiritualNature.descriptionEn}
+          </Text>
+        </View>
+
+        {/* Split Visual Progress Bar */}
+        <View style={styles.natureProgressContainer}>
+          <View style={styles.natureSplitProgressBg}>
+            <View
+              style={[
+                styles.natureSplitProgressLeft,
+                { width: `${materialSpiritualNature.antarbhagaPercentage}%` }
+              ]}
+            />
+            <View
+              style={[
+                styles.natureSplitProgressRight,
+                { width: `${materialSpiritualNature.bahirbhagaPercentage}%` }
+              ]}
+            />
+          </View>
+          <View style={styles.natureSplitLabelsRow}>
+            <Text style={[styles.natureSplitLabel, { color: '#1B5E20' }]}>
+              🕉️ {isHi ? 'अंतर्भाग' : 'Antarbhaga'}: {materialSpiritualNature.antarbhagaPoints} pts ({materialSpiritualNature.antarbhagaPercentage}%)
+            </Text>
+            <Text style={[styles.natureSplitLabel, { color: '#B78103' }]}>
+              💼 {isHi ? 'बहिर्भाग' : 'Bahirbhaga'}: {materialSpiritualNature.bahirbhagaPoints} pts ({materialSpiritualNature.bahirbhagaPercentage}%)
+            </Text>
+          </View>
+        </View>
+
+        {/* Dual Cards */}
+        <View style={styles.dualNatureRow}>
+          {/* Antarbhaga Card */}
+          <View style={[styles.natureCard, { borderColor: '#81C784', backgroundColor: '#F9FBE7' }]}>
+            <View style={styles.natureCardHeader}>
+              <Text style={styles.natureCardEmoji}>🕉️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.natureCardTitle, { color: '#2E7D32' }]}>
+                  {isHi ? 'अंतर्भाग (Antarbhaga)' : 'Antarbhaga (Inner)'}
+                </Text>
+                <Text style={styles.natureCardPts}>
+                  {materialSpiritualNature.antarbhagaPoints} Bindus • {materialSpiritualNature.antarbhagaPercentage}%
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.natureCardHouses}>
+              <Text style={{ fontWeight: '700' }}>{isHi ? 'सम्मिलित भाव: ' : 'Houses: '}</Text>
+              Kona (5, 9) + Kendra (1, 4, 7, 10)
+            </Text>
+            <Text style={styles.natureCardSig}>
+              {isHi
+                ? materialSpiritualNature.antarbhagaSignificationsHi
+                : isGu
+                ? materialSpiritualNature.antarbhagaSignificationsGu
+                : materialSpiritualNature.antarbhagaSignificationsEn}
+            </Text>
+          </View>
+
+          {/* Bahirbhaga Card */}
+          <View style={[styles.natureCard, { borderColor: '#FFD54F', backgroundColor: '#FFFDE7' }]}>
+            <View style={styles.natureCardHeader}>
+              <Text style={styles.natureCardEmoji}>💼</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.natureCardTitle, { color: '#E65100' }]}>
+                  {isHi ? 'बहिर्भाग (Bahirbhaga)' : 'Bahirbhaga (Outer)'}
+                </Text>
+                <Text style={styles.natureCardPts}>
+                  {materialSpiritualNature.bahirbhagaPoints} Bindus • {materialSpiritualNature.bahirbhagaPercentage}%
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.natureCardHouses}>
+              <Text style={{ fontWeight: '700' }}>{isHi ? 'सम्मिलित भाव: ' : 'Houses: '}</Text>
+              Houses 2, 3, 6, 8, 11, 12
+            </Text>
+            <Text style={styles.natureCardSig}>
+              {isHi
+                ? materialSpiritualNature.bahirbhagaSignificationsHi
+                : isGu
+                ? materialSpiritualNature.bahirbhagaSignificationsGu
+                : materialSpiritualNature.bahirbhagaSignificationsEn}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 9. ⚠️ Judging Years of Misfortune & Vulnerability Windows */}
+      <View style={styles.card}>
+        <Text style={styles.cardSectionTitle}>
+          {isHi ? '⚠️ संकट एवं रोग संवेदनशीलता वर्ष (Misfortune Windows - 7/27 Rule)' : '⚠️ Misfortune & Health Windows (7/27 Rule)'}
+        </Text>
+        <Text style={styles.cardSectionSub}>
+          {isHi
+            ? 'अष्टकवर्ग के शास्त्रीय सूत्रों (७/२७ नियम एवं पापी ग्रह स्थित भाव बिंदु) द्वारा रोग, शल्य क्रिया व कर्म परीक्षा के संभावित आयु वर्ष:'
+            : 'Classical Ashtakavarga algorithms (7/27 quotient & malefic house occupancy) indicating periods for health discipline & surgery alerts:'}
+        </Text>
+
+        {/* 9.1 Classical 7/27 Quotients */}
+        <Text style={styles.subSectionTitle}>
+          {isHi ? '१. शास्त्रीय आयु लब्धि सूत्र (Quotient Ages: Sum × 7 ÷ 27)' : '1. Classical Quotient Formulas (Sum × 7 ÷ 27)'}
+        </Text>
+
+        <View style={styles.quotientList}>
+          {misfortuneYears.quotientCalculations.map(item => {
+            const isSurgery = item.afflictionType === 'SURGERY_TRAUMA' || item.afflictionType === 'VITALITY_CRISIS';
+            return (
+              <View
+                key={item.id}
+                style={[
+                  styles.quotientCard,
+                  isSurgery && { borderLeftColor: '#D84315', borderLeftWidth: 4 }
+                ]}
+              >
+                <View style={styles.quotientHeaderRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.quotientTitle}>
+                      {isHi ? item.titleHi : isGu ? item.titleGu : item.titleEn}
+                    </Text>
+                    <Text style={styles.quotientEntitiesSub}>
+                      {item.fromEntity} ➔ {item.toEntity} (Houses: {item.housesIncluded.join(', ')})
+                    </Text>
+                  </View>
+
+                  <View style={styles.quotientAgeBadge}>
+                    <Text style={styles.quotientAgeText}>
+                      {item.quotientAge} {isHi ? 'वर्ष' : 'Yrs'}
+                    </Text>
+                    <Text style={styles.quotientAgeSub}>
+                      ({item.exactAgeStr})
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.quotientFormulaBox}>
+                  <Text style={styles.quotientFormulaText}>
+                    📐 {item.formulaStr}
+                  </Text>
+                </View>
+
+                <Text style={styles.quotientSignification}>
+                  {isHi ? item.significationHi : isGu ? item.significationGu : item.significationEn}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* 9.2 Malefic House Occupancy Bindu Ages */}
+        <Text style={[styles.subSectionTitle, { marginTop: 14 }]}>
+          {isHi ? '२. पापी ग्रह स्थित भाव बिंदु आयु (Malefic House Bindu Ages)' : '2. Malefic House Bindu Ages'}
+        </Text>
+        <Text style={styles.subSectionExplanation}>
+          {isHi
+            ? 'राहु, मंगल व शनि जिस भाव में स्थित हैं, उस भाव के कुल बिंदु आयु के उस वर्ष में विशेष प्रभाव दर्शाते हैं:'
+            : 'The total bindus in the houses occupied by Rahu, Mars, and Saturn indicate critical years for specific tests:'}
+        </Text>
+
+        <View style={styles.maleficList}>
+          {misfortuneYears.maleficHouseAges.map(item => (
+            <View key={item.planetEn} style={styles.maleficCard}>
+              <View style={styles.maleficHeaderRow}>
+                <View style={styles.maleficPlanetCol}>
+                  <Text style={styles.maleficSymbol}>{item.symbol}</Text>
+                  <View>
+                    <Text style={styles.maleficPlanetTitle}>
+                      {isHi ? item.planetHi : isGu ? item.planetGu : item.planetEn}
+                    </Text>
+                    <Text style={styles.maleficHouseSub}>
+                      {isHi ? `भाव ${item.houseNumber} (${item.rashiNameHi})` : `House ${item.houseNumber} (${item.rashiNameEn.split(' ')[0]})`}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.maleficAgeBadge}>
+                  <Text style={styles.maleficAgeText}>
+                    {item.age} {isHi ? 'वर्ष की आयु' : isGu ? 'વર્ષની વય' : 'Years Age'}
+                  </Text>
+                  <Text style={styles.maleficPointsSub}>
+                    ({item.savPoints} Bindus)
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.maleficThreatType}>
+                ⚡ <Text style={{ fontWeight: '700' }}>{isHi ? 'संभावित प्रभाव: ' : 'Sensitivity: '}</Text>
+                {isHi ? item.threatTypeHi : isGu ? item.threatTypeGu : item.threatTypeEn}
+              </Text>
+              <Text style={styles.maleficWarningText}>
+                {isHi ? item.warningHi : isGu ? item.warningGu : item.warningEn}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* 9.3 Remedial Measures */}
+        <View style={styles.remedyBox}>
+          <View style={styles.remedyHeaderRow}>
+            <Text style={styles.remedyEmoji}>🛡️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.remedyTitle}>
+                {isHi ? 'शास्त्रीय सुरक्षा एवं निवारक उपाय (Classical Remedies)' : 'Classical Protective Remedies'}
+              </Text>
+              <Text style={styles.remedySub}>
+                {isHi ? 'संवेदनशील आयु वर्षों में अनिष्ट शांति एवं स्वास्थ्य रक्षण हेतु:' : 'Proactive lifestyle & spiritual protections during sensitive windows:'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.remedyList}>
+            {(isHi ? misfortuneYears.remedialTipsHi : isGu ? misfortuneYears.remedialTipsGu : misfortuneYears.remedialTipsEn).map((tip, idx) => (
+              <View key={idx} style={styles.remedyItemRow}>
+                <Text style={styles.remedyBullet}>•</Text>
+                <Text style={styles.remedyItemText}>{tip}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
     </View>
   );
 };
@@ -1606,4 +2109,454 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: '#2E7D32',
   },
+
+  // Tradition Toggle Styles
+  traditionToggleWrapper: {
+    backgroundColor: '#FFF9E6',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#FFE082',
+  },
+  traditionToggleHeader: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#5D4037',
+    marginBottom: 8,
+  },
+  traditionButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  traditionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#D7CCC8',
+  },
+  traditionBtnActive: {
+    backgroundColor: '#3E1019',
+    borderColor: '#FFD700',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  traditionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#5D4037',
+  },
+  traditionBtnTextActive: {
+    color: '#FFD700',
+  },
+  traditionActiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFD700',
+    marginLeft: 6,
+  },
+  traditionExplanationBox: {
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#FFE082',
+  },
+  traditionExplanationText: {
+    fontSize: 11,
+    color: '#6D4C41',
+    lineHeight: 15,
+  },
+
+  // 7. Three Parts of Life Styles
+  goldenPhaseBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFF8E1',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFC107',
+    marginBottom: 12,
+    gap: 10,
+  },
+  goldenPhaseEmoji: {
+    fontSize: 22,
+  },
+  goldenPhaseTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#B78103',
+    lineHeight: 18,
+  },
+  goldenPhaseCounsel: {
+    fontSize: 11.5,
+    color: '#5D4037',
+    lineHeight: 16.5,
+    marginTop: 4,
+  },
+  methodCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  methodTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#212121',
+  },
+  methodSub: {
+    fontSize: 11,
+    color: '#616161',
+    marginTop: 2,
+    marginBottom: 10,
+    lineHeight: 15,
+  },
+  partsList: {
+    gap: 8,
+  },
+  partCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  partTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  partTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  partBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  partBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontWeight: '700',
+  },
+  partSpanSub: {
+    fontSize: 10.5,
+    color: '#757575',
+    marginTop: 2,
+  },
+  partPointsCol: {
+    alignItems: 'flex-end',
+  },
+  partPointsVal: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#212121',
+  },
+  partBenchmarkText: {
+    fontSize: 10,
+    color: '#757575',
+  },
+  partProgressBarBg: {
+    height: 5,
+    backgroundColor: '#EEEEEE',
+    borderRadius: 3,
+    marginVertical: 6,
+    overflow: 'hidden',
+  },
+  partProgressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  partDesc: {
+    fontSize: 11,
+    color: '#424242',
+    lineHeight: 15.5,
+  },
+
+  // 8. Material vs Spiritual Nature Styles
+  natureVerdictBox: {
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1.5,
+    marginBottom: 12,
+  },
+  natureVerdictTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#212121',
+  },
+  natureVerdictSub: {
+    fontSize: 11.5,
+    color: '#555555',
+    marginTop: 3,
+    lineHeight: 16,
+    fontWeight: '600',
+  },
+  natureVerdictDesc: {
+    fontSize: 11.5,
+    color: '#333333',
+    lineHeight: 16.5,
+    marginTop: 6,
+  },
+  natureProgressContainer: {
+    marginBottom: 12,
+  },
+  natureSplitProgressBg: {
+    height: 10,
+    flexDirection: 'row',
+    borderRadius: 5,
+    overflow: 'hidden',
+    backgroundColor: '#E0E0E0',
+  },
+  natureSplitProgressLeft: {
+    height: '100%',
+    backgroundColor: '#2E7D32',
+  },
+  natureSplitProgressRight: {
+    height: '100%',
+    backgroundColor: '#E65100',
+  },
+  natureSplitLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  natureSplitLabel: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  dualNatureRow: {
+    gap: 8,
+  },
+  natureCard: {
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+  },
+  natureCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  natureCardEmoji: {
+    fontSize: 18,
+  },
+  natureCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  natureCardPts: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#424242',
+  },
+  natureCardHouses: {
+    fontSize: 11,
+    color: '#616161',
+    marginBottom: 4,
+  },
+  natureCardSig: {
+    fontSize: 11,
+    color: '#424242',
+    lineHeight: 15.5,
+  },
+
+  // 9. Misfortune Years Styles
+  subSectionTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#212121',
+    marginBottom: 3,
+  },
+  subSectionExplanation: {
+    fontSize: 11,
+    color: '#616161',
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  quotientList: {
+    gap: 8,
+    marginTop: 4,
+  },
+  quotientCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  quotientHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  quotientTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  quotientEntitiesSub: {
+    fontSize: 10.5,
+    color: '#757575',
+    marginTop: 1,
+  },
+  quotientAgeBadge: {
+    backgroundColor: '#3E1019',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignItems: 'center',
+  },
+  quotientAgeText: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  quotientAgeSub: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    opacity: 0.85,
+  },
+  quotientFormulaBox: {
+    backgroundColor: '#EEEEEE',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginVertical: 5,
+  },
+  quotientFormulaText: {
+    fontSize: 10,
+    color: '#424242',
+    fontWeight: '600',
+  },
+  quotientSignification: {
+    fontSize: 11,
+    color: '#424242',
+    lineHeight: 15.5,
+  },
+  maleficList: {
+    gap: 8,
+    marginTop: 4,
+  },
+  maleficCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  maleficHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  maleficPlanetCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  maleficSymbol: {
+    fontSize: 18,
+  },
+  maleficPlanetTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#212121',
+  },
+  maleficHouseSub: {
+    fontSize: 10.5,
+    color: '#757575',
+  },
+  maleficAgeBadge: {
+    alignItems: 'flex-end',
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#EF9A9A',
+  },
+  maleficAgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B71C1C',
+  },
+  maleficPointsSub: {
+    fontSize: 9.5,
+    color: '#757575',
+  },
+  maleficThreatType: {
+    fontSize: 11,
+    color: '#C62828',
+    marginBottom: 3,
+  },
+  maleficWarningText: {
+    fontSize: 11,
+    color: '#424242',
+    lineHeight: 15.5,
+  },
+  remedyBox: {
+    marginTop: 14,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#81C784',
+  },
+  remedyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  remedyEmoji: {
+    fontSize: 20,
+  },
+  remedyTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1B5E20',
+  },
+  remedySub: {
+    fontSize: 11,
+    color: '#2E7D32',
+  },
+  remedyList: {
+    gap: 6,
+  },
+  remedyItemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  remedyBullet: {
+    fontSize: 14,
+    color: '#1B5E20',
+    lineHeight: 16,
+  },
+  remedyItemText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#1B5E20',
+    lineHeight: 16,
+  },
 });
+
