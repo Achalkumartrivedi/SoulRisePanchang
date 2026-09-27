@@ -17,7 +17,7 @@ import { KotaChakraModal } from '../components/KotaChakraModal';
 import { PaintBrushHeader } from '../components/PaintBrushHeader';
 import { VedicDimensionsWidget } from '../components/VedicDimensionsWidget';
 import { MoonPhaseVisual } from '../components/MoonPhaseVisual';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Defs, LinearGradient, RadialGradient, Stop, Rect } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
 
@@ -99,13 +99,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Hero Celestial Sanctuary Card */}
         <View style={styles.heroCard}>
+          {/* Multi-Stop Sacred Burgundy Gradient & Moon Photon Bloom Substrate */}
+          <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+            <Defs>
+              <LinearGradient id="heroBaseGradient" x1="0%" y1="0%" x2="25%" y2="100%">
+                <Stop offset="0%" stopColor="#3A161E" />
+                <Stop offset="45%" stopColor="#290810" />
+                <Stop offset="100%" stopColor="#190308" />
+              </LinearGradient>
+              <RadialGradient id="moonPhotonBloom" cx="88%" cy="20%" rx="65%" ry="65%">
+                <Stop offset="0%" stopColor="#FFDEA8" stopOpacity="0.32" />
+                <Stop offset="35%" stopColor="#FFB800" stopOpacity="0.14" />
+                <Stop offset="70%" stopColor="#FFB800" stopOpacity="0.03" />
+                <Stop offset="100%" stopColor="#FFB800" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Rect width="100%" height="100%" rx={28} fill="url(#heroBaseGradient)" />
+            <Rect width="100%" height="100%" rx={28} fill="url(#moonPhotonBloom)" />
+          </Svg>
+
           {/* Astrological Mandala Watermark in Background */}
           <View style={styles.watermarkContainer} pointerEvents="none">
-            <Svg width={140} height={140} viewBox="0 0 100 100">
-              <Circle cx="50" cy="50" r="48" fill="none" stroke="#FFDCA1" strokeWidth="1.5" />
-              <Circle cx="50" cy="50" r="32" fill="none" stroke="#FFDCA1" strokeWidth="1" />
-              <Path d="M50 2 L50 98 M2 50 L98 50 M16 16 L84 84 M16 84 L84 16" stroke="#FFDCA1" strokeWidth="0.8" />
-              <Circle cx="50" cy="50" r="14" fill="#FFDCA1" />
+            <Svg width={150} height={150} viewBox="0 0 100 100">
+              <Circle cx="50" cy="50" r="48" fill="none" stroke="#FFDCA1" strokeWidth="1.2" />
+              <Circle cx="50" cy="50" r="32" fill="none" stroke="#FFDCA1" strokeWidth="0.9" />
+              <Path d="M50 2 L50 98 M2 50 L98 50 M16 16 L84 84 M16 84 L84 16" stroke="#FFDCA1" strokeWidth="0.7" />
+              <Circle cx="50" cy="50" r="14" fill="#FFDCA1" fillOpacity={0.8} />
             </Svg>
           </View>
 
@@ -629,19 +648,24 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   heroCard: {
-    backgroundColor: '#37151C', // surface-container (#37151C)
+    backgroundColor: '#37151C', // surface fallback
     borderRadius: 28,
     padding: 18,
     marginHorizontal: 16,
     marginTop: 12,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 220, 161, 0.16)',
-    elevation: 8,
-    shadowColor: '#180207',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(255, 222, 168, 0.40)', // Specular hairline golden lip
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(81, 69, 45, 0.28)',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'rgba(255, 220, 161, 0.14)',
+    elevation: 14,
+    shadowColor: '#0A0004',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.92,
+    shadowRadius: 24,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -664,9 +688,21 @@ const styles = StyleSheet.create({
   },
   eraPillHigh: {
     backgroundColor: '#431F26', // surface-container-high
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 999,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 240, 200, 0.40)', // Specular top bevel
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(15, 2, 5, 0.6)',
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderColor: 'rgba(255, 220, 161, 0.15)',
+    shadowColor: '#0F0205',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 3,
   },
   eraPillTextHigh: {
     fontSize: 9.5,
@@ -676,10 +712,22 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   eraPillHighest: {
-    backgroundColor: '#502930', // surface-container-highest
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
+    backgroundColor: '#4D242C', // surface-container-highest
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 999,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 240, 200, 0.35)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(15, 2, 5, 0.6)',
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderColor: 'rgba(255, 220, 161, 0.12)',
+    shadowColor: '#0F0205',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 3,
   },
   eraPillTextHighest: {
     fontSize: 9.5,
@@ -749,14 +797,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(67, 31, 38, 0.7)',
+    backgroundColor: 'rgba(67, 31, 38, 0.68)',
     borderRadius: 18,
-    padding: 10,
-    shadowColor: '#180207',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 11,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 222, 168, 0.30)', // Specular top rim
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(20, 2, 5, 0.6)',
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderColor: 'rgba(255, 220, 161, 0.12)',
+    shadowColor: '#0A0103',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 4,
   },
   telemetryIconContainer: {
     width: 36,
