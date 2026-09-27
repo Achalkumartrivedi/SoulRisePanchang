@@ -35,6 +35,14 @@ interface HomeScreenProps {
 
 type SectionKey = 'LIMBS' | 'MUHURAT' | 'CHOGHADIYA' | 'PLANETS' | 'KUNDALI' | 'WESTERN' | 'LALKITAB';
 
+const cleanVedicTime = (timeStr?: string): string => {
+  if (!timeStr) return '';
+  return timeStr
+    .replace(/\b(Today|Tomorrow|IST)\b/gi, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+};
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   panchang,
   currentDateIso,
@@ -102,10 +110,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           {/* Multi-Stop Sacred Burgundy Gradient & Moon Photon Bloom Substrate */}
           <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
             <Defs>
-              <LinearGradient id="heroBaseGradient" x1="0%" y1="0%" x2="25%" y2="100%">
-                <Stop offset="0%" stopColor="#3A161E" />
-                <Stop offset="45%" stopColor="#290810" />
-                <Stop offset="100%" stopColor="#190308" />
+              <LinearGradient id="heroBaseGradient" x1="0%" y1="0%" x2="30%" y2="100%">
+                <Stop offset="0%" stopColor="#3E1821" />
+                <Stop offset="50%" stopColor="#35131B" />
+                <Stop offset="100%" stopColor="#2E0E15" />
               </LinearGradient>
               <RadialGradient id="moonPhotonBloom" cx="88%" cy="20%" rx="65%" ry="65%">
                 <Stop offset="0%" stopColor="#FFDEA8" stopOpacity="0.32" />
@@ -151,7 +159,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Text style={styles.heroTithiTitle}>{locHeroPaksha}</Text>
               <Text style={styles.heroTithiTitle}>{locHeroTithi.name}</Text>
               <Text style={styles.heroLunarSubtitle}>
-                {panchang.tithi.number ? `${panchang.tithi.number}th Lunar Day` : '2nd Lunar Day'} • Unto {panchang.tithi.endTimeFormatted || '04:38 PM'}
+                {panchang.tithi.number ? `${panchang.tithi.number}th Lunar Day` : '2nd Lunar Day'} • Unto {cleanVedicTime(panchang.tithi.endTimeFormatted) || '04:38 PM'}
               </Text>
             </View>
 
@@ -163,45 +171,49 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             />
           </View>
 
-          {/* Surya / Chandra Solar Telemetry Dual Cards */}
+          {/* Surya / Chandra Solar Telemetry Dual Cards: Exact Stitch Material Symbols */}
           <View style={styles.solarTelemetryRow}>
             <View style={styles.telemetryCard}>
               <View style={styles.telemetryIconContainer}>
-                <Text style={styles.telemetryIcon}>☼</Text>
+                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFB800">
+                  <Path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
+                </Svg>
               </View>
               <View style={styles.telemetryCol}>
                 <Text style={styles.telemetryLabel}>SUNRISE</Text>
-                <Text style={styles.telemetryVal}>{panchang.sunMoon.sunrise || '06:12 AM'}</Text>
+                <Text style={styles.telemetryVal} numberOfLines={1}>{cleanVedicTime(panchang.sunMoon.sunrise) || '06:12 AM'}</Text>
               </View>
             </View>
 
             <View style={styles.telemetryCard}>
-              <View style={[styles.telemetryIconContainer, { backgroundColor: 'rgba(255, 183, 78, 0.2)' }]}>
-                <Text style={styles.telemetryIcon}>🌅</Text>
+              <View style={[styles.telemetryIconContainer, { backgroundColor: 'rgba(255, 183, 78, 0.16)' }]}>
+                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFB74E">
+                  <Path d="M2 18h20v2H2v-2zm1.05-4.46l1.73-1c.47-.27 1.08-.11 1.35.36.27.47.11 1.08-.36 1.35l-1.73 1a.998.998 0 01-1.35-.36.996.996 0 01.36-1.35zm16.52.35c-.27-.47-.11-1.08.36-1.35l1.73-1c.47-.27 1.08-.11 1.35.36.27.47.11 1.08-.36 1.35l-1.73 1a.998.998 0 01-1.35-.36zM12 7c-2.76 0-5 2.24-5 5h10c0-2.76-2.24-5-5-5zm-1-5v3c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1z" />
+                </Svg>
               </View>
               <View style={styles.telemetryCol}>
                 <Text style={styles.telemetryLabel}>SUNSET</Text>
-                <Text style={styles.telemetryVal}>{panchang.sunMoon.sunset || '06:12 PM'}</Text>
+                <Text style={styles.telemetryVal} numberOfLines={1}>{cleanVedicTime(panchang.sunMoon.sunset) || '06:12 PM'}</Text>
               </View>
             </View>
           </View>
 
-          {/* Sacred Triad Astrological Parameters */}
+          {/* Sacred Triad Astrological Parameters: Exact Stitch 3-Column Regal Split */}
           <View style={styles.sacredTriadRow}>
             <View style={styles.triadCol}>
               <Text style={styles.triadLabel}>NAKSHATRA</Text>
               <Text style={styles.triadVal} numberOfLines={1}>{panchang.nakshatra.name || 'Revati'}</Text>
-              <Text style={styles.triadSub} numberOfLines={1}>Till {panchang.nakshatra.endTimeFormatted || '08:24 PM'}</Text>
+              <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.nakshatra.endTimeFormatted) || '08:24 PM'}</Text>
             </View>
             <View style={[styles.triadCol, styles.triadColBorder]}>
               <Text style={styles.triadLabel}>YOGA</Text>
               <Text style={styles.triadVal} numberOfLines={1}>{panchang.yoga.name || 'Dhruva'}</Text>
-              <Text style={styles.triadSub} numberOfLines={1}>Till {panchang.yoga.endTimeFormatted || '11:15 AM'}</Text>
+              <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.yoga.endTimeFormatted) || '11:15 AM'}</Text>
             </View>
             <View style={styles.triadCol}>
               <Text style={styles.triadLabel}>KARANA</Text>
               <Text style={styles.triadVal} numberOfLines={1}>{panchang.karana.name || 'Taitila'}</Text>
-              <Text style={styles.triadSub} numberOfLines={1}>Till {panchang.karana.endTimeFormatted || '04:38 PM'}</Text>
+              <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.karana.endTimeFormatted) || '04:38 PM'}</Text>
             </View>
           </View>
         </View>
@@ -776,9 +788,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   heroTithiTitle: {
+    fontFamily: 'serif',
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFDCA1',
+    color: '#FFF0D4',
     marginTop: 2,
     lineHeight: 27,
   },
@@ -797,84 +810,85 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(67, 31, 38, 0.68)',
+    backgroundColor: 'rgba(67, 31, 38, 0.60)',
     borderRadius: 18,
-    padding: 11,
+    padding: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 222, 168, 0.30)', // Specular top rim
+    borderTopColor: 'rgba(255, 222, 168, 0.25)', // Specular top rim
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(20, 2, 5, 0.6)',
+    borderBottomColor: 'rgba(20, 2, 5, 0.4)',
     borderLeftWidth: 0.5,
     borderRightWidth: 0.5,
-    borderColor: 'rgba(255, 220, 161, 0.12)',
+    borderColor: 'rgba(255, 220, 161, 0.10)',
     shadowColor: '#0A0103',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 2,
   },
   telemetryIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 184, 0, 0.2)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 184, 0, 0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  telemetryIcon: {
-    fontSize: 16,
-    color: '#FFB800',
-  },
   telemetryCol: {
     flex: 1,
+    minWidth: 0,
   },
   telemetryLabel: {
     fontSize: 9.5,
     fontWeight: '700',
     color: '#D5C4AB',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   telemetryVal: {
-    fontSize: 15,
+    fontSize: 15.5,
     fontWeight: '700',
-    color: '#FFD9DE',
+    color: '#FFF0D4',
     marginTop: 1,
   },
   sacredTriadRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(81, 69, 45, 0.35)',
+    borderTopColor: 'rgba(255, 220, 161, 0.14)',
     paddingTop: 12,
   },
   triadCol: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
   },
   triadColBorder: {
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: 'rgba(81, 69, 45, 0.35)',
+    borderColor: 'rgba(255, 220, 161, 0.14)',
     paddingHorizontal: 4,
   },
   triadLabel: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '700',
     color: '#D5C5A5',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 1.0,
+    marginBottom: 3,
   },
   triadVal: {
-    fontSize: 13.5,
+    fontFamily: 'serif',
+    fontSize: 16,
     fontWeight: '700',
-    color: '#FFDCA1',
-    marginTop: 2,
+    color: '#FFF0D4',
+    marginBottom: 3,
   },
   triadSub: {
-    fontSize: 9.5,
+    fontSize: 11,
+    fontWeight: '400',
     color: '#D5C4AB',
-    marginTop: 1,
   },
 
   // 2. Kaal & Muhurat Highlights Styles
