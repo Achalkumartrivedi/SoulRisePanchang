@@ -131,15 +131,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           {/* Multi-Stop Sacred Burgundy Gradient & Golden Bloom extending all the way to right edge */}
           <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
             <Defs>
-              <LinearGradient id="heroBaseGradient" x1="0%" y1="0%" x2="30%" y2="100%">
+              <LinearGradient id="heroBaseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <Stop offset="0%" stopColor="#3E1821" />
-                <Stop offset="50%" stopColor="#35131B" />
-                <Stop offset="100%" stopColor="#2E0E15" />
+                <Stop offset="50%" stopColor="#33121A" />
+                <Stop offset="100%" stopColor="#250B11" />
               </LinearGradient>
-              <LinearGradient id="heroGoldenAura" x1="100%" y1="0%" x2="25%" y2="70%">
-                <Stop offset="0%" stopColor="#FFB800" stopOpacity="0.25" />
-                <Stop offset="35%" stopColor="#FFB800" stopOpacity="0.12" />
-                <Stop offset="65%" stopColor="#FFB800" stopOpacity="0.04" />
+              <LinearGradient id="heroGoldenAura" x1="100%" y1="25%" x2="20%" y2="50%">
+                <Stop offset="0%" stopColor="#FFB800" stopOpacity="0.22" />
+                <Stop offset="25%" stopColor="#FFB800" stopOpacity="0.15" />
+                <Stop offset="60%" stopColor="#FFB800" stopOpacity="0.05" />
+                <Stop offset="85%" stopColor="#FFB800" stopOpacity="0" />
                 <Stop offset="100%" stopColor="#FFB800" stopOpacity="0" />
               </LinearGradient>
             </Defs>
@@ -157,85 +158,87 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </Svg>
           </View>
 
-          {/* Era Badges */}
-          <View style={styles.heroEraRow}>
-            <View style={styles.eraBadgesLeft}>
-              <View style={styles.eraPillHigh}>
-                <Text style={styles.eraPillTextHigh}>
-                  VIKRAM {panchang.samvat?.vikramSamvat || (new Date(currentDateIso).getFullYear() + 57)}
+          <View style={styles.heroContentInner}>
+            {/* Era Badges */}
+            <View style={styles.heroEraRow}>
+              <View style={styles.eraBadgesLeft}>
+                <View style={styles.eraPillHigh}>
+                  <Text style={styles.eraPillTextHigh}>
+                    VIKRAM {panchang.samvat?.vikramSamvat || (new Date(currentDateIso).getFullYear() + 57)}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.masaBadge}>
+                <Animated.View style={[styles.masaPulseDot, { opacity: blinkAnim }]} />
+                <Text style={styles.masaText}>
+                  {(panchang.samvat?.monthName || 'Bhadrapada').toUpperCase()} MASA
                 </Text>
               </View>
             </View>
-            <View style={styles.masaBadge}>
-              <Animated.View style={[styles.masaPulseDot, { opacity: blinkAnim }]} />
-              <Text style={styles.masaText}>
-                {(panchang.samvat?.monthName || 'Bhadrapada').toUpperCase()} MASA
-              </Text>
-            </View>
-          </View>
 
-          {/* Main Lunar Phase Centerpiece */}
-          <View style={styles.heroLunarCenterpiece}>
-            <View style={styles.heroTithiInfo}>
-              <Text style={styles.tithiPradhanaLabel}>TITHI PRADHANA</Text>
-              <Text style={styles.heroTithiTitle}>{locHeroPaksha}</Text>
-              <Text style={styles.heroTithiTitle}>{locHeroTithi.name}</Text>
-              <Text style={styles.heroLunarSubtitle}>
-                {panchang.tithi.number ? `${panchang.tithi.number}th Lunar Day` : '2nd Lunar Day'} • Unto {cleanVedicTime(panchang.tithi.endTimeFormatted) || '04:38 PM'}
-              </Text>
-            </View>
-
-            {/* 🌙 Luminous Golden Moon Phase */}
-            <MoonPhaseVisual
-              paksha={panchang.tithi.paksha}
-              tithiNumber={panchang.tithi.number || 2}
-              size={66}
-            />
-          </View>
-
-          {/* Surya / Chandra Solar Telemetry Dual Cards: Exact Stitch Material Symbols */}
-          <View style={styles.solarTelemetryRow}>
-            <View style={styles.telemetryCard}>
-              <View style={styles.telemetryIconContainer}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFB800">
-                  <Path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
-                </Svg>
+            {/* Main Lunar Phase Centerpiece */}
+            <View style={styles.heroLunarCenterpiece}>
+              <View style={styles.heroTithiInfo}>
+                <Text style={styles.tithiPradhanaLabel}>TITHI PRADHANA</Text>
+                <Text style={styles.heroTithiTitle}>{locHeroPaksha}</Text>
+                <Text style={styles.heroTithiTitle}>{locHeroTithi.name}</Text>
+                <Text style={styles.heroLunarSubtitle}>
+                  {panchang.tithi.number ? `${panchang.tithi.number}th Lunar Day` : '2nd Lunar Day'} • Unto {cleanVedicTime(panchang.tithi.endTimeFormatted) || '04:38 PM'}
+                </Text>
               </View>
-              <View style={styles.telemetryCol}>
-                <Text style={styles.telemetryLabel}>SUNRISE</Text>
-                <Text style={styles.telemetryVal} numberOfLines={1}>{cleanVedicTime(panchang.sunMoon.sunrise) || '06:12 AM'}</Text>
-              </View>
+
+              {/* 🌙 Luminous Golden Moon Phase */}
+              <MoonPhaseVisual
+                paksha={panchang.tithi.paksha}
+                tithiNumber={panchang.tithi.number || 2}
+                size={66}
+              />
             </View>
 
-            <View style={styles.telemetryCard}>
-              <View style={[styles.telemetryIconContainer, { backgroundColor: 'rgba(255, 183, 78, 0.16)' }]}>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFB74E">
-                  <Path d="M2 18h20v2H2v-2zm1.05-4.46l1.73-1c.47-.27 1.08-.11 1.35.36.27.47.11 1.08-.36 1.35l-1.73 1a.998.998 0 01-1.35-.36.996.996 0 01.36-1.35zm16.52.35c-.27-.47-.11-1.08.36-1.35l1.73-1c.47-.27 1.08-.11 1.35.36.27.47.11 1.08-.36 1.35l-1.73 1a.998.998 0 01-1.35-.36zM12 7c-2.76 0-5 2.24-5 5h10c0-2.76-2.24-5-5-5zm-1-5v3c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1z" />
-                </Svg>
+            {/* Surya / Chandra Solar Telemetry Dual Cards: Exact Stitch Material Symbols */}
+            <View style={styles.solarTelemetryRow}>
+              <View style={styles.telemetryCard}>
+                <View style={styles.telemetryIconContainer}>
+                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFB800">
+                    <Path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
+                  </Svg>
+                </View>
+                <View style={styles.telemetryCol}>
+                  <Text style={styles.telemetryLabel}>SUNRISE</Text>
+                  <Text style={styles.telemetryVal} numberOfLines={1}>{cleanVedicTime(panchang.sunMoon.sunrise) || '06:12 AM'}</Text>
+                </View>
               </View>
-              <View style={styles.telemetryCol}>
-                <Text style={styles.telemetryLabel}>SUNSET</Text>
-                <Text style={styles.telemetryVal} numberOfLines={1}>{cleanVedicTime(panchang.sunMoon.sunset) || '06:12 PM'}</Text>
+
+              <View style={styles.telemetryCard}>
+                <View style={[styles.telemetryIconContainer, { backgroundColor: 'rgba(255, 183, 78, 0.16)' }]}>
+                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="#FFB74E">
+                    <Path d="M2 18h20v2H2v-2zm1.05-4.46l1.73-1c.47-.27 1.08-.11 1.35.36.27.47.11 1.08-.36 1.35l-1.73 1a.998.998 0 01-1.35-.36.996.996 0 01.36-1.35zm16.52.35c-.27-.47-.11-1.08.36-1.35l1.73-1c.47-.27 1.08-.11 1.35.36.27.47.11 1.08-.36 1.35l-1.73 1a.998.998 0 01-1.35-.36zM12 7c-2.76 0-5 2.24-5 5h10c0-2.76-2.24-5-5-5zm-1-5v3c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1z" />
+                  </Svg>
+                </View>
+                <View style={styles.telemetryCol}>
+                  <Text style={styles.telemetryLabel}>SUNSET</Text>
+                  <Text style={styles.telemetryVal} numberOfLines={1}>{cleanVedicTime(panchang.sunMoon.sunset) || '06:12 PM'}</Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* Sacred Triad Astrological Parameters: Exact Stitch 3-Column Regal Split */}
-          <View style={styles.sacredTriadRow}>
-            <View style={styles.triadCol}>
-              <Text style={styles.triadLabel}>NAKSHATRA</Text>
-              <Text style={styles.triadVal} numberOfLines={1}>{panchang.nakshatra.name || 'Revati'}</Text>
-              <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.nakshatra.endTimeFormatted) || '08:24 PM'}</Text>
-            </View>
-            <View style={[styles.triadCol, styles.triadColBorder]}>
-              <Text style={styles.triadLabel}>YOGA</Text>
-              <Text style={styles.triadVal} numberOfLines={1}>{panchang.yoga.name || 'Dhruva'}</Text>
-              <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.yoga.endTimeFormatted) || '11:15 AM'}</Text>
-            </View>
-            <View style={styles.triadCol}>
-              <Text style={styles.triadLabel}>KARANA</Text>
-              <Text style={styles.triadVal} numberOfLines={1}>{panchang.karana.name || 'Taitila'}</Text>
-              <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.karana.endTimeFormatted) || '04:38 PM'}</Text>
+            {/* Sacred Triad Astrological Parameters: Exact Stitch 3-Column Regal Split */}
+            <View style={styles.sacredTriadRow}>
+              <View style={styles.triadCol}>
+                <Text style={styles.triadLabel}>NAKSHATRA</Text>
+                <Text style={styles.triadVal} numberOfLines={1}>{panchang.nakshatra.name || 'Revati'}</Text>
+                <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.nakshatra.endTimeFormatted) || '08:24 PM'}</Text>
+              </View>
+              <View style={[styles.triadCol, styles.triadColBorder]}>
+                <Text style={styles.triadLabel}>YOGA</Text>
+                <Text style={styles.triadVal} numberOfLines={1}>{panchang.yoga.name || 'Dhruva'}</Text>
+                <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.yoga.endTimeFormatted) || '11:15 AM'}</Text>
+              </View>
+              <View style={styles.triadCol}>
+                <Text style={styles.triadLabel}>KARANA</Text>
+                <Text style={styles.triadVal} numberOfLines={1}>{panchang.karana.name || 'Taitila'}</Text>
+                <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.karana.endTimeFormatted) || '04:38 PM'}</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -684,7 +687,6 @@ const styles = StyleSheet.create({
   heroCard: {
     backgroundColor: '#37151C', // surface fallback
     borderRadius: 28,
-    padding: 18,
     marginHorizontal: 16,
     marginTop: 12,
     marginBottom: 12,
@@ -702,6 +704,9 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     position: 'relative',
     overflow: 'hidden',
+  },
+  heroContentInner: {
+    padding: 18,
   },
   watermarkContainer: {
     position: 'absolute',
