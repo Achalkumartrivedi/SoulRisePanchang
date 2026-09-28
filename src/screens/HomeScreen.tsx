@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, CityLocation } from '../types/panchang';
 import { Header } from '../components/Header';
@@ -90,6 +90,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     setActiveSection(prev => (prev === key ? null : key));
   };
 
+  const blinkAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(blinkAnim, {
+          toValue: 0.25,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(blinkAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [blinkAnim]);
+
   return (
     <View style={styles.container}>
       <Header
@@ -107,7 +128,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 1. Hero Celestial Sanctuary Card */}
         <View style={styles.heroCard}>
-          {/* Multi-Stop Sacred Burgundy Gradient & Moon Photon Bloom Substrate */}
+          {/* Multi-Stop Sacred Burgundy Gradient & Golden Bloom extending all the way to right edge */}
           <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
             <Defs>
               <LinearGradient id="heroBaseGradient" x1="0%" y1="0%" x2="30%" y2="100%">
@@ -115,15 +136,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Stop offset="50%" stopColor="#35131B" />
                 <Stop offset="100%" stopColor="#2E0E15" />
               </LinearGradient>
-              <RadialGradient id="moonPhotonBloom" cx="88%" cy="20%" rx="65%" ry="65%">
-                <Stop offset="0%" stopColor="#FFDEA8" stopOpacity="0.32" />
-                <Stop offset="35%" stopColor="#FFB800" stopOpacity="0.14" />
-                <Stop offset="70%" stopColor="#FFB800" stopOpacity="0.03" />
+              <LinearGradient id="heroGoldenAura" x1="100%" y1="0%" x2="25%" y2="70%">
+                <Stop offset="0%" stopColor="#FFB800" stopOpacity="0.25" />
+                <Stop offset="35%" stopColor="#FFB800" stopOpacity="0.12" />
+                <Stop offset="65%" stopColor="#FFB800" stopOpacity="0.04" />
                 <Stop offset="100%" stopColor="#FFB800" stopOpacity="0" />
-              </RadialGradient>
+              </LinearGradient>
             </Defs>
             <Rect width="100%" height="100%" rx={28} fill="url(#heroBaseGradient)" />
-            <Rect width="100%" height="100%" rx={28} fill="url(#moonPhotonBloom)" />
+            <Rect width="100%" height="100%" rx={28} fill="url(#heroGoldenAura)" />
           </Svg>
 
           {/* Astrological Mandala Watermark in Background */}
@@ -140,15 +161,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.heroEraRow}>
             <View style={styles.eraBadgesLeft}>
               <View style={styles.eraPillHigh}>
-                <Text style={styles.eraPillTextHigh}>VIKRAM {panchang.samvat.vikramSamvat || 2083}</Text>
-              </View>
-              <View style={styles.eraPillHighest}>
-                <Text style={styles.eraPillTextHighest}>VEER 2553</Text>
+                <Text style={styles.eraPillTextHigh}>
+                  VIKRAM {panchang.samvat?.vikramSamvat || (new Date(currentDateIso).getFullYear() + 57)}
+                </Text>
               </View>
             </View>
             <View style={styles.masaBadge}>
-              <View style={styles.masaPulseDot} />
-              <Text style={styles.masaText}>{(panchang.samvat.monthName || 'ASHVIN').toUpperCase()} MASA</Text>
+              <Animated.View style={[styles.masaPulseDot, { opacity: blinkAnim }]} />
+              <Text style={styles.masaText}>
+                {(panchang.samvat?.monthName || 'Bhadrapada').toUpperCase()} MASA
+              </Text>
             </View>
           </View>
 

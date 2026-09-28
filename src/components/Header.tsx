@@ -108,14 +108,23 @@ export const Header: React.FC<HeaderProps> = ({
           </View>
         </View>
 
-        <View style={styles.vedicBadgeCapsule}>
-          <Text style={styles.vedicBadgeText}>VEDIC</Text>
+        <View style={styles.headerTopRightIcons}>
+          {/* Notification Bell with Golden Dot */}
+          <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
+            <Text style={styles.iconBellText}>🔔</Text>
+            <View style={styles.notificationDot} />
+          </TouchableOpacity>
+
+          {/* Profile Avatar */}
+          <TouchableOpacity style={styles.avatarCircle} activeOpacity={0.75}>
+            <Text style={styles.avatarText}>👤</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Utility Actions Strip: Location, Language, Samvat, Notifications, Profile */}
+      {/* Utility Actions Strip: Location and Language Dropdowns on exact right side */}
       <View style={styles.utilityStripRow}>
-        <View style={styles.utilityLeftGroup}>
+        <View style={styles.utilityRightAlignedGroup}>
           {/* Unified Location Chip */}
           <TouchableOpacity style={styles.topActionChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
             <Text style={styles.topActionChipIcon}>📍</Text>
@@ -128,23 +137,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Text style={styles.topActionChipIcon}>🌐</Text>
             <Text style={styles.topActionChipText}>{currentLangObj.code.toUpperCase()}</Text>
             <Text style={styles.topActionChipArrow}>▼</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.utilityRightGroup}>
-          <View style={styles.samvatMiniChip}>
-            <Text style={styles.samvatMiniText}>VIKRAM {samvat?.vikramSamvat || 2083}</Text>
-          </View>
-
-          {/* Notification Bell with Golden Dot */}
-          <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
-            <Text style={styles.iconBellText}>🔔</Text>
-            <View style={styles.notificationDot} />
-          </TouchableOpacity>
-
-          {/* Profile Avatar */}
-          <TouchableOpacity style={styles.avatarCircle} activeOpacity={0.75}>
-            <Text style={styles.avatarText}>👤</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -341,56 +333,24 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     marginTop: 3,
   },
-  vedicBadgeCapsule: {
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 184, 0, 0.65)',
-    backgroundColor: 'rgba(255, 184, 0, 0.08)',
-    paddingHorizontal: 16,
-    paddingVertical: 5.5,
-    borderRadius: 999,
-    shadowColor: '#FFB800',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-  },
-  vedicBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#FFB800',
-    letterSpacing: 1.4,
+  headerTopRightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   utilityStripRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingVertical: 5,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 220, 161, 0.08)',
     marginBottom: 4,
   },
-  utilityLeftGroup: {
+  utilityRightAlignedGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-  },
-  utilityRightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  samvatMiniChip: {
-    backgroundColor: 'rgba(255, 220, 161, 0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 4.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 220, 161, 0.18)',
-  },
-  samvatMiniText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#FFDCA1',
-    letterSpacing: 0.5,
+    gap: 8,
   },
   topActionChip: {
     flexDirection: 'row',
