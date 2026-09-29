@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
-      {/* Royal Heritage Brand Crest Header: Exact Symbol, Name & Vedic Badge */}
+      {/* 1. Brand Masthead */}
       <View style={styles.brandCrestHeader}>
         <View style={styles.brandCrestLeft}>
           <View style={styles.emblemWrapper}>
@@ -102,14 +102,13 @@ export const Header: React.FC<HeaderProps> = ({
             />
           </View>
           <View style={styles.brandTypographyCol}>
-            <Text style={styles.brandTitleSoulRise}>SoulRise</Text>
-            <Text style={styles.brandTitlePanchang}>Panchang</Text>
+            <Text style={styles.brandTitleSoulRise}>SoulRise Panchang</Text>
             <Text style={styles.brandSacredSubtitle}>SACRED SOLAR-LUNAR ALMANAC</Text>
           </View>
         </View>
 
         <View style={styles.headerTopRightIcons}>
-          {/* Notification Bell with Golden Dot */}
+          {/* Notification Bell with Amber Dot */}
           <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
             <Text style={styles.iconBellText}>🔔</Text>
             <View style={styles.notificationDot} />
@@ -122,17 +121,18 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       </View>
 
-      {/* Utility Actions Strip: Location and Language Dropdowns on exact right side */}
-      <View style={styles.utilityStripRow}>
+      {/* 2. Location & Flow Bar */}
+      <View style={styles.flowAndControlsRow}>
+        <Text style={styles.flowText}>Prashanta Muhurta Flow</Text>
         <View style={styles.utilityRightAlignedGroup}>
-          {/* Unified Location Chip */}
+          {/* Location Chip */}
           <TouchableOpacity style={styles.topActionChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
             <Text style={styles.topActionChipIcon}>📍</Text>
             <Text style={styles.topActionChipText} numberOfLines={1}>{selectedCity.name}</Text>
             <Text style={styles.topActionChipArrow}>▼</Text>
           </TouchableOpacity>
 
-          {/* Unified Language Chip */}
+          {/* Language Chip */}
           <TouchableOpacity style={styles.topActionChip} onPress={onOpenLanguagePicker} activeOpacity={0.75}>
             <Text style={styles.topActionChipIcon}>🌐</Text>
             <Text style={styles.topActionChipText}>{currentLangObj.code.toUpperCase()}</Text>
@@ -141,33 +141,32 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       </View>
 
-      {/* Scrubber / Temporal Navigation Bar */}
-      <View style={styles.scrubberRow}>
+      {/* 3. Date Switcher Navigation Capsule */}
+      <View style={styles.dateCapsuleContainer}>
         <TouchableOpacity style={styles.navArrowBtn} onPress={onPrevDay} activeOpacity={0.7}>
-          <Text style={styles.navArrowText}>◀</Text>
+          <Text style={styles.navArrowText}>‹</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.dateSelectorCapsule} onPress={openPicker} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.dateCenterBtn} onPress={openPicker} activeOpacity={0.8}>
           <Text style={styles.calendarIcon}>📅</Text>
           <Text style={styles.datePillText}>{formattedDateStr}</Text>
           <Text style={styles.dateChevron}>▼</Text>
-          {isTodayActive && (
-            <View style={styles.todaySmallBadge}>
-              <Text style={styles.todaySmallBadgeText}>TODAY</Text>
+          {isTodayActive ? (
+            <View style={styles.todayActiveBadge}>
+              <Text style={styles.todayActiveBadgeText}>TODAY</Text>
             </View>
+          ) : (
+            <TouchableOpacity style={styles.todayInactiveBadge} onPress={onToday} activeOpacity={0.75}>
+              <Text style={styles.todayInactiveBadgeText}>TODAY</Text>
+            </TouchableOpacity>
           )}
         </TouchableOpacity>
 
-        {!isTodayActive && (
-          <TouchableOpacity style={styles.todayReturnBtn} onPress={onToday} activeOpacity={0.75}>
-            <Text style={styles.todayReturnText}>TODAY</Text>
-          </TouchableOpacity>
-        )}
-
         <TouchableOpacity style={styles.navArrowBtn} onPress={onNextDay} activeOpacity={0.7}>
-          <Text style={styles.navArrowText}>▶</Text>
+          <Text style={styles.navArrowText}>›</Text>
         </TouchableOpacity>
       </View>
+
 
       {/* Full Date, Month & Year Selector Modal */}
       <Modal visible={pickerVisible} transparent animationType="fade" onRequestClose={() => setPickerVisible(false)}>
@@ -263,24 +262,15 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#21040B', // Surface Container Lowest
+    backgroundColor: 'transparent',
     paddingHorizontal: 16,
-    paddingBottom: 14,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 220, 161, 0.16)',
-    elevation: 8,
-    shadowColor: '#180207',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
+    paddingBottom: 6,
   },
   brandCrestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 2,
+    paddingTop: 4,
     paddingBottom: 8,
   },
   brandCrestLeft: {
@@ -290,62 +280,111 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emblemWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    shadowColor: '#FFB800',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 10,
-    elevation: 6,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#2B0E14',
+    borderWidth: 2,
+    borderColor: '#DFB059',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   emblemImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   brandTypographyCol: {
     justifyContent: 'center',
   },
   brandTitleSoulRise: {
     fontFamily: 'serif',
-    fontSize: 21,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#FFF0D4',
-    letterSpacing: 0.4,
-    lineHeight: 24,
-  },
-  brandTitlePanchang: {
-    fontFamily: 'serif',
-    fontSize: 21,
-    fontWeight: '700',
-    color: '#FFF0D4',
-    letterSpacing: 0.4,
-    lineHeight: 24,
+    color: '#2B0E14',
+    letterSpacing: 0.2,
+    lineHeight: 26,
   },
   brandSacredSubtitle: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#CBB89D',
-    letterSpacing: 1.4,
-    marginTop: 3,
+    fontSize: 9.5,
+    fontWeight: '600',
+    color: '#7D6A68',
+    letterSpacing: 1.6,
+    marginTop: 1,
+    textTransform: 'uppercase',
   },
   headerTopRightIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  utilityStripRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  iconCircleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderWidth: 1,
+    borderColor: '#EADBCE',
     alignItems: 'center',
-    paddingVertical: 5,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 220, 161, 0.08)',
-    marginBottom: 4,
+    justifyContent: 'center',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  iconBellText: {
+    fontSize: 17,
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F59E0B',
+  },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderWidth: 1,
+    borderColor: '#EADBCE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  avatarText: {
+    fontSize: 16,
+    color: '#2B0E14',
+  },
+  flowAndControlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    marginBottom: 6,
+  },
+  flowText: {
+    fontFamily: 'serif',
+    fontStyle: 'italic',
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#7D6A68',
+    letterSpacing: 0.3,
   },
   utilityRightAlignedGroup: {
     flexDirection: 'row',
@@ -355,160 +394,105 @@ const styles = StyleSheet.create({
   topActionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#37151C',
-    paddingHorizontal: 9,
-    paddingVertical: 5.5,
+    gap: 3.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 11,
+    paddingVertical: 5,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255, 220, 161, 0.22)',
-    shadowColor: '#180207',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: '#EADBCE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   topActionChipIcon: {
     fontSize: 12,
   },
   topActionChipText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#D5C5A5',
-    maxWidth: 75,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2B0E14',
+    maxWidth: 90,
   },
   topActionChipArrow: {
     fontSize: 8,
-    color: '#FFDCA1',
-    marginLeft: 1,
+    color: '#2B0E14',
+    opacity: 0.6,
   },
-  iconCircleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    backgroundColor: '#37151C',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 220, 161, 0.16)',
-  },
-  iconBellText: {
-    fontSize: 16,
-  },
-  notificationDot: {
-    position: 'absolute',
-    top: 6,
-    right: 7,
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#FFB800',
-    shadowColor: '#FFB800',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  avatarCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFDCA1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FFB800',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  avatarText: {
-    fontSize: 15,
-  },
-  scrubberRow: {
+  dateCapsuleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingTop: 6,
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#EADBCE',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
   },
   navArrowBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#37151C',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 184, 0, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   navArrowText: {
-    fontSize: 13,
-    color: '#FFB800',
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(43, 14, 20, 0.8)',
+    lineHeight: 20,
   },
-  dateSelectorCapsule: {
-    flex: 1,
+  dateCenterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#37151C',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    height: 36,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 184, 0, 0.35)',
-    shadowColor: '#180207',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
   },
   calendarIcon: {
     fontSize: 13,
   },
   datePillText: {
-    fontSize: 12,
+    fontFamily: 'serif',
+    fontSize: 14,
     fontWeight: '700',
-    color: '#FFDCA1',
+    color: '#2B0E14',
+    letterSpacing: 0.2,
   },
   dateChevron: {
-    fontSize: 8.5,
-    color: '#FFDCA1',
+    fontSize: 9,
+    color: 'rgba(43, 14, 20, 0.6)',
   },
-  todaySmallBadge: {
-    backgroundColor: '#FFB800',
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-    marginLeft: 3,
+  todayActiveBadge: {
+    backgroundColor: '#F0B829',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    marginLeft: 4,
   },
-  todaySmallBadgeText: {
-    color: '#412D00',
-    fontSize: 8,
+  todayActiveBadgeText: {
+    fontSize: 9.5,
     fontWeight: '800',
+    color: '#2B0E14',
     letterSpacing: 0.5,
   },
-  todayReturnBtn: {
-    backgroundColor: '#FFB800',
-    paddingHorizontal: 10,
-    height: 36,
+  todayInactiveBadge: {
+    backgroundColor: '#F0B829',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FFB800',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 3,
+    marginLeft: 4,
   },
-  todayReturnText: {
-    color: '#412D00',
-    fontSize: 10,
+  todayInactiveBadgeText: {
+    fontSize: 9.5,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    color: '#2B0E14',
+    letterSpacing: 0.5,
   },
+
 
   // Modal Styles
   modalOverlay: {

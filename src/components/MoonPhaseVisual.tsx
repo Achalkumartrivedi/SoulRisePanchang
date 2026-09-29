@@ -92,25 +92,37 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
           ]}
         />
 
-        {/* Astrolabe Circular Dashed Compass Ring (from Royal Heritage Stitch spec) */}
+        {/* Concentric Astrolabe Orbit Rings */}
+        <View
+          style={[
+            styles.astrolabeRingOuter,
+            {
+              width: size + 20,
+              height: size + 20,
+              borderRadius: (size + 20) / 2,
+            },
+          ]}
+        />
         <View
           style={[
             styles.astrolabeRing,
             {
-              width: size + 8,
-              height: size + 8,
-              borderRadius: (size + 8) / 2,
+              width: size + 10,
+              height: size + 10,
+              borderRadius: (size + 10) / 2,
             },
           ]}
         />
+        <Text style={styles.sparkleStar}>✦</Text>
 
         <Svg width={size} height={size} viewBox="0 0 100 100" style={styles.svg}>
           <Defs>
             {/* Primary Royal Heritage Lunar Gradient */}
             <RadialGradient id="moonGlow" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#FFDEA8" />
-              <Stop offset="55%" stopColor="#FFB800" />
-              <Stop offset="100%" stopColor="#7C5800" />
+              <Stop offset="0%" stopColor="#FBF1D5" />
+              <Stop offset="45%" stopColor="#D4BA82" />
+              <Stop offset="80%" stopColor="#9E7D46" />
+              <Stop offset="100%" stopColor="#5E4620" />
             </RadialGradient>
 
             {/* Dark Velvet Obsidian Substrate */}
@@ -129,8 +141,8 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
             cx="50"
             cy="50"
             r="41.5"
-            stroke="#FFDEA8"
-            strokeOpacity="0.32"
+            stroke="#DFB059"
+            strokeOpacity="0.4"
             strokeWidth="1.2"
           />
 
@@ -144,7 +156,7 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
               cx="50"
               cy="50"
               r="40"
-              stroke="#FFB800"
+              stroke="#DFB059"
               strokeOpacity="0.5"
               strokeWidth="1.5"
               fill="none"
@@ -154,48 +166,43 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
             <Path d={moonPath} fill="url(#moonGlow)" />
           ) : null}
 
-          {/* Dynamic Lunar Craters (Adjusted based on Waxing vs Waning visibility) */}
+          {/* Dynamic Lunar Craters */}
           <G>
-            {/* Central stable mare */}
-            <Circle cx="50" cy="48" r="3.5" fill="#FFE0B2" fillOpacity={isAmavasya ? 0.12 : 0.55} />
-            
-            {/* Right-hemisphere craters (prominent during Waxing) */}
+            <Circle cx="50" cy="48" r="3.5" fill="#FFE0B2" fillOpacity={isAmavasya ? 0.12 : 0.45} />
             <Circle
               cx="64"
               cy="38"
               r="2.5"
               fill="#FFE0B2"
-              fillOpacity={isShukla || isPurnima ? 0.5 : 0.18}
+              fillOpacity={isShukla || isPurnima ? 0.45 : 0.15}
             />
             <Circle
               cx="60"
               cy="62"
               r="3.2"
               fill="#FFE0B2"
-              fillOpacity={isShukla || isPurnima ? 0.55 : 0.18}
+              fillOpacity={isShukla || isPurnima ? 0.5 : 0.15}
             />
-
-            {/* Left-hemisphere craters (prominent during Waning) */}
             <Circle
               cx="36"
               cy="38"
               r="2.5"
               fill="#FFE0B2"
-              fillOpacity={!isShukla || isPurnima ? 0.5 : 0.18}
+              fillOpacity={!isShukla || isPurnima ? 0.45 : 0.15}
             />
             <Circle
               cx="40"
               cy="62"
               r="3.2"
               fill="#FFE0B2"
-              fillOpacity={!isShukla || isPurnima ? 0.55 : 0.18}
+              fillOpacity={!isShukla || isPurnima ? 0.5 : 0.15}
             />
             <Circle
               cx="32"
               cy="52"
               r="1.8"
               fill="#FFE0B2"
-              fillOpacity={!isShukla || isPurnima ? 0.45 : 0.15}
+              fillOpacity={!isShukla || isPurnima ? 0.4 : 0.12}
             />
           </G>
         </Svg>
@@ -225,36 +232,50 @@ const styles = StyleSheet.create({
   },
   glowCorona: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 184, 0, 0.22)',
-    shadowColor: '#FFB800',
+    backgroundColor: 'rgba(223, 176, 89, 0.25)',
+    shadowColor: '#DFB059',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
-    shadowRadius: 18,
+    shadowRadius: 20,
     elevation: 10,
+  },
+  astrolabeRingOuter: {
+    position: 'absolute',
+    borderWidth: 1,
+    borderColor: 'rgba(223, 176, 89, 0.2)',
   },
   astrolabeRing: {
     position: 'absolute',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255, 222, 168, 0.35)',
+    borderColor: 'rgba(223, 176, 89, 0.35)',
+  },
+  sparkleStar: {
+    position: 'absolute',
+    top: -4,
+    right: 2,
+    fontSize: 10,
+    color: '#DFB059',
+    zIndex: 3,
   },
   svg: {
     zIndex: 2,
   },
   badgeContainer: {
-    marginTop: 5,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: 'rgba(67, 31, 38, 0.8)',
-    borderWidth: 0.8,
-    borderColor: 'rgba(255, 220, 161, 0.25)',
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 2.5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(223, 176, 89, 0.5)',
   },
   badgeText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#FFDCA1',
-    letterSpacing: 0.5,
+    color: '#DFB059',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
 });
+

@@ -16,5 +16,24 @@ export const Colors = {
   shadow: 'rgba(0,0,0,0.08)',
   darkBg: '#1C1B1F',
   darkCard: '#2B2930',
-  darkText: '#E6E1E5'
+  darkText: '#E6E1E5',
+
+  // Stitch Finalized Panchang Design Tokens
+  panchangCream: '#F8F5EE',
+  panchangIvory: '#FBF9F4',
+  panchangSand: '#F2ECE1',
+  panchangBorderLight: '#EADBCE',
+  panchangTextMain: '#2D1B1E',
+  panchangTextMuted: '#7D6A68',
+  panchangMaroon: '#2B0E14',
+  panchangMaroonDark: '#1E070C',
+  panchangMaroonCard: '#37151C',
+  panchangGold: '#DFB059',
+  panchangGoldLight: '#F5DE9C',
+  panchangGoldDark: '#B88428',
+  panchangAccentGreen: '#237B4B',
+  panchangAccentGreenBg: '#E9F5EE',
+  panchangAccentRed: '#BC2C2C',
+  panchangAccentRedBg: '#FDF0F0',
 };
+

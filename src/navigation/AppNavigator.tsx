@@ -368,7 +368,7 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#170205" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F5EE" />
 
       <View style={styles.contentArea}>
         {activeTab === 'TODAY' && (
@@ -415,55 +415,74 @@ export const AppNavigator: React.FC = () => {
         )}
       </View>
 
-      {/* Custom Bottom Tab Bar */}
-      <View style={[styles.tabBar, { paddingBottom: tabBarBottomPadding }]}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'TODAY' && styles.tabItemActive]}
-          onPress={() => handleTabPress('TODAY')}
-        >
-          <Text style={styles.tabIcon}>☀️</Text>
-          <Text style={[styles.tabLabel, activeTab === 'TODAY' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('today')}</Text>
-        </TouchableOpacity>
+      {/* Floating Bottom Navigation Dock */}
+      <View style={[styles.tabBarDockWrapper, { paddingBottom: Math.max(tabBarBottomPadding, 8) }]}>
+        <View style={styles.tabBar}>
+          {activeTab === 'TODAY' ? (
+            <TouchableOpacity
+              style={styles.todayActivePill}
+              onPress={() => handleTabPress('TODAY')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.todayActiveIcon}>☀️</Text>
+              <Text style={styles.todayActiveText}>TODAY</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => handleTabPress('TODAY')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.tabIcon}>☀️</Text>
+              <Text style={styles.tabLabel} numberOfLines={1}>{t('today')}</Text>
+            </TouchableOpacity>
+          )}
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'CALENDAR' && styles.tabItemActive]}
-          onPress={() => handleTabPress('CALENDAR')}
-        >
-          <Text style={styles.tabIcon}>📅</Text>
-          <Text style={[styles.tabLabel, activeTab === 'CALENDAR' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('calendar')}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'CALENDAR' && styles.tabItemActive]}
+            onPress={() => handleTabPress('CALENDAR')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tabIcon}>📅</Text>
+            <Text style={[styles.tabLabel, activeTab === 'CALENDAR' && styles.tabLabelActive]} numberOfLines={1}>{t('calendar')}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'FESTIVALS' && styles.tabItemActive]}
-          onPress={() => handleTabPress('FESTIVALS')}
-        >
-          <Text style={styles.tabIcon}>🚩</Text>
-          <Text style={[styles.tabLabel, activeTab === 'FESTIVALS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('festivals')}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'FESTIVALS' && styles.tabItemActive]}
+            onPress={() => handleTabPress('FESTIVALS')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tabIcon}>🎉</Text>
+            <Text style={[styles.tabLabel, activeTab === 'FESTIVALS' && styles.tabLabelActive]} numberOfLines={1}>{t('festivals')}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'REMINDERS' && styles.tabItemActive]}
-          onPress={() => handleTabPress('REMINDERS')}
-        >
-          <Text style={styles.tabIcon}>⏰</Text>
-          <Text style={[styles.tabLabel, activeTab === 'REMINDERS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>Reminders</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'REMINDERS' && styles.tabItemActive]}
+            onPress={() => handleTabPress('REMINDERS')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tabIcon}>🔔</Text>
+            <Text style={[styles.tabLabel, activeTab === 'REMINDERS' && styles.tabLabelActive]} numberOfLines={1}>Reminders</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'RASHIPHAL' && styles.tabItemActive]}
-          onPress={() => handleTabPress('RASHIPHAL')}
-        >
-          <Text style={styles.tabIcon}>♈</Text>
-          <Text style={[styles.tabLabel, activeTab === 'RASHIPHAL' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('horoscope')}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'RASHIPHAL' && styles.tabItemActive]}
+            onPress={() => handleTabPress('RASHIPHAL')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tabIcon}>✨</Text>
+            <Text style={[styles.tabLabel, activeTab === 'RASHIPHAL' && styles.tabLabelActive]} numberOfLines={1}>{t('horoscope')}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'SETTINGS' && styles.tabItemActive]}
-          onPress={() => handleTabPress('SETTINGS')}
-        >
-          <Text style={styles.tabIcon}>⚙️</Text>
-          <Text style={[styles.tabLabel, activeTab === 'SETTINGS' && styles.tabLabelActive]} numberOfLines={1} adjustsFontSizeToFit>{t('settings')}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'SETTINGS' && styles.tabItemActive]}
+            onPress={() => handleTabPress('SETTINGS')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tabIcon}>⚙️</Text>
+            <Text style={[styles.tabLabel, activeTab === 'SETTINGS' && styles.tabLabelActive]} numberOfLines={1}>{t('settings')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Language Selection Modal triggered from Settings */}
@@ -506,47 +525,83 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#170205',
+    backgroundColor: '#F8F5EE',
   },
   contentArea: {
     flex: 1,
-    backgroundColor: '#170205',
+    backgroundColor: '#F8F5EE',
+  },
+  tabBarDockWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    zIndex: 100,
+    backgroundColor: 'transparent',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#26060B',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 215, 0, 0.28)',
-    paddingVertical: 8,
-    paddingBottom: 8,
-    elevation: 10,
-    shadowColor: 'rgba(255, 215, 0, 0.22)',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#EADBCE',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 8,
   },
   tabItem: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
-    borderRadius: 14,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 999,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(255, 215, 0, 0.12)',
-    transform: [{ scale: 1.05 }],
+    backgroundColor: 'rgba(43, 14, 20, 0.08)',
+  },
+  todayActivePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#280910',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  todayActiveIcon: {
+    fontSize: 13,
+  },
+  todayActiveText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#DFB059',
+    letterSpacing: 0.8,
   },
   tabIcon: {
-    fontSize: 20,
-    marginBottom: 2,
+    fontSize: 16,
+    lineHeight: 18,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '600',
-    color: '#8C676E',
+    color: '#7D6A68',
+    marginTop: 1,
   },
   tabLabelActive: {
-    color: '#FFD700',
+    color: '#2B0E14',
     fontWeight: 'bold',
   },
 });
+
