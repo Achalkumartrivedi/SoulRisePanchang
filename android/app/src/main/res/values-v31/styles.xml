@@ -1,0 +1,10 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <style name="Theme.App.SplashScreen" parent="AppTheme">
+    <item name="android:windowBackground">@drawable/splashscreen</item>
+    <item name="android:statusBarColor">#F8F5EE</item>
+    <item name="android:windowLightStatusBar">true</item>
+    <item name="android:windowSplashScreenBackground">@color/splashscreen_background</item>
+    <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+    <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+  </style>
+</resources>

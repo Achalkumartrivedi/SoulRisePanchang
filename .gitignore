@@ -22,5 +22,6 @@ patch_repo.json
 *.png
 *.aab
 scratch/
+chrome_profile/
 
 

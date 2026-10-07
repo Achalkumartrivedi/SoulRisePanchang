@@ -36,6 +36,7 @@ export function getDharmaCalendarDayData(
   const exactFestivalMatch = FESTIVALS.find(f => f.dateIso === dateIso);
 
   switch (calendarSystem) {
+
     // ----------------------------------------------------
     // 1. SIKH NANAKSHAHI CALENDAR (S. Samvat 558)
     // ----------------------------------------------------
@@ -254,7 +255,7 @@ export function getDharmaCalendarDayData(
     case 'HINDU':
     default: {
       const tithiIdx = calculateTithiForDate(date);
-      const tithiName = getLocalizedTithi((tithiIdx % 15) + 1, language as any).name;
+      const tithiName = getLocalizedTithi(tithiIdx + 1, language as any, tithiIdx <= 14 ? 'SHUKLA' : 'KRISHNA').name;
       const hinduMonthName = getHinduMonthName(date, lunarSystem);
       const pakshaFull = getLocalizedPakshaName(tithiIdx <= 14 ? 'SHUKLA' : 'KRISHNA', language as any);
       const hinduFest = FESTIVALS.find(f => f.dateIso === dateIso && f.category !== 'JAIN_FESTIVAL' && f.category !== 'WORLD_FESTIVAL');
@@ -272,12 +273,12 @@ export function getDharmaCalendarDayData(
       return {
         calendarSystem: 'HINDU',
         eraTitle,
-        monthName: `${hinduMonthName} (${pakshaFull})`,
-        dayLabel: `${pakshaFull} ${tithiName}`,
+        monthName: hinduMonthName,
+        dayLabel: `${pakshaFull} • ${tithiName}`,
         badgeText,
         badgeType: hinduFest ? 'FESTIVAL' : (tithiIdx === 14 || tithiIdx === 29 || tithiIdx === 10 || tithiIdx === 25 ? 'RITUAL' : undefined),
         festivalMatch: hinduFest || null,
-        significance: hinduFest ? hinduFest.description : `Vedic Hindu Panchang day in ${hinduMonthName} month (${pakshaFull} ${tithiName}).`,
+        significance: hinduFest ? hinduFest.description : `Vedic Hindu Panchang day in ${hinduMonthName} month (${pakshaFull} • ${tithiName}).`,
         additionalDetails: [
           { label: 'Vedic Samvat', value: 'Vikram Samvat 2083' },
           { label: 'Hindu Month', value: hinduMonthName },

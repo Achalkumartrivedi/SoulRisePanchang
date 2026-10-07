@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Colors } from '../theme/colors';
 import { PanchangDayData, CityLocation } from '../types/panchang';
@@ -11,6 +11,8 @@ import { JainCalendarModal } from '../components/JainCalendarModal';
 import { LalKitabModal } from '../components/LalKitabModal';
 import { NavtaraModal } from '../components/NavtaraModal';
 import { KotaChakraModal } from '../components/KotaChakraModal';
+import { CentralAlmanacHubModal, AlmanacTab } from '../components/CentralAlmanacHubModal';
+import { calculateTimingProgress } from '../engine/muhuratCalculator';
 import Svg, { Circle, Path, Defs, LinearGradient, Stop, Rect, Line, Polygon, G, Text as SvgText } from 'react-native-svg';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTithi, getLocalizedPakshaName } from '../i18n/vedicTerms';
@@ -20,11 +22,14 @@ interface HomeScreenProps {
   currentDateIso: string;
   selectedCity: CityLocation;
   onOpenCityPicker: () => void;
+  onOpenLanguagePicker?: () => void;
   onPrevDay: () => void;
   onNextDay: () => void;
   onToday: () => void;
   onNavigateToFestivals: () => void;
   onSelectDateIso?: (dateIso: string) => void;
+  onNavigateToReminders?: () => void;
+  onOpenKaalMuhurat?: (tab?: 'AUSPICIOUS' | 'INAUSPICIOUS' | 'ALL') => void;
 }
 
 const cleanVedicTime = (timeStr?: string): string => {
@@ -45,6 +50,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onToday,
   onNavigateToFestivals,
   onSelectDateIso,
+  onOpenKaalMuhurat,
 }) => {
   const { language, t } = useLanguage();
 
@@ -54,6 +60,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showLalKitabModal, setShowLalKitabModal] = useState(false);
   const [showNavtaraModal, setShowNavtaraModal] = useState(false);
   const [showKotaChakraModal, setShowKotaChakraModal] = useState(false);
+  const [showCentralHubModal, setShowCentralHubModal] = useState(false);
+  const [centralHubInitialTab, setCentralHubInitialTab] = useState<AlmanacTab>('PANCHANG');
   const [lalKitabPayload, setLalKitabPayload] = useState<{
     dob?: string;
     tob?: string;
@@ -68,6 +76,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const abhijitItem = panchang.auspiciousMuhurats?.find(m => m.name.toLowerCase().includes('abhijit'));
   const rahuItem = panchang.inauspiciousMuhurats?.find(m => m.name.toLowerCase().includes('rahu'));
+
+  const abhijitProgress = useMemo(() => {
+    if (!abhijitItem) return null;
+    return calculateTimingProgress(abhijitItem.startTime, abhijitItem.endTime, currentDateIso, new Date(), language);
+  }, [abhijitItem, currentDateIso, language]);
+
+  const rahuProgress = useMemo(() => {
+    if (!rahuItem) return null;
+    return calculateTimingProgress(rahuItem.startTime, rahuItem.endTime, currentDateIso, new Date(), language);
+  }, [rahuItem, currentDateIso, language]);
 
   const blinkAnim = useRef(new Animated.Value(1)).current;
 
@@ -114,32 +132,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 2. Master Hero Almanac Card (Heritage Velvet Burgundy Centerpiece) */}
-        <View style={styles.heroCard}>
+        <TouchableOpacity
+          style={styles.heroCard}
+          onPress={() => {
+            setCentralHubInitialTab('PANCHANG');
+            setShowCentralHubModal(true);
+          }}
+          activeOpacity={0.92}
+        >
           {/* Multi-Stop Sacred Burgundy Gradient */}
-          <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+          <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
             <Defs>
               <LinearGradient id="heroGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <Stop offset="0%" stopColor="#37151C" />
                 <Stop offset="48%" stopColor="#2B0E14" />
                 <Stop offset="100%" stopColor="#1E070C" />
               </LinearGradient>
-              <LinearGradient id="heroAura" x1="100%" y1="20%" x2="20%" y2="50%">
+              <LinearGradient id="heroAura" x1="100%" y1="25%" x2="20%" y2="50%">
                 <Stop offset="0%" stopColor="#DFB059" stopOpacity="0.22" />
-                <Stop offset="30%" stopColor="#DFB059" stopOpacity="0.14" />
-                <Stop offset="70%" stopColor="#DFB059" stopOpacity="0.04" />
+                <Stop offset="25%" stopColor="#DFB059" stopOpacity="0.15" />
+                <Stop offset="60%" stopColor="#DFB059" stopOpacity="0.05" />
+                <Stop offset="85%" stopColor="#DFB059" stopOpacity="0" />
                 <Stop offset="100%" stopColor="#DFB059" stopOpacity="0" />
               </LinearGradient>
             </Defs>
-            <Rect width="100%" height="100%" rx={28} fill="url(#heroGradient)" />
-            <Rect width="100%" height="100%" rx={28} fill="url(#heroAura)" />
+            <Rect width="100" height="100" fill="url(#heroGradient)" />
+            <Rect width="100" height="100" fill="url(#heroAura)" />
           </Svg>
 
           {/* Celestial Orbit Watermark Backdrop */}
           <View style={styles.orbitCircle1} pointerEvents="none" />
           <View style={styles.orbitCircle2} pointerEvents="none" />
 
-          {/* Top Badges Row */}
-          <View style={styles.heroTopBadgesRow}>
+          {/* Inner Content with Dedicated Padding */}
+          <View style={styles.heroContentInner}>
+            {/* Top Badges Row */}
+            <View style={styles.heroTopBadgesRow}>
             <View style={styles.heroVikramBadge}>
               <Text style={styles.heroBadgeStar}>✦</Text>
               <Text style={styles.heroVikramText}>VIKRAM {samvatYear}</Text>
@@ -230,7 +258,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Text style={styles.triadSub} numberOfLines={1}>Till {cleanVedicTime(panchang.karana.endTimeFormatted) || '07:42 PM'}</Text>
             </View>
           </View>
+
+          {/* Ambient Bottom Expand Central Almanac Hub Badge */}
+          <View style={styles.expandHubBadge}>
+            <Text style={styles.expandHubBadgeText}>✦ TAP TO EXPAND CENTRAL ALMANAC HUB ✦</Text>
+          </View>
         </View>
+      </TouchableOpacity>
 
         {/* 3. Kaal & Muhurat Highlights */}
         <View style={styles.sectionContainer}>
@@ -239,55 +273,106 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <View style={styles.maroonPillIndicator} />
               <Text style={styles.sectionTitleText}>Kaal & Muhurat</Text>
             </View>
-            <TouchableOpacity style={styles.sectionLinkBtn} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.sectionLinkBtn}
+              activeOpacity={0.7}
+              onPress={() => onOpenKaalMuhurat?.('ALL')}
+            >
               <Text style={styles.sectionLinkText}>ALL TIMINGS →</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.cardsTwoColGrid}>
             {/* Abhijit Muhurat Card (Shubha) */}
-            <View style={styles.abhijitCard}>
+            <TouchableOpacity
+              style={styles.abhijitCard}
+              activeOpacity={0.88}
+              onPress={() => onOpenKaalMuhurat?.('AUSPICIOUS')}
+            >
               <View>
                 <View style={styles.cardBadgeRow}>
                   <Text style={styles.sparkleIcon}>✨</Text>
                   <View style={styles.shubhaBadge}>
-                    <Text style={styles.shubhaBadgeText}>SHUBHA</Text>
+                    <Text style={styles.shubhaBadgeText}>
+                      {abhijitProgress?.status === 'ACTIVE' ? '● LIVE' : 'SHUBHA'}
+                    </Text>
                   </View>
                 </View>
                 <Text style={styles.muhuratCardHeading}>Abhijit Muhurat</Text>
-                <Text style={styles.muhuratCardSub}>Most Auspicious Window</Text>
+                <Text style={styles.muhuratCardSub} numberOfLines={1}>
+                  {abhijitProgress?.status === 'ACTIVE'
+                    ? abhijitProgress.timeRemainingLabel
+                    : 'Most Auspicious Window'}
+                </Text>
               </View>
               <View style={styles.muhuratCardFooter}>
                 <Text style={styles.abhijitTimingText}>
                   {abhijitItem ? `${abhijitItem.startTime} – ${abhijitItem.endTime}` : '11:48 AM – 12:36 PM'}
                 </Text>
+                {abhijitProgress?.status === 'ACTIVE' && (
+                  <View style={styles.muhuratProgressTrack}>
+                    <View
+                      style={[
+                        styles.muhuratProgressFillShubh,
+                        { width: `${abhijitProgress.progressPercent}%` },
+                      ]}
+                    />
+                  </View>
+                )}
               </View>
-            </View>
+            </TouchableOpacity>
 
             {/* Rahu Kaal Card (Varjya) */}
-            <View style={styles.rahuCard}>
+            <TouchableOpacity
+              style={styles.rahuCard}
+              activeOpacity={0.88}
+              onPress={() => onOpenKaalMuhurat?.('INAUSPICIOUS')}
+            >
               <View>
                 <View style={styles.cardBadgeRow}>
                   <Text style={styles.warningIcon}>⚠️</Text>
                   <View style={styles.varjyaBadge}>
-                    <Text style={styles.varjyaBadgeText}>VARJYA</Text>
+                    <Text style={styles.varjyaBadgeText}>
+                      {rahuProgress?.status === 'ACTIVE' ? '● LIVE' : 'VARJYA'}
+                    </Text>
                   </View>
                 </View>
                 <Text style={styles.muhuratCardHeading}>Rahu Kaal</Text>
-                <Text style={styles.muhuratCardSub}>Inauspicious Period</Text>
+                <Text style={styles.muhuratCardSub} numberOfLines={1}>
+                  {rahuProgress?.status === 'ACTIVE'
+                    ? rahuProgress.timeRemainingLabel
+                    : 'Inauspicious Period'}
+                </Text>
               </View>
               <View style={styles.muhuratCardFooter}>
                 <Text style={styles.rahuTimingText}>
                   {rahuItem ? `${rahuItem.startTime} – ${rahuItem.endTime}` : '07:42 AM – 09:12 AM'}
                 </Text>
+                {rahuProgress?.status === 'ACTIVE' && (
+                  <View style={styles.muhuratProgressTrack}>
+                    <View
+                      style={[
+                        styles.muhuratProgressFillVarjya,
+                        { width: `${rahuProgress.progressPercent}%` },
+                      ]}
+                    />
+                  </View>
+                )}
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* 4. Day Choghadiya Active Strip */}
         <View style={styles.sectionContainer}>
-          <View style={styles.choghadiyaStripCard}>
+          <TouchableOpacity
+            style={styles.choghadiyaStripCard}
+            onPress={() => {
+              setCentralHubInitialTab('CHOGHADIYA');
+              setShowCentralHubModal(true);
+            }}
+            activeOpacity={0.88}
+          >
             <View style={styles.choghadiyaTopRow}>
               <View style={styles.choghadiyaTitleGroup}>
                 <Text style={styles.clockIcon}>🕒</Text>
@@ -307,20 +392,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
               <Text style={styles.choghadiyaTimeWindow}>06:12 – 07:42 AM</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* 5. Current Planetary & Gochar */}
         <View style={styles.sectionContainer}>
           <View style={styles.planetaryMasterCard}>
-            <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+            <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
               <Defs>
                 <LinearGradient id="planetaryGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <Stop offset="0%" stopColor="#37151C" />
                   <Stop offset="100%" stopColor="#200A0F" />
                 </LinearGradient>
               </Defs>
-              <Rect width="100%" height="100%" rx={24} fill="url(#planetaryGrad)" />
+              <Rect width="100" height="100" fill="url(#planetaryGrad)" />
             </Svg>
 
             {/* Header */}
@@ -329,17 +414,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <View style={styles.planetIconCircle}>
                   <Text style={styles.planetEmoji}>🪐</Text>
                 </View>
-                <View>
-                  <Text style={styles.planetaryTitle}>Current Planetary & Gochar</Text>
-                  <Text style={styles.planetarySub}>SIDEREAL VEDIC TRANSITS</Text>
+                <View style={styles.planetaryTitleGroup}>
+                  <Text style={styles.planetaryTitle} numberOfLines={1}>Current Planetary & Gochar</Text>
+                  <Text style={styles.planetarySub} numberOfLines={1}>SIDEREAL VEDIC TRANSITS</Text>
                 </View>
               </View>
-              <TouchableOpacity activeOpacity={0.7}>
-                <Text style={styles.planetaryViewLink}>VIEW DETAILS →</Text>
+              <TouchableOpacity
+                style={styles.planetaryViewBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setCentralHubInitialTab('PLANETARY');
+                  setShowCentralHubModal(true);
+                }}
+              >
+                <Text style={styles.planetaryViewText}>VIEW DETAILS</Text>
+                <Text style={styles.planetaryViewArrow}>→</Text>
               </TouchableOpacity>
             </View>
 
-            {/* 2x2 Transit Cards Grid */}
+            {/* 2x2 Transit Cards Grid: Row 1 */}
             <View style={styles.cardsTwoColGrid}>
               {/* Surya */}
               <View style={styles.planetTransitCard}>
@@ -374,7 +467,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={styles.planetDeg}>26°18'</Text>
                 </View>
               </View>
+            </View>
 
+            {/* 2x2 Transit Cards Grid: Row 2 */}
+            <View style={[styles.cardsTwoColGrid, { marginTop: 10 }]}>
               {/* Chandra */}
               <View style={styles.planetTransitCard}>
                 <View>
@@ -487,14 +583,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={() => setShowLalKitabModal(true)}
             activeOpacity={0.9}
           >
-            <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+            <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
               <Defs>
                 <LinearGradient id="aiKundliGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <Stop offset="0%" stopColor="#37151C" />
                   <Stop offset="100%" stopColor="#1E070C" />
                 </LinearGradient>
               </Defs>
-              <Rect width="100%" height="100%" rx={24} fill="url(#aiKundliGrad)" />
+              <Rect width="100" height="100" fill="url(#aiKundliGrad)" />
             </Svg>
 
             {/* Header */}
@@ -503,17 +599,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <View style={styles.aiIconBox}>
                   <Text style={styles.aiIconText}>📖</Text>
                 </View>
-                <View>
+                <View style={styles.aiTitleGroup}>
                   <View style={styles.aiTitleRow}>
-                    <Text style={styles.aiKundliTitle}>AI Kundli Details</Text>
+                    <Text style={styles.aiKundliTitle} numberOfLines={1}>AI Kundli Details</Text>
                     <View style={styles.liveBadge}>
                       <Text style={styles.liveBadgeText}>LIVE</Text>
                     </View>
                   </View>
-                  <Text style={styles.aiKundliSub}>LAL KITAB & BRIGHU ALGORITHM</Text>
+                  <Text style={styles.aiKundliSub} numberOfLines={1}>LAL KITAB & BRIGHU ALGORITHM</Text>
                 </View>
               </View>
-              <Text style={styles.aiConsultLink}>CONSULT PANDIT AI →</Text>
+              <View style={styles.aiConsultBtn}>
+                <Text style={styles.aiConsultText}>CONSULT PANDIT AI</Text>
+                <Text style={styles.aiConsultArrow}>→</Text>
+              </View>
             </View>
 
             {/* Insights Timeline */}
@@ -668,7 +767,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <View style={styles.guidanceHeaderRow}>
               <View style={styles.guidanceHeaderLeft}>
                 <View style={styles.goldPillIndicator} />
-                <Text style={styles.sectionTitleText}>Daily Spiritual Guidance</Text>
+                <Text style={styles.guidanceTitleText} numberOfLines={1}>Daily Spiritual Guidance</Text>
               </View>
               <View style={styles.sadhanaBadge}>
                 <Text style={styles.sadhanaBadgeText}>TODAY'S SADHANA</Text>
@@ -751,6 +850,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setShowKotaChakraModal(false)}
         defaultNakshatraIndex={panchang.nakshatra.number || 1}
       />
+
+      <CentralAlmanacHubModal
+        visible={showCentralHubModal}
+        onClose={() => setShowCentralHubModal(false)}
+        dateIso={currentDateIso}
+        selectedCity={selectedCity}
+        panchang={panchang}
+        initialTab={centralHubInitialTab}
+        onSelectDateIso={onSelectDateIso}
+        onOpenCityPicker={onOpenCityPicker}
+      />
     </View>
   );
 };
@@ -766,6 +876,7 @@ const styles = StyleSheet.create({
 
   // 1. Master Hero Card Styles
   heroCard: {
+    backgroundColor: '#37151C',
     borderRadius: 28,
     marginHorizontal: 16,
     marginTop: 6,
@@ -779,6 +890,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     position: 'relative',
     overflow: 'hidden',
+  },
+  heroContentInner: {
     padding: 18,
   },
   orbitCircle1: {
@@ -976,6 +1089,23 @@ const styles = StyleSheet.create({
     color: 'rgba(245, 222, 156, 0.7)',
     marginTop: 2,
   },
+  expandHubBadge: {
+    marginTop: 14,
+    backgroundColor: 'rgba(223, 176, 89, 0.12)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(223, 176, 89, 0.35)',
+    paddingVertical: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
+  expandHubBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#DFB059',
+    letterSpacing: 1.2,
+  },
 
   // Common Section Layout Styles
   sectionContainer: {
@@ -1123,6 +1253,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#BC2C2C',
   },
+  muhuratProgressTrack: {
+    height: 3.5,
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    borderRadius: 2,
+    marginTop: 6,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  muhuratProgressFillShubh: {
+    height: '100%',
+    backgroundColor: '#237B4B',
+    borderRadius: 2,
+  },
+  muhuratProgressFillVarjya: {
+    height: '100%',
+    backgroundColor: '#BC2C2C',
+    borderRadius: 2,
+  },
 
   // 3. Day Choghadiya Strip Styles
   choghadiyaStripCard: {
@@ -1203,6 +1351,7 @@ const styles = StyleSheet.create({
 
   // 4. Current Planetary & Gochar Styles
   planetaryMasterCard: {
+    backgroundColor: '#37151C',
     borderRadius: 24,
     padding: 16,
     borderTopWidth: 1,
@@ -1221,45 +1370,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(223, 176, 89, 0.2)',
-    paddingBottom: 12,
-    marginBottom: 14,
+    paddingBottom: 11,
+    marginBottom: 13,
     zIndex: 5,
   },
   planetaryHeaderLeft: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    marginRight: 8,
+  },
+  planetaryTitleGroup: {
+    flex: 1,
+    minWidth: 0,
   },
   planetIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     borderWidth: 1,
     borderColor: 'rgba(223, 176, 89, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   planetEmoji: {
-    fontSize: 15,
+    fontSize: 13,
   },
   planetaryTitle: {
     fontFamily: 'serif',
-    fontSize: 17,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.1,
   },
   planetarySub: {
-    fontSize: 9.5,
+    fontSize: 8.5,
     fontWeight: '600',
     color: '#F5DE9C',
-    letterSpacing: 1,
-  },
-  planetaryViewLink: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#DFB059',
     letterSpacing: 0.8,
+  },
+  planetaryViewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(223, 176, 89, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(223, 176, 89, 0.38)',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  planetaryViewText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#F5DE9C',
+    letterSpacing: 0.5,
+  },
+  planetaryViewArrow: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#F5DE9C',
   },
   planetTransitCard: {
     flex: 1,
@@ -1490,6 +1665,7 @@ const styles = StyleSheet.create({
 
   // 6. AI Kundli Details Styles
   aiKundliMasterCard: {
+    backgroundColor: '#37151C',
     borderRadius: 24,
     padding: 16,
     borderTopWidth: 1,
@@ -1508,27 +1684,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(223, 176, 89, 0.2)',
-    paddingBottom: 12,
+    paddingBottom: 11,
     marginBottom: 12,
     zIndex: 5,
+    gap: 8,
   },
   aiKundliHeaderLeft: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    marginRight: 6,
+  },
+  aiTitleGroup: {
+    flex: 1,
+    minWidth: 0,
   },
   aiIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 12,
     backgroundColor: 'rgba(245, 158, 11, 0.2)',
     borderWidth: 1,
     borderColor: 'rgba(223, 176, 89, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   aiIconText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   aiTitleRow: {
     flexDirection: 'row',
@@ -1537,33 +1722,51 @@ const styles = StyleSheet.create({
   },
   aiKundliTitle: {
     fontFamily: 'serif',
-    fontSize: 17,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.1,
   },
   liveBadge: {
     backgroundColor: '#EA580C',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
     borderRadius: 999,
   },
   liveBadgeText: {
-    fontSize: 8.5,
+    fontSize: 7.5,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   aiKundliSub: {
-    fontSize: 9.5,
+    fontSize: 8.5,
     fontWeight: '600',
     color: '#F5DE9C',
     letterSpacing: 0.8,
   },
-  aiConsultLink: {
-    fontSize: 10.5,
+  aiConsultBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(223, 176, 89, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(223, 176, 89, 0.38)',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  aiConsultText: {
+    fontSize: 8.5,
     fontWeight: '700',
-    color: '#DFB059',
-    letterSpacing: 0.5,
+    color: '#F5DE9C',
+    letterSpacing: 0.4,
+  },
+  aiConsultArrow: {
+    fontSize: 8.5,
+    fontWeight: '700',
+    color: '#F5DE9C',
   },
   aiInsightsContainer: {
     gap: 10,
@@ -1814,25 +2017,37 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(234, 219, 206, 0.7)',
     paddingBottom: 12,
     marginBottom: 12,
+    gap: 8,
   },
   guidanceHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 6,
+  },
+  guidanceTitleText: {
+    fontFamily: 'serif',
+    fontSize: 14.8,
+    fontWeight: '700',
+    color: '#2B0E14',
+    flexShrink: 1,
   },
   sadhanaBadge: {
     backgroundColor: '#FEF3C7',
     borderWidth: 1,
     borderColor: '#FCD34D',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderRadius: 999,
+    flexShrink: 0,
+    alignSelf: 'center',
   },
   sadhanaBadgeText: {
-    fontSize: 9.5,
+    fontSize: 9,
     fontWeight: '700',
     color: '#78350F',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   ritualHeaderRow: {
     flexDirection: 'row',

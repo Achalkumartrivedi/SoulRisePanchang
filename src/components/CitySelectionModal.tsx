@@ -9,11 +9,12 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Linking
+  Linking,
 } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../theme/colors';
+import { Fonts } from '../constants/typography';
 import { CityLocation } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import { useLanguage } from '../context/LanguageContext';
@@ -38,7 +39,7 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
   selectedCity,
   onSelectCity,
   title,
-  persistToGlobalStorage = false
+  persistToGlobalStorage = false,
 }) => {
   const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
@@ -83,10 +84,11 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const filteredDefaultCities = DEFAULT_CITIES.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.hindiName.includes(searchQuery) ||
-    c.stateCountry.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDefaultCities = DEFAULT_CITIES.filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.hindiName.includes(searchQuery) ||
+      c.stateCountry.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDetectGps = async () => {
@@ -96,17 +98,17 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
       if (status !== 'granted') {
         setIsDetectingGps(false);
         Alert.alert(
-          '📍 Location Permission Required / स्थान अनुमति आवश्यक',
-          'Without location permission, accurate local Tithi, Sunrise, Sunset, Muhurat and Planetary positions for your exact location cannot be calculated.\n\nस्थान अनुमति के बिना आपके सटीक क्षेत्र की सही तिथि, सूर्योदय और ग्रह स्थिति की सटीक गणना संभव नहीं है।\n\nWould you like to turn on location permission in device settings?',
+          t('locationPermRequired'),
+          t('locationPermMessage'),
           [
             {
-              text: 'Turn On in Settings (सेटिंग खोलें)',
+              text: t('turnOnSettings'),
               onPress: () => {
                 Linking.openSettings().catch(() => {});
-              }
+              },
             },
             {
-              text: 'No, Use Default (New Delhi)',
+              text: t('useDefaultLocation'),
               style: 'cancel',
               onPress: async () => {
                 if (persistToGlobalStorage) {
@@ -115,13 +117,13 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
                   await AsyncStorage.setItem(CITY_STORAGE_KEY, JSON.stringify(defaultCity));
                   await AsyncStorage.setItem(GPS_STORAGE_KEY, 'false');
                   Alert.alert(
-                    '📍 Default Location Active',
-                    'Showing Panchang & Planetary info for New Delhi (नई दिल्ली) as default.'
+                    t('defaultLocationActive'),
+                    t('defaultLocationMessage')
                   );
                 }
                 onClose();
-              }
-            }
+              },
+            },
           ],
           { cancelable: false }
         );
@@ -129,15 +131,15 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
       }
 
       let loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced
+        accuracy: Location.Accuracy.Balanced,
       }).catch(async () => {
         return await Location.getLastKnownPositionAsync();
       });
 
       if (!loc) {
         Alert.alert(
-          '⚠️ Location Signal Weak',
-          'Unable to acquire GPS fix. Please ensure location/GPS is toggled ON in your phone status bar.'
+          t('weakSignal'),
+          t('weakSignalMessage')
         );
         setIsDetectingGps(false);
         return;
@@ -167,7 +169,7 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
         stateCountry: persistToGlobalStorage ? 'GPS Location' : 'Device Location',
         latitude,
         longitude,
-        timeZoneId: 'Asia/Kolkata'
+        timeZoneId: 'Asia/Kolkata',
       };
 
       onSelectCity(userGpsCity);
@@ -178,7 +180,7 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
       onClose();
     } catch (e: any) {
       console.log('GPS detection error:', e);
-      Alert.alert('⚠️ GPS Error', e?.message || 'Failed to detect current location.');
+      Alert.alert(t('gpsError'), e?.message || 'Failed to detect current location.');
     } finally {
       setIsDetectingGps(false);
     }
@@ -204,7 +206,7 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
       stateCountry: res.countryName || res.displayName,
       latitude: res.lat,
       longitude: res.lng,
-      timeZoneId: 'Asia/Kolkata'
+      timeZoneId: 'Asia/Kolkata',
     };
     onSelectCity(cityObj);
     if (persistToGlobalStorage) {
@@ -221,18 +223,23 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
   const isQueryTyped = searchQuery.trim().length >= 2;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalCard, { paddingTop: 16, paddingBottom: bottomPadding }]}>
+        <View style={[styles.modalCard, { paddingTop: 14, paddingBottom: bottomPadding }]}>
+          {/* Drag Handle Indicator */}
+          <View style={styles.sheetDragBar} />
+
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <View>
+            <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={styles.modalTitle}>📍 {title || t('activeLocation') || 'Select Location'}</Text>
               <Text style={styles.modalSub}>
-                {language === 'hi' || language === 'hinglish' ? 'विश्वभर में कोई भी शहर या स्थान खोजें' : 'Search any city, town or country worldwide'}
+                {language === 'hi' || language === 'hinglish'
+                  ? 'विश्वभर में कोई भी शहर या स्थान खोजें'
+                  : 'Search any city, town or country worldwide'}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -246,21 +253,21 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
           >
             {isDetectingGps ? (
               <View style={styles.gpsRowCenter}>
-                <ActivityIndicator size="small" color="#FFFFFF" />
-                <Text style={styles.gpsBtnTextActive}>  📡 Detecting GPS location...</Text>
+                <ActivityIndicator size="small" color="#DFB059" />
+                <Text style={styles.gpsBtnTextActive}>  {t('detectingGps')}</Text>
               </View>
             ) : (
               <View style={styles.gpsRowCenter}>
                 <Text style={styles.gpsIcon}>🎯</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.gpsBtnTitle, isGpsActive && styles.gpsBtnTextActive]}>
-                    {persistToGlobalStorage
-                      ? 'Use Current GPS Location (वर्तमान स्थान)'
-                      : 'Use Device Current Location (वर्तमान स्थान)'}
+                  <Text style={[styles.gpsBtnTitle, isGpsActive && styles.gpsBtnTitleActive]}>
+                    {t('useGpsLocation')}
                   </Text>
                   <Text style={[styles.gpsBtnSub, isGpsActive && styles.gpsBtnSubActive]}>
                     {persistToGlobalStorage
-                      ? (isGpsActive ? `Active: ${selectedCity.name}` : 'Auto-detect exact latitude & longitude via device GPS')
+                      ? isGpsActive
+                        ? `Active: ${selectedCity.name}`
+                        : 'Auto-detect exact latitude & longitude via device GPS'
                       : 'Use device current latitude & longitude for this profile'}
                   </Text>
                 </View>
@@ -274,8 +281,8 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
             <Text style={styles.searchIcon}>🔍</Text>
             <TextInput
               style={styles.searchInput}
-              placeholder="Type city, village, state or country..."
-              placeholderTextColor={Colors.textMuted}
+              placeholder={t('searchCityPlaceholder')}
+              placeholderTextColor={Colors.panchangTextMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -283,22 +290,24 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Text style={{ fontSize: 14, color: Colors.textMuted, paddingHorizontal: 6 }}>✖</Text>
+                <Text style={{ fontSize: 14, color: Colors.panchangTextMuted, paddingHorizontal: 6 }}>✖</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {isSearching && (
             <View style={styles.searchingRow}>
-              <ActivityIndicator size="small" color={Colors.maroon} />
-              <Text style={styles.searchingText}>Searching global locations (विश्वभर में खोज रहे हैं)...</Text>
+              <ActivityIndicator size="small" color={Colors.panchangGold} />
+              <Text style={styles.searchingText}>{t('searchingLocations')}</Text>
             </View>
           )}
 
           <Text style={styles.sectionHeaderLabel}>
             {isQueryTyped
-              ? (searchResults.length > 0 ? `SEARCH RESULTS (${searchResults.length})` : 'POPULAR & MATCHING CITIES')
-              : 'POPULAR CITIES & SACRED HUBS (प्रमुख शहर)'}
+              ? searchResults.length > 0
+                ? `${t('searchResultsHeader')} (${searchResults.length})`
+                : t('matchingCitiesHeader')
+              : t('popularCitiesHeader')}
           </Text>
 
           {/* Global Search Results List or Default Cities List */}
@@ -316,7 +325,9 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cityItemName}>📍 {item.cityName}</Text>
-                    <Text style={styles.cityItemSub} numberOfLines={2}>{item.displayName}</Text>
+                    <Text style={styles.cityItemSub} numberOfLines={2}>
+                      {item.displayName}
+                    </Text>
                     <Text style={styles.latLngTag}>
                       Lat: {item.lat.toFixed(4)}° | Lng: {item.lng.toFixed(4)}°
                     </Text>
@@ -340,10 +351,12 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.cityItemName, isSelected && styles.cityItemNameActive]}>
-                        📍 {item.name} {item.hindiName ? `(${item.hindiName})` : ''}
+                        📍 {language === 'hi' ? (item.hindiName || item.name) : item.name}
                       </Text>
-                      <Text style={styles.cityItemSub}>{item.stateCountry}</Text>
-                      <Text style={styles.latLngTag}>
+                      <Text style={[styles.cityItemSub, isSelected && styles.cityItemSubActive]}>
+                        {item.stateCountry}
+                      </Text>
+                      <Text style={[styles.latLngTag, isSelected && styles.latLngTagActive]}>
                         Lat: {item.latitude.toFixed(4)}° | Lng: {item.longitude.toFixed(4)}°
                       </Text>
                     </View>
@@ -362,59 +375,75 @@ export const CitySelectionModal: React.FC<CitySelectionModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: 'rgba(23, 2, 5, 0.72)',
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: Colors.creamBg,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: Colors.panchangCream,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderColor: Colors.panchangGold,
     paddingHorizontal: 16,
     maxHeight: '85%',
+  },
+  sheetDragBar: {
+    width: 44,
+    height: 4.5,
+    backgroundColor: Colors.panchangGold,
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 14,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: Colors.panchangBorderLight,
   },
   modalTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 20,
+    color: Colors.panchangMaroon,
+    letterSpacing: 0.3,
   },
   modalSub: {
-    fontSize: 11,
-    color: Colors.textSecondary,
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 11.5,
+    color: Colors.panchangTextMuted,
     marginTop: 2,
   },
   closeBtn: {
-    backgroundColor: '#E0E0E0',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    backgroundColor: '#F3EDE6',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: Colors.panchangBorderLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtnText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#555555',
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 13,
+    color: Colors.panchangMaroon,
   },
   gpsDetectBtn: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#FFFDF6',
     borderWidth: 1.5,
-    borderColor: '#FFB300',
+    borderColor: Colors.panchangGold,
     borderRadius: 14,
     padding: 12,
     marginBottom: 12,
   },
   gpsDetectBtnActive: {
-    backgroundColor: Colors.maroon,
-    borderColor: Colors.maroon,
+    backgroundColor: Colors.panchangMaroon,
+    borderColor: Colors.panchangGold,
   },
   gpsRowCenter: {
     flexDirection: 'row',
@@ -425,25 +454,31 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   gpsBtnTitle: {
+    fontFamily: Fonts.jakartaBold,
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#B71C1C',
+    color: Colors.panchangMaroon,
+  },
+  gpsBtnTitleActive: {
+    color: Colors.panchangGold,
   },
   gpsBtnSub: {
+    fontFamily: Fonts.jakartaRegular,
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: Colors.panchangTextMuted,
     marginTop: 1,
   },
   gpsBtnTextActive: {
-    color: '#FFD700',
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 13,
+    color: Colors.panchangGoldLight,
   },
   gpsBtnSubActive: {
-    color: '#FFFFFF',
+    color: Colors.panchangGoldLight,
   },
   checkIconLight: {
+    fontFamily: Fonts.jakartaBold,
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    color: Colors.panchangGold,
     marginLeft: 8,
   },
   searchBox: {
@@ -451,20 +486,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.panchangGold,
+    paddingHorizontal: 12,
     marginBottom: 10,
-    height: 42,
+    height: 44,
   },
   searchIcon: {
-    fontSize: 14,
+    fontSize: 15,
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
+    fontFamily: Fonts.jakartaRegular,
     fontSize: 13,
-    color: Colors.textPrimary,
+    color: Colors.panchangTextMain,
   },
   searchingRow: {
     flexDirection: 'row',
@@ -474,56 +510,64 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   searchingText: {
+    fontFamily: Fonts.jakartaSemiBold,
     fontSize: 12,
-    color: Colors.maroon,
-    fontWeight: '600',
+    color: Colors.panchangMaroon,
     marginLeft: 8,
   },
   sectionHeaderLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: Colors.textMuted,
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 10.5,
+    color: Colors.panchangTextMuted,
     marginBottom: 8,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   cityItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.cardBg,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.panchangBorderLight,
   },
   cityItemActive: {
-    backgroundColor: '#FFF3E0',
-    borderColor: Colors.maroon,
+    backgroundColor: Colors.panchangMaroon,
+    borderColor: Colors.panchangGold,
+    borderWidth: 1.5,
   },
   cityItemName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 16.5,
+    color: Colors.panchangMaroon,
   },
   cityItemNameActive: {
-    color: Colors.maroon,
-    fontWeight: 'bold',
+    color: Colors.panchangGoldLight,
   },
   cityItemSub: {
-    fontSize: 11,
-    color: Colors.textSecondary,
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 11.5,
+    color: Colors.panchangTextMuted,
     marginTop: 2,
   },
+  cityItemSubActive: {
+    color: Colors.panchangBorderLight,
+  },
   latLngTag: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+    fontFamily: Fonts.jakartaSemiBold,
+    fontSize: 10.5,
+    color: Colors.panchangGoldDark,
     marginTop: 3,
   },
+  latLngTagActive: {
+    color: Colors.panchangGold,
+  },
   checkIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 18,
+    color: Colors.panchangGold,
+    marginLeft: 8,
   },
 });

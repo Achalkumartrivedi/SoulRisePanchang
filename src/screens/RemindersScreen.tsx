@@ -350,7 +350,7 @@ export const RemindersScreen: React.FC = () => {
       <View style={styles.filterContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
           {[
-            { id: 'ALL', label: 'All (सभी)' },
+            { id: 'ALL', label: 'All' },
             { id: 'WEEKLY_DAY', label: '🗓️ Weekly Vrat' },
             { id: 'TITHI_FESTIVAL', label: '🚩 Tithi & Festival' },
             { id: 'LAL_KITAB_REMEDY', label: '🔢 Daily Counter' },
@@ -498,7 +498,7 @@ export const RemindersScreen: React.FC = () => {
       </ScrollView>
 
       {/* Create / Edit Reminder Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -814,7 +814,7 @@ export const RemindersScreen: React.FC = () => {
 
       {/* Custom In-App Themed Delete Confirmation Modal */}
       {deleteModalVisible && reminderToDelete && (
-        <Modal visible={deleteModalVisible} animationType="fade" transparent>
+        <Modal visible={deleteModalVisible} animationType="fade" transparent onRequestClose={() => setDeleteModalVisible(false)}>
           <View style={styles.modalOverlay}>
             <View style={[styles.modalCard, { borderTopWidth: 4, borderTopColor: '#C62828' }]}>
               <View style={styles.modalHeader}>
@@ -904,7 +904,7 @@ export const RemindersScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.creamBg
+    backgroundColor: 'transparent'
   },
   header: {
     flexDirection: 'row',

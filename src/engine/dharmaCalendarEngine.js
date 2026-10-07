@@ -254,12 +254,12 @@ function getDharmaCalendarDayData(date, calendarSystem, language = 'hi', lunarSy
             return {
                 calendarSystem: 'HINDU',
                 eraTitle,
-                monthName: `${hinduMonthName} (${pakshaFull})`,
-                dayLabel: `${pakshaFull} ${tithiName}`,
+                monthName: hinduMonthName,
+                dayLabel: `${pakshaFull} • ${tithiName}`,
                 badgeText,
                 badgeType: hinduFest ? 'FESTIVAL' : (tithiIdx === 14 || tithiIdx === 29 || tithiIdx === 10 || tithiIdx === 25 ? 'RITUAL' : undefined),
                 festivalMatch: hinduFest || null,
-                significance: hinduFest ? hinduFest.description : `Vedic Hindu Panchang day in ${hinduMonthName} month (${pakshaFull} ${tithiName}).`,
+                significance: hinduFest ? hinduFest.description : `Vedic Hindu Panchang day in ${hinduMonthName} month (${pakshaFull} • ${tithiName}).`,
                 additionalDetails: [
                     { label: 'Vedic Samvat', value: 'Vikram Samvat 2083' },
                     { label: 'Hindu Month', value: hinduMonthName },

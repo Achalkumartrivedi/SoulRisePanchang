@@ -9,11 +9,13 @@ import {
   SafeAreaView,
   StatusBar,
   Modal,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { Colors } from '../theme/colors';
+import { Fonts } from '../constants/typography';
 import { saveUserProfile, loginOrRegisterEmailUser, resetUserPin, UserProfile } from '../engine/userDatabase';
-import { restoreKundliProfilesFromCloud } from '../utils/profileStorage';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -30,58 +32,49 @@ interface OnboardingAuthScreenProps {
   onSkip: () => void;
 }
 
-export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onComplete, onSkip }) => {
+const { width } = Dimensions.get('window');
+
+export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({
+  onComplete,
+  onSkip,
+}) => {
   const { signInWithGoogle, signInWithEmail, sendPasswordlessLink } = useAuth();
   const insets = useSafeAreaInsets();
-  const bottomInsetPadding = Math.max(insets.bottom + 12, 48);
-  const [authMode, setAuthMode] = useState<'SELECT' | 'EMAIL_FORM' | 'FORGOT_PIN'>('SELECT');
-  const [showGooglePicker, setShowGooglePicker] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const topPadding = Math.max(insets.top + 8, 24);
+  const bottomPadding = Math.max(insets.bottom + 16, 28);
 
-  // Unified Email / Phone State
+  // Popups state
+  const [showSignInPopup, setShowSignInPopup] = useState(false);
+  const [showGuestPopup, setShowGuestPopup] = useState(false);
+  const [popupSubTab, setPopupSubTab] = useState<'LOGIN' | 'FORGOT_PIN'>('LOGIN');
+
+  // Input states
   const [emailAddr, setEmailAddr] = useState('');
   const [emailPin, setEmailPin] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<CountryCodeItem>(DEFAULT_COUNTRY);
   const [showCountryModal, setShowCountryModal] = useState(false);
 
-  // Forgot PIN Reset State
+  // Forgot PIN state
   const [forgotEmail, setForgotEmail] = useState('');
   const [newPin, setNewPin] = useState('');
 
   const inputType = detectInputType(emailAddr);
 
-  const handleGoogleSignInPress = async () => {
+  const handleGoogleSignIn = async () => {
     const res = await signInWithGoogle();
     if (res.success) {
       onComplete();
     } else if (res.message && !res.message.includes('cancelled')) {
-      Alert.alert('Google Sign-In Error', res.message);
+      Alert.alert('Google Sign-In', res.message);
     }
   };
 
-  const handleSendMagicLink = async () => {
-    const cleanEmail = emailAddr.trim().toLowerCase();
-    const emailCheck = validateEmailFormat(cleanEmail);
-    if (!emailCheck.valid) {
-      Alert.alert('⚠️ Valid Email Required', emailCheck.message || 'Please enter a valid email address to receive a passwordless magic link.');
-      return;
-    }
-
-    const res = await sendPasswordlessLink(cleanEmail);
-    if (res.success) {
-      Alert.alert('✨ Magic Link Sent', res.message || `Magic sign-in link sent to ${cleanEmail}. Open the email link to sign in instantly!`);
-    } else {
-      Alert.alert('❌ Error Sending Link', res.message || 'Failed to send magic link.');
-    }
-  };
-
-  const handleSmartEmailSubmit = async () => {
+  const handleSmartSubmit = async () => {
     const rawInput = emailAddr.trim();
     const cleanPin = emailPin.trim();
 
     if (!rawInput) {
-      Alert.alert('⚠️ Email or Phone Required', 'Please enter a valid email address or mobile phone number.');
+      Alert.alert('⚠️ Input Required', 'Please enter a valid email address or mobile phone number.');
       return;
     }
 
@@ -95,14 +88,14 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
     if (inputType === 'EMAIL') {
       const check = validateEmailFormat(rawInput);
       if (!check.valid) {
-        Alert.alert('⚠️ Invalid Email Format', check.message);
+        Alert.alert('⚠️ Invalid Email', check.message);
         return;
       }
       finalIdentifier = rawInput.toLowerCase();
     } else {
       const check = validatePhoneNumberForCountry(rawInput, selectedCountry);
       if (!check.valid) {
-        Alert.alert('⚠️ Invalid Phone Number', check.message);
+        Alert.alert('⚠️ Invalid Phone', check.message);
         return;
       }
       finalIdentifier = check.formattedNumber!;
@@ -110,329 +103,395 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
 
     const res = await signInWithEmail(finalIdentifier, cleanPin);
     if (res.success && res.profile) {
+      setShowSignInPopup(false);
       onComplete();
     } else {
       Alert.alert('❌ Sign In Failed', res.message || 'Incorrect PIN or login error.');
     }
   };
 
-  const handleResetPinSubmit = async () => {
+  const handleSendMagicLink = async () => {
+    const cleanEmail = emailAddr.trim().toLowerCase();
+    const check = validateEmailFormat(cleanEmail);
+    if (!check.valid) {
+      Alert.alert('⚠️ Valid Email Required', check.message || 'Please enter an email to receive a passwordless sign-in link.');
+      return;
+    }
+
+    const res = await sendPasswordlessLink(cleanEmail);
+    if (res.success) {
+      Alert.alert('✨ Magic Link Sent', res.message || `Sign-in link sent to ${cleanEmail}. Click the link to log in instantly!`);
+      setShowSignInPopup(false);
+    } else {
+      Alert.alert('❌ Error', res.message || 'Failed to send magic link.');
+    }
+  };
+
+  const handleResetPin = async () => {
     const res = await resetUserPin(forgotEmail, newPin);
     if (res.success) {
-      Alert.alert('✅ PIN Reset Successful', res.message);
+      Alert.alert('✅ Success', res.message);
       setEmailAddr(forgotEmail);
       setEmailPin(newPin);
-      setAuthMode('EMAIL_FORM');
+      setPopupSubTab('LOGIN');
     } else {
       Alert.alert('⚠️ Reset Failed', res.message || 'Unable to reset PIN.');
     }
   };
 
-  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
-
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A0006" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F5EE" />
 
-      {/* Top Bar with Skip */}
-      <View style={[styles.topBar, { paddingTop: topPadding }]}>
-        <View style={styles.topStarBadge}>
-          <Text style={styles.starIcon}>✨ 🌌 ✨</Text>
+      {/* Top Header with Skip Action */}
+      <View style={[styles.topHeader, { paddingTop: topPadding }]}>
+        <View style={styles.topHeaderLeft}>
+          <Text style={styles.omBadge}>ॐ</Text>
+          <Text style={styles.topHeaderTitle}>SoulRise Panchang</Text>
         </View>
 
-        {/* Skip Button */}
-        <TouchableOpacity style={styles.skipBtn} onPress={onSkip} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.skipBtn} onPress={() => setShowGuestPopup(true)} activeOpacity={0.8}>
           <Text style={styles.skipBtnText}>Skip for Now ➔</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInsetPadding + 20 }]} showsVerticalScrollIndicator={false}>
-        {/* Sacred Sun Logo & Centered Welcome Header */}
-        <View style={styles.welcomeBanner}>
-          <Text style={styles.sunLogo}>☀️</Text>
-          <Text style={styles.welcomeTitle}>Welcome to SoulRise Panchang and Kundali</Text>
-          <Text style={styles.welcomeSub}>
-            Connect your account to back up Janam Kundli charts & sync sacred Panchang reminders across all your devices.
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Sacred Sun Crest Banner */}
+        <View style={styles.crestBanner}>
+          <View style={styles.sunBadge}>
+            <Svg width={42} height={42} viewBox="0 0 24 24" fill="none">
+              <Circle cx={12} cy={12} r={5} fill="#DFB059" />
+              <Path
+                d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"
+                stroke="#2B0E14"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </Svg>
+          </View>
+          <Text style={styles.mainTitle}>Account Sign In / खाता लॉगिन</Text>
+          <Text style={styles.subtitle}>
+            Sign in to securely back up your Janam Kundlis and sync sacred Panchang reminders across all your devices.
           </Text>
         </View>
 
-        {authMode === 'SELECT' && (
-          <View style={styles.cardContainer}>
-            {/* Button 1: Sign in With Google */}
-            <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={() => handleGoogleSignInPress()}
-              activeOpacity={0.85}
-            >
-              <View style={styles.googleLogoBadge}>
-                <Text style={{ color: '#4285F4', fontSize: 16, fontWeight: 'bold' }}>G</Text>
-              </View>
-              <Text style={styles.googleBtnText}>Sign in With Google</Text>
-            </TouchableOpacity>
+        {/* Benefits Card */}
+        <View style={styles.benefitsCard}>
+          <Text style={styles.benefitsHeaderTitle}>BENEFITS OF SIGNING IN • लाभ</Text>
 
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Smart Unified Button: Sign in with Email or Phone */}
-            <TouchableOpacity
-              style={styles.emailSignupBtn}
-              onPress={() => setAuthMode('EMAIL_FORM')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.emailIcon}>✉️ / 📱</Text>
-              <Text style={styles.emailSignupBtnText}>Sign in with Email or Phone</Text>
-            </TouchableOpacity>
-
-            {/* Bottom Skip Link */}
-            <TouchableOpacity style={styles.bottomSkipLink} onPress={onSkip}>
-              <Text style={styles.bottomSkipText}>Continue Without Sign In ➔</Text>
-            </TouchableOpacity>
-
-            {/* Legal Terms & Privacy Policy Footer Link */}
-            <View style={styles.termsFooter}>
-              <Text style={styles.termsFooterText}>
-                By Signing up, you agree to our{' '}
-                <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>
-                  Terms of Use
-                </Text>{' '}
-                and{' '}
-                <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>
-                  Privacy Policy
-                </Text>
-              </Text>
+          <View style={styles.benefitRow}>
+            <Text style={styles.benefitIcon}>☁️</Text>
+            <View style={styles.benefitTextCol}>
+              <Text style={styles.benefitTitle}>Encrypted Cloud Backup</Text>
+              <Text style={styles.benefitDesc}>Never lose your family birth charts when upgrading or changing phones.</Text>
             </View>
           </View>
-        )}
 
-        {authMode === 'EMAIL_FORM' && (
-          <View style={styles.cardContainer}>
-            <Text style={styles.modeTitle}>✉️ / 📱 Sign in with Email or Phone</Text>
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={styles.label}>Email or Phone Number:</Text>
-              <Text style={{ fontSize: 11, color: inputType === 'PHONE' ? Colors.maroon : '#4CAF50', fontWeight: 'bold' }}>
-                {inputType === 'PHONE' ? '📱 Mobile Phone Mode' : '✉️ Email Mode'}
-              </Text>
-            </View>
-
-            {/* Country Selector Dropdown Bar for Phone Mode */}
-            {inputType === 'PHONE' && (
-              <TouchableOpacity
-                style={styles.countryPickerBtn}
-                onPress={() => setShowCountryModal(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.countryPickerText}>
-                  {selectedCountry.flag} {selectedCountry.name} ({selectedCountry.dialCode})  ▼
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <TextInput
-              style={styles.input}
-              placeholder={inputType === 'PHONE' ? `e.g. 9876543210 (${selectedCountry.minDigits} digits)` : "user@gmail.com"}
-              placeholderTextColor="#999"
-              value={emailAddr}
-              onChangeText={setEmailAddr}
-              keyboardType={inputType === 'PHONE' ? 'phone-pad' : 'email-address'}
-              autoCapitalize="none"
-              autoFocus
-            />
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-              <Text style={styles.label}>6-Digit Security PIN / Password:</Text>
-              <TouchableOpacity onPress={() => {
-                setForgotEmail(emailAddr);
-                setAuthMode('FORGOT_PIN');
-              }}>
-                <Text style={{ fontSize: 11, color: Colors.maroon, fontWeight: 'bold', textDecorationLine: 'underline' }}>
-                  Forgot PIN?
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter 6-digit PIN"
-              placeholderTextColor="#999"
-              value={emailPin}
-              onChangeText={setEmailPin}
-              keyboardType="number-pad"
-              maxLength={6}
-              secureTextEntry
-            />
-
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('SELECT')}>
-                <Text style={styles.cancelBtnText}>Back</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSmartEmailSubmit}>
-                <Text style={styles.submitBtnText}>Sign In / Sign Up ➔</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.magicLinkBtn} onPress={handleSendMagicLink} activeOpacity={0.85}>
-              <Text style={styles.magicLinkBtnText}>🪄 Or Send Passwordless Magic Link to Email</Text>
-            </TouchableOpacity>
-
-            <View style={styles.termsFooter}>
-              <Text style={styles.termsFooterText}>
-                By Signing up, you agree to our{' '}
-                <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>
-                  Terms of Use
-                </Text>{' '}
-                and{' '}
-                <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>
-                  Privacy Policy
-                </Text>
-              </Text>
+          <View style={styles.benefitRow}>
+            <Text style={styles.benefitIcon}>🔔</Text>
+            <View style={styles.benefitTextCol}>
+              <Text style={styles.benefitTitle}>Multi-Device Dharma Sync</Text>
+              <Text style={styles.benefitDesc}>Sync custom Vrats, Ekadashi, and Choghadiya notification preferences.</Text>
             </View>
           </View>
-        )}
 
-        {authMode === 'FORGOT_PIN' && (
-          <View style={styles.cardContainer}>
-            <Text style={styles.modeTitle}>🔑 Reset Security PIN / Password</Text>
-            <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 12, lineHeight: 16 }}>
-              Enter your registered email address or phone number and create a new 6-digit security PIN to recover your account:
+          <View style={styles.benefitRow}>
+            <Text style={styles.benefitIcon}>🌟</Text>
+            <View style={styles.benefitTextCol}>
+              <Text style={styles.benefitTitle}>Personalized Astrology Insights</Text>
+              <Text style={styles.benefitDesc}>Get daily personalized Gochar (transits) matched to your Moon sign.</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Action Buttons Section */}
+        <View style={styles.actionsContainer}>
+          {/* Button 1: Google Sign In */}
+          <TouchableOpacity
+            style={styles.googleBtn}
+            onPress={handleGoogleSignIn}
+            activeOpacity={0.85}
+          >
+            <View style={styles.googleIconBadge}>
+              <Text style={{ color: '#4285F4', fontSize: 16, fontWeight: 'bold' }}>G</Text>
+            </View>
+            <Text style={styles.googleBtnText}>Sign in with Google</Text>
+          </TouchableOpacity>
+
+          <View style={styles.orDividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.orText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Button 2: Email / Phone Sign In (Triggers Sub-Popup) */}
+          <TouchableOpacity
+            style={styles.emailPhoneBtn}
+            onPress={() => {
+              setPopupSubTab('LOGIN');
+              setShowSignInPopup(true);
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.emailPhoneIcon}>✉️ / 📱</Text>
+            <Text style={styles.emailPhoneText}>Sign in with Email or Phone ➔</Text>
+          </TouchableOpacity>
+
+          {/* Button 3: Continue as Guest */}
+          <TouchableOpacity
+            style={styles.guestBtn}
+            onPress={() => setShowGuestPopup(true)}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.guestBtnText}>
+              Continue as Guest (अतिथि के रूप में जारी रखें)
             </Text>
+          </TouchableOpacity>
+        </View>
 
-            <Text style={styles.label}>Registered Email / Phone Number:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="user@gmail.com or +91 9876543210"
-              placeholderTextColor="#999"
-              value={forgotEmail}
-              onChangeText={setForgotEmail}
-              autoCapitalize="none"
-              autoFocus
-            />
-
-            <Text style={styles.label}>Enter New 6-Digit PIN:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter new 6-digit PIN"
-              placeholderTextColor="#999"
-              value={newPin}
-              onChangeText={setNewPin}
-              keyboardType="number-pad"
-              maxLength={6}
-              secureTextEntry
-            />
-
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAuthMode('EMAIL_FORM')}>
-                <Text style={styles.cancelBtnText}>Back</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.submitBtn} onPress={handleResetPinSubmit}>
-                <Text style={styles.submitBtnText}>Reset PIN & Sign In ➔</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        {/* Privacy Assurance */}
+        <Text style={styles.privacyNote}>
+          🔒 100% Spiritual Data Privacy. We do not sell or track your sacred horoscope information.
+        </Text>
       </ScrollView>
 
-
-
-      {/* Country Code Picker Modal */}
-      <Modal visible={showCountryModal} animationType="slide" transparent>
+      {/* ======================================================== */}
+      {/* 1. SIGN IN SUB-POPUP MODAL                               */}
+      {/* ======================================================== */}
+      <Modal
+        visible={showSignInPopup}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSignInPopup(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={styles.pickerModalCard}>
-            <View style={styles.pickerHeader}>
-              <Text style={styles.pickerHeaderTitle}>🌐 Select Country Code</Text>
-              <TouchableOpacity onPress={() => setShowCountryModal(false)} style={styles.closeBtn}>
-                <Text style={styles.closeText}>✕</Text>
+          <View style={styles.popupCard}>
+            {/* Popup Header */}
+            <View style={styles.popupHeader}>
+              <View style={styles.popupHeaderTitleCol}>
+                <Text style={styles.popupMainTitle}>
+                  {popupSubTab === 'LOGIN' ? '✉️ / 📱 Sign In with Email or Phone' : '🔑 Reset 6-Digit PIN'}
+                </Text>
+                <Text style={styles.popupSubtitle}>
+                  {popupSubTab === 'LOGIN' ? 'Enter credentials or request magic link' : 'Enter registered email to reset your PIN'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowSignInPopup(false)}
+                style={styles.closeBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.closeBtnText}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={{ maxHeight: 360 }}>
+
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {popupSubTab === 'LOGIN' ? (
+                <View style={styles.formContainer}>
+                  {/* Mode Indicator */}
+                  <View style={styles.modeIndicatorRow}>
+                    <Text style={styles.inputLabel}>Email or Phone Number:</Text>
+                    <Text style={[styles.modeBadge, { color: inputType === 'PHONE' ? '#B88428' : '#237B4B' }]}>
+                      {inputType === 'PHONE' ? '📱 Mobile Phone Mode' : '✉️ Email Mode'}
+                    </Text>
+                  </View>
+
+                  {/* Country Selector (If Phone Mode) */}
+                  {inputType === 'PHONE' && (
+                    <TouchableOpacity
+                      style={styles.countryPickerPill}
+                      onPress={() => setShowCountryModal(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.countryPickerText}>
+                        {selectedCountry.flag} {selectedCountry.name} ({selectedCountry.dialCode}) ▼
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Input 1: Email or Phone */}
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={inputType === 'PHONE' ? `e.g. 9876543210 (${selectedCountry.minDigits} digits)` : "user@example.com"}
+                    placeholderTextColor="#8A7571"
+                    value={emailAddr}
+                    onChangeText={setEmailAddr}
+                    keyboardType={inputType === 'PHONE' ? 'phone-pad' : 'email-address'}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+
+                  {/* Input 2: 6-Digit PIN */}
+                  <View style={styles.pinHeaderRow}>
+                    <Text style={styles.inputLabel}>6-Digit Security PIN:</Text>
+                    <TouchableOpacity onPress={() => {
+                      setForgotEmail(emailAddr);
+                      setPopupSubTab('FORGOT_PIN');
+                    }}>
+                      <Text style={styles.forgotPinLink}>Forgot PIN?</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter 6-digit PIN"
+                    placeholderTextColor="#8A7571"
+                    value={emailPin}
+                    onChangeText={setEmailPin}
+                    secureTextEntry
+                    keyboardType="number-pad"
+                    maxLength={8}
+                  />
+
+                  {/* Primary Submit Button */}
+                  <TouchableOpacity
+                    style={styles.popupPrimarySubmitBtn}
+                    onPress={handleSmartSubmit}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.popupPrimarySubmitText}>
+                      Sign In & Access Panchang (लॉगिन करें) ➔
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Alternative: Magic Link for Email */}
+                  {inputType === 'EMAIL' && (
+                    <TouchableOpacity
+                      style={styles.magicLinkBtn}
+                      onPress={handleSendMagicLink}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.magicLinkText}>
+                        ✨ Send Passwordless Magic Link to Email
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                /* Forgot PIN Reset Form */
+                <View style={styles.formContainer}>
+                  <Text style={styles.inputLabel}>Your Email Address:</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g. user@example.com"
+                    placeholderTextColor="#8A7571"
+                    value={forgotEmail}
+                    onChangeText={setForgotEmail}
+                    autoCapitalize="none"
+                  />
+
+                  <Text style={styles.inputLabel}>New 6-Digit PIN:</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter new 6-digit PIN"
+                    placeholderTextColor="#8A7571"
+                    value={newPin}
+                    onChangeText={setNewPin}
+                    secureTextEntry
+                    keyboardType="number-pad"
+                    maxLength={8}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.popupPrimarySubmitBtn}
+                    onPress={handleResetPin}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.popupPrimarySubmitText}>Reset PIN & Return ➔</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.cancelLink}
+                    onPress={() => setPopupSubTab('LOGIN')}
+                  >
+                    <Text style={styles.cancelLinkText}>Back to Login</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ======================================================== */}
+      {/* 2. GUEST MODE CONFIRMATION POPUP                         */}
+      {/* ======================================================== */}
+      <Modal
+        visible={showGuestPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowGuestPopup(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.guestCard}>
+            <View style={styles.guestCrest}>
+              <Text style={styles.guestIcon}>🕉️</Text>
+            </View>
+            <Text style={styles.guestTitle}>Continue as Guest / अतिथि प्रवेश</Text>
+            <Text style={styles.guestDesc}>
+              You can access all daily Panchang calculations, Muhurats, Choghadiya, and Festival calendars without an account.
+            </Text>
+            <Text style={styles.guestNote}>
+              Note: Saved Janam Kundli profiles and reminders will be stored locally on this phone. You can create an account anytime from Settings.
+            </Text>
+
+            <View style={styles.guestActionsRow}>
+              <TouchableOpacity
+                style={styles.guestCancelBtn}
+                onPress={() => setShowGuestPopup(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.guestCancelText}>Sign In Instead</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.guestConfirmBtn}
+                onPress={() => {
+                  setShowGuestPopup(false);
+                  onSkip();
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.guestConfirmText}>Proceed as Guest ➔</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Country Code Selection Modal */}
+      <Modal
+        visible={showCountryModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCountryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.popupCard, { maxHeight: '80%' }]}>
+            <View style={styles.popupHeader}>
+              <Text style={styles.popupMainTitle}>Select Country Code</Text>
+              <TouchableOpacity onPress={() => setShowCountryModal(false)} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
               {COUNTRY_CODES.map((item) => (
                 <TouchableOpacity
-                  key={item.code}
-                  style={[
-                    styles.countryRow,
-                    selectedCountry.code === item.code && styles.countryRowActive
-                  ]}
+                  key={item.dialCode + item.name}
+                  style={styles.countryItemRow}
                   onPress={() => {
                     setSelectedCountry(item);
                     setShowCountryModal(false);
                   }}
                 >
-                  <Text style={styles.countryFlagText}>{item.flag}</Text>
-                  <Text style={styles.countryNameText}>{item.name}</Text>
-                  <Text style={styles.countryDialText}>{item.dialCode}</Text>
+                  <Text style={styles.countryFlag}>{item.flag}</Text>
+                  <Text style={styles.countryName}>{item.name}</Text>
+                  <Text style={styles.countryDialCode}>{item.dialCode}</Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Terms of Use Modal */}
-      <Modal visible={showTermsModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.docModalCard}>
-            <View style={styles.docHeader}>
-              <Text style={styles.docTitle}>📜 Terms of Use</Text>
-              <TouchableOpacity onPress={() => setShowTermsModal(false)} style={styles.closeBtn}>
-                <Text style={styles.closeText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
-              <Text style={styles.docHeading}>1. Acceptance of Terms</Text>
-              <Text style={styles.docText}>
-                By downloading or using SoulRise Panchang and Kundli, you agree to these Terms of Use.
-              </Text>
-
-              <Text style={styles.docHeading}>2. Services & Calculations</Text>
-              <Text style={styles.docText}>
-                Provides Vedic Panchang, Tithi, Rahu Kalam, Choghadiya, Janam Kundli, and Horoscope readings for spiritual & educational purposes.
-              </Text>
-
-              <Text style={styles.docHeading}>3. Account & Data Backup</Text>
-              <Text style={styles.docText}>
-                User accounts and saved Kundli charts are stored locally and backed up to Firebase Cloud (`soulrise-panchang`).
-              </Text>
-
-              <Text style={styles.docHeading}>4. Astrological Disclaimer</Text>
-              <Text style={styles.docText}>
-                Astrological readings are for guidance only and do not replace professional medical, legal, or financial advice.
-              </Text>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Privacy Policy Modal */}
-      <Modal visible={showPrivacyModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.docModalCard}>
-            <View style={styles.docHeader}>
-              <Text style={styles.docTitle}>📜 Privacy Policy</Text>
-              <TouchableOpacity onPress={() => setShowPrivacyModal(false)} style={styles.closeBtn}>
-                <Text style={styles.closeText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView contentContainerStyle={{ padding: 16 }}>
-              <Text style={styles.docHeading}>1. Location Usage</Text>
-              <Text style={styles.docText}>
-                GPS data is processed locally on your device to calculate city-specific Panchang, Rahu Kalam, and Tithis. We NEVER sell your location data.
-              </Text>
-
-              <Text style={styles.docHeading}>2. User Account Data</Text>
-              <Text style={styles.docText}>
-                We collect Profile Name, Email, and 6-Digit PIN to back up your Janam Kundli charts and sync reminders across devices.
-              </Text>
-
-              <Text style={styles.docHeading}>3. Data Control & Deletion</Text>
-              <Text style={styles.docText}>
-                You can delete your account and erase all saved local data anytime in App Settings ➔ Delete Account.
-              </Text>
             </ScrollView>
           </View>
         </View>
@@ -442,427 +501,476 @@ export const OnboardingAuthScreen: React.FC<OnboardingAuthScreenProps> = ({ onCo
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#1A0006' // Deep Vedic Galaxy Cosmic Background
+    backgroundColor: 'transparent',
   },
-  topBar: {
-    paddingTop: StatusBar.currentHeight ? StatusBar.currentHeight + 10 : 20,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EADBCE',
+    backgroundColor: '#F8F5EE',
   },
-  topStarBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.4)'
+  topHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  starIcon: {
-    fontSize: 13,
-    color: '#FFD700',
-    fontWeight: 'bold'
+  omBadge: {
+    fontSize: 16,
+    color: '#DFB059',
+    marginRight: 6,
+  },
+  topHeaderTitle: {
+    fontSize: 16,
+    fontFamily: Fonts.cormorantBold,
+    color: '#2B0E14',
   },
   skipBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)'
+    paddingHorizontal: 10,
   },
   skipBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold'
+    fontSize: 13,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#7D6A68',
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40
+    paddingTop: 16,
   },
-  welcomeBanner: {
+  crestBanner: {
     alignItems: 'center',
-    marginVertical: 24,
-    paddingHorizontal: 10
+    marginBottom: 20,
   },
-  sunLogo: {
-    fontSize: 54,
-    marginBottom: 10
-  },
-  welcomeTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-    lineHeight: 30,
-    marginBottom: 8
-  },
-  welcomeSub: {
-    fontSize: 13,
-    color: '#FFE0B2',
-    textAlign: 'center',
-    lineHeight: 19,
-    paddingHorizontal: 12,
-    opacity: 0.95
-  },
-  cardContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
-    borderRadius: 20,
-    padding: 24,
+  sunBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFDF9',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#FFD700',
-    elevation: 8
+    borderColor: '#DFB059',
+    marginBottom: 12,
+    shadowColor: '#2B0E14',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  mainTitle: {
+    fontSize: 22,
+    fontFamily: Fonts.cormorantBold,
+    color: '#2B0E14',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#7D6A68',
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 10,
+  },
+  benefitsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.2,
+    borderColor: '#EADBCE',
+    marginBottom: 22,
+    shadowColor: '#2B0E14',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  benefitsHeaderTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#7D6A68',
+    letterSpacing: 1.2,
+    marginBottom: 12,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  benefitIcon: {
+    fontSize: 18,
+    marginRight: 12,
+    marginTop: 1,
+  },
+  benefitTextCol: {
+    flex: 1,
+  },
+  benefitTitle: {
+    fontSize: 13,
+    fontFamily: Fonts.jakartaBold,
+    color: '#2B0E14',
+    marginBottom: 2,
+  },
+  benefitDesc: {
+    fontSize: 11,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#665554',
+    lineHeight: 15,
+  },
+  actionsContainer: {
+    width: '100%',
+    marginBottom: 16,
   },
   googleBtn: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#DDDDDD',
-    paddingVertical: 14,
-    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 13,
+    borderWidth: 1.2,
+    borderColor: '#D8C7B8',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  googleLogoBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#F5F5F5',
+  googleIconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F1F3F4',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0'
+    marginRight: 10,
   },
   googleBtnText: {
-    color: '#3C4043',
-    fontSize: 15,
-    fontWeight: 'bold'
+    fontSize: 14,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#2B0E14',
   },
-  dividerRow: {
+  orDividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 18
+    marginVertical: 8,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E0E0E0'
+    backgroundColor: '#EADBCE',
   },
-  dividerText: {
+  orText: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#888888',
-    paddingHorizontal: 12
+    fontFamily: Fonts.jakartaMedium,
+    color: '#9C8885',
+    marginHorizontal: 12,
   },
-  emailSignupBtn: {
-    backgroundColor: Colors.maroon,
-    paddingVertical: 14,
-    borderRadius: 12,
+  emailPhoneBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    elevation: 3
+    backgroundColor: '#2B0E14',
+    borderRadius: 14,
+    paddingVertical: 14,
+    borderWidth: 1.2,
+    borderColor: '#DFB059',
+    marginBottom: 14,
+    shadowColor: '#2B0E14',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  emailIcon: {
+  emailPhoneIcon: {
     fontSize: 16,
-    marginRight: 8
+    marginRight: 8,
   },
-  emailSignupBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold'
-  },
-  bottomSkipLink: {
-    marginTop: 18,
-    alignItems: 'center'
-  },
-  bottomSkipText: {
-    color: Colors.textMuted,
-    fontSize: 12,
-    fontWeight: 'bold',
-    textDecorationLine: 'underline'
-  },
-  termsFooter: {
-    marginTop: 18,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    alignItems: 'center'
-  },
-  termsFooterText: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16
-  },
-  termsLink: {
-    color: Colors.maroon,
-    fontWeight: 'bold',
-    textDecorationLine: 'underline'
-  },
-  modeTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    marginBottom: 12
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    marginBottom: 4,
-    marginTop: 6
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 12,
+  emailPhoneText: {
     fontSize: 14,
-    backgroundColor: '#FAFAFA',
-    color: Colors.textPrimary,
-    marginBottom: 12
-  },
-  btnRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 14
-  },
-  cancelBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: 10,
-    backgroundColor: '#EEEEEE'
-  },
-  cancelBtnText: {
-    color: Colors.textPrimary,
-    fontWeight: 'bold'
-  },
-  submitBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: 10,
-    backgroundColor: Colors.maroon
-  },
-  googleSubmitBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: 10,
-    backgroundColor: '#4285F4',
-    alignItems: 'center',
-    marginTop: 10
-  },
-  submitBtnText: {
+    fontFamily: Fonts.jakartaBold,
     color: '#FFFFFF',
-    fontWeight: 'bold'
+    letterSpacing: 0.2,
   },
-  // Modal Overlays & Picker Cards
+  guestBtn: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  guestBtnText: {
+    fontSize: 12,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#7D6A68',
+    textDecorationLine: 'underline',
+  },
+  privacyNote: {
+    fontSize: 10,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#8A7571',
+    textAlign: 'center',
+    lineHeight: 14,
+    marginTop: 6,
+    paddingHorizontal: 12,
+  },
+
+  // Modal Overlay & Sub-Popup
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(27, 7, 12, 0.65)',
     justifyContent: 'center',
-    padding: 16
+    alignItems: 'center',
+    paddingHorizontal: 18,
   },
-  pickerModalCard: {
-    backgroundColor: '#FFFFFF',
+  popupCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FBF9F4',
     borderRadius: 20,
     padding: 20,
-    elevation: 10
+    borderWidth: 1.5,
+    borderColor: '#DFB059',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  pickerHeader: {
+  popupHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EADBCE',
+    paddingBottom: 10,
   },
-  googleBadgeSmall: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0'
+  popupHeaderTitleCol: {
+    flex: 1,
+    paddingRight: 8,
   },
-  pickerHeaderTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-    flex: 1
+  popupMainTitle: {
+    fontSize: 15,
+    fontFamily: Fonts.jakartaBold,
+    color: '#2B0E14',
   },
-  pickerSubTitle: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 14,
-    lineHeight: 16
+  popupSubtitle: {
+    fontSize: 11,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#7D6A68',
+    marginTop: 2,
   },
   closeBtn: {
-    padding: 4
+    padding: 4,
   },
-  closeText: {
+  closeBtnText: {
     fontSize: 16,
+    color: '#7D6A68',
     fontWeight: 'bold',
-    color: '#888'
   },
-  accountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF5EE',
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 10
-  },
-  avatarCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.maroon,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12
-  },
-  avatarLetter: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  accountName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.textPrimary
-  },
-  accountEmail: {
-    fontSize: 12,
-    color: Colors.textSecondary
-  },
-  addAccountBtn: {
-    backgroundColor: '#ECEFF1',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
+  formContainer: {
     marginTop: 4,
-    marginBottom: 10
   },
-  addAccountText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#37474F'
-  },
-  customInputBox: {
-    backgroundColor: '#F9F9F9',
-    padding: 12,
-    borderRadius: 10,
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0'
-  },
-  pickerCancelBtn: {
-    marginTop: 10,
-    alignItems: 'center',
-    paddingVertical: 8
-  },
-  pickerCancelText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textMuted
-  },
-  docModalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    maxHeight: 520
-  },
-  docHeader: {
-    backgroundColor: Colors.maroon,
-    padding: 16,
+  modeIndicatorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
-  docTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  docHeading: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    marginTop: 10,
-    marginBottom: 4
-  },
-  docText: {
+  inputLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 8
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#2B0E14',
   },
-  magicLinkBtn: {
-    marginTop: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#FAF3E0',
+  modeBadge: {
+    fontSize: 10,
+    fontFamily: Fonts.jakartaBold,
+  },
+  countryPickerPill: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#FFD700',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  magicLinkBtnText: {
-    color: Colors.maroon,
-    fontSize: 13,
-    fontWeight: 'bold'
-  },
-  countryPickerBtn: {
-    backgroundColor: '#FFF8E7',
-    borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#EADBCE',
     borderRadius: 10,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     marginBottom: 8,
-    alignItems: 'center'
   },
   countryPickerText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.maroon
+    fontSize: 12,
+    fontFamily: Fonts.jakartaMedium,
+    color: '#2B0E14',
   },
-  countryRow: {
+  textInput: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#EADBCE',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#2B0E14',
+    marginBottom: 12,
+  },
+  pinHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  forgotPinLink: {
+    fontSize: 11,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#2B0E14',
+    textDecorationLine: 'underline',
+  },
+  popupPrimarySubmitBtn: {
+    backgroundColor: '#2B0E14',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: '#DFB059',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  popupPrimarySubmitText: {
+    fontSize: 13,
+    fontFamily: Fonts.jakartaBold,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  magicLinkBtn: {
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  magicLinkText: {
+    fontSize: 11,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#237B4B',
+    textDecorationLine: 'underline',
+  },
+  cancelLink: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  cancelLinkText: {
+    fontSize: 12,
+    fontFamily: Fonts.jakartaMedium,
+    color: '#7D6A68',
+  },
+
+  // Guest Card Popup
+  guestCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FBF9F4',
+    borderRadius: 20,
+    padding: 22,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#DFB059',
+  },
+  guestCrest: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFDF9',
+    borderWidth: 1.2,
+    borderColor: '#DFB059',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  guestIcon: {
+    fontSize: 22,
+  },
+  guestTitle: {
+    fontSize: 16,
+    fontFamily: Fonts.cormorantBold,
+    color: '#2B0E14',
+    marginBottom: 8,
+  },
+  guestDesc: {
+    fontSize: 12,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#5C4745',
+    textAlign: 'center',
+    lineHeight: 17,
+    marginBottom: 10,
+  },
+  guestNote: {
+    fontSize: 10,
+    fontFamily: Fonts.jakartaRegular,
+    color: '#8A7571',
+    textAlign: 'center',
+    lineHeight: 14,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  guestActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
+  },
+  guestCancelBtn: {
+    flex: 1,
+    backgroundColor: '#F2ECE1',
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D8C7B8',
+  },
+  guestCancelText: {
+    fontSize: 12,
+    fontFamily: Fonts.jakartaSemiBold,
+    color: '#7D6A68',
+  },
+  guestConfirmBtn: {
+    flex: 1.3,
+    backgroundColor: '#2B0E14',
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: 'center',
+    borderWidth: 1.2,
+    borderColor: '#DFB059',
+  },
+  guestConfirmText: {
+    fontSize: 12,
+    fontFamily: Fonts.jakartaBold,
+    color: '#FFFFFF',
+  },
+
+  // Country Modal Items
+  countryItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE'
+    borderBottomColor: '#EADBCE',
   },
-  countryRowActive: {
-    backgroundColor: '#FFF8E7'
-  },
-  countryFlagText: {
+  countryFlag: {
     fontSize: 20,
-    marginRight: 12
+    marginRight: 10,
   },
-  countryNameText: {
+  countryName: {
     flex: 1,
     fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textPrimary
+    fontFamily: Fonts.jakartaRegular,
+    color: '#2B0E14',
   },
-  countryDialText: {
+  countryDialCode: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.maroon
-  }
+    fontFamily: Fonts.jakartaBold,
+    color: '#DFB059',
+  },
 });

@@ -1,24 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, FlatList, Switch, Alert, StatusBar, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  Switch,
+  Alert,
+  StatusBar,
+  Linking,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { Path } from 'react-native-svg';
 import { Colors } from '../theme/colors';
+import { Fonts } from '../constants/typography';
 import { CityLocation } from '../types/panchang';
 import { DEFAULT_CITIES } from '../data/cities';
 import {
   CHOGHADIYA_NOTIF_KEY,
   updateLiveChoghadiyaNotification,
-  cancelChoghadiyaNotification
+  cancelChoghadiyaNotification,
 } from '../utils/choghadiyaNotifier';
-
 import { useLanguage } from '../context/LanguageContext';
 import { SUPPORTED_LANGUAGES } from '../types/language';
 import { useCalendarSystem, CalendarSystem } from '../context/CalendarContext';
-import { getUserProfile, clearUserProfile, UserProfile } from '../engine/userDatabase';
-import { AuthModal } from '../components/AuthModal';
+import { clearUserProfile } from '../engine/userDatabase';
 import { FeedbackModal } from '../components/FeedbackModal';
-import { useAuth } from '../context/AuthContext';
 
 interface SettingsScreenProps {
   selectedCity: CityLocation;
@@ -38,23 +48,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onOpenLanguageModal,
 }) => {
   const { language, t } = useLanguage();
-  const { user: userProfile, logout } = useAuth();
   const { calendarSystem, setCalendarSystem, lunarSystem, setLunarSystem } = useCalendarSystem();
-  const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
-  const [useAmanta, setUseAmanta] = useState(false); // false = Purnimanta (North India default)
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
+
   const [useGps, setUseGps] = useState(selectedCity.stateCountry === 'GPS Location');
   const [useChoghadiyaNotif, setUseChoghadiyaNotif] = useState(false);
 
   // Purnima & Amavasya Reminder States
   const [purnimaNotif, setPurnimaNotif] = useState(true);
   const [amavasyaNotif, setAmavasyaNotif] = useState(true);
-  const [reminderDays, setReminderDays] = useState<number>(1); // 0 (same day), 1, 2, or 5 days before
+  const [reminderDays, setReminderDays] = useState<number>(1); // 0, 1, 2, or 5 days before
 
-  // Customer Profile & Support Modal States
-  const [authModalVisible, setAuthModalVisible] = useState(false);
+  // Feedback, Legal & Account Deletion Modal States
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
-  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   useEffect(() => {
@@ -85,8 +92,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             await clearUserProfile();
             await AsyncStorage.clear();
             Alert.alert('✅ Data Cleared', 'Your account data and preferences have been completely deleted.');
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -155,7 +162,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             stateCountry: 'GPS Location',
             latitude,
             longitude,
-            timeZoneId: 'Asia/Kolkata'
+            timeZoneId: 'Asia/Kolkata',
           };
           onSelectCity(gpsCity);
           await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(gpsCity));
@@ -163,14 +170,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         } else {
           setUseGps(false);
           Alert.alert(
-            '📍 Location Permission Required / स्थान अनुमति आवश्यक',
-            'Without location permission, accurate local Tithi, Sunrise, Sunset, Muhurat and Planetary positions for your exact location cannot be calculated.\n\nस्थान अनुमति के बिना आपके सटीक क्षेत्र की सही तिथि, सूर्योदय और ग्रह स्थिति की सटीक गणना संभव नहीं है।\n\nWould you like to turn on location permission in device settings?',
+            '📍 Location Permission Required',
+            'Without location permission, accurate local Tithi, Sunrise, Sunset, Muhurat and Planetary positions for your exact location cannot be calculated.\n\nWould you like to turn on location permission in device settings?',
             [
               {
-                text: 'Turn On in Settings (सेटिंग खोलें)',
+                text: 'Turn On in Settings',
                 onPress: () => {
                   Linking.openSettings().catch(() => {});
-                }
+                },
               },
               {
                 text: 'No, Use Default (New Delhi)',
@@ -182,10 +189,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   await AsyncStorage.setItem('SOULRISE_USE_GPS', 'false');
                   Alert.alert(
                     '📍 Default Location Active',
-                    'Showing Panchang & Planetary info for New Delhi (नई दिल्ली) as default.'
+                    'Showing Panchang & Planetary info for New Delhi as default.'
                   );
-                }
-              }
+                },
+              },
             ],
             { cancelable: false }
           );
@@ -199,7 +206,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       const manualCity: CityLocation = {
         ...selectedCity,
         name: cleanName,
-        stateCountry: selectedCity.stateCountry === 'GPS Location' ? 'Manual Selection' : selectedCity.stateCountry
+        stateCountry: selectedCity.stateCountry === 'GPS Location' ? 'Manual Selection' : selectedCity.stateCountry,
       };
       onSelectCity(manualCity);
       await AsyncStorage.setItem('SOULRISE_SELECTED_CITY', JSON.stringify(manualCity));
@@ -209,35 +216,60 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const insets = useSafeAreaInsets();
   const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
 
+  // Single-Language helper: only Hinglish displays dual-language brackets
+  const isHinglish = language === 'hinglish';
+  const displayCityName = isHinglish && selectedCity.hindiName
+    ? `${selectedCity.name} (${selectedCity.hindiName})`
+    : selectedCity.name;
+
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Sacred Velvet Burgundy Header */}
       <View style={[styles.header, { paddingTop: topPadding }]}>
-        <Text style={styles.headerTitle} numberOfLines={1} adjustsFontSizeToFit>{t('settingsTitle')}</Text>
-        <Text style={styles.headerSubtitle} numberOfLines={2} adjustsFontSizeToFit>{t('settingsSub')}</Text>
+        <View style={styles.headerTitleRow}>
+          <View style={styles.headerIconBox}>
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M19.4 13a7.7 7.7 0 0 0 .1-1 7.7 7.7 0 0 0-.1-1l2.1-1.6c.2-.2.3-.5.1-.7l-2-3.5c-.1-.2-.4-.3-.7-.2l-2.5 1a7.4 7.4 0 0 0-1.7-1l-.4-2.6A.6.6 0 0 0 14 2h-4c-.3 0-.6.2-.6.5l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1c-.3-.1-.6 0-.7.2l-2 3.5c-.1.2 0 .5.1.7L4.3 11a7.7 7.7 0 0 0-.1 1c0 .3 0 .7.1 1l-2.1 1.6c-.2.2-.3.5-.1.7l2 3.5c.1.2.4.3.7.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .3.3.5.6.5h4c.3 0 .6-.2.6-.5l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.3.1.6 0 .7-.2l2-3.5c.1-.2 0-.5-.1-.7L19.4 13z"
+                fill="#DFB059"
+              />
+            </Svg>
+          </View>
+          <View>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {t('settingsTitle')}
+            </Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {t('settingsSub')}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* App Language Card */}
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* 1. App Language Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t('appLanguage')}</Text>
+          <Text style={styles.cardSubTitle}>Choose your preferred display language:</Text>
 
-          <TouchableOpacity style={styles.citySelectorBox} onPress={onOpenLanguageModal} activeOpacity={0.8}>
-            <View style={styles.cityLeft}>
+          <TouchableOpacity style={styles.selectorBox} onPress={onOpenLanguageModal} activeOpacity={0.8}>
+            <View style={styles.selectorLeft}>
               <Text style={{ fontSize: 24, marginRight: 12 }}>{currentLangObj.flag}</Text>
               <View>
-                <Text style={styles.cityNameText}>{currentLangObj.name}</Text>
-                <Text style={styles.citySubText}>{currentLangObj.nativeName}</Text>
+                <Text style={styles.selectorPrimaryText}>{currentLangObj.name}</Text>
+                <Text style={styles.selectorSubText}>{currentLangObj.nativeName}</Text>
               </View>
             </View>
-            <Text style={styles.changeBtnText}>Select ➔</Text>
+            <View style={styles.changeActionBadge}>
+              <Text style={styles.changeActionText}>Change ➔</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
-        {/* Calendar System Preference Card */}
+        {/* 2. Calendar System Preference Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>📅 Calendar System Preference</Text>
-          <Text style={styles.cardSubTitle}>Choose your default calendar view (persists across app restarts):</Text>
+          <Text style={styles.cardSubTitle}>Select default astronomical system across the app:</Text>
 
           <View style={styles.calSystemList}>
             {[
@@ -248,7 +280,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               { id: 'BUDDHIST', title: '☸️ Buddhist Lunar Calendar (BE 2568)', desc: 'Buddha Era 2568, Vesak, Asalha & Kathina Sacred Days' },
               { id: 'CHRISTIAN', title: '✝️ Christian Liturgical Calendar', desc: 'Feasts, Lent, Easter, Good Friday, Christmas & Seasons' },
               { id: 'PARSI', title: '🔥 Zoroastrian Parsi Calendar', desc: 'Shahenshahi / Fasli Yazdegerdi 1396 & Navroz Celebrations' },
-            ].map(item => (
+            ].map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={[styles.calSystemItem, calendarSystem === item.id && styles.calSystemItemActive]}
@@ -267,20 +299,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </View>
         </View>
 
-        {/* Lunar Month System (Amanta vs Purnimanta) Card */}
+        {/* 3. Lunar Month System (Amanta vs Purnimanta) Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>
             {language === 'gu'
               ? '🌙 લૂનાર માસ પદ્ધતિ (અમાંત પદ્ધતિ)'
-              : (language === 'hi' ? '🌙 लूनर मास पद्धति (अमांत / पूर्णिमांत)' : '🌙 Lunar Month System')}
+              : language === 'hi'
+              ? '🌙 लूनर मास पद्धति (अमांत / पूर्णिमांत)'
+              : '🌙 Lunar Month System'}
           </Text>
           <Text style={styles.cardSubTitle}>Select Hindu Lunar Month calculation method for your region:</Text>
 
           <View style={styles.calSystemList}>
             {[
               { id: 'AMANTA', title: '🌾 Amanta (Gujarat / Maharashtra / South)', desc: 'Month ends on Amavasya. Shravana Month active during Vad/Krishna Paksha.' },
-              { id: 'PURNIMANTA', title: '🏔️ Purnimanta (North India / Rajasthan / UP)', desc: 'Month ends on Purnima. Bhadrapada Month active during Krishna Paksha.' }
-            ].map(item => (
+              { id: 'PURNIMANTA', title: '🏔️ Purnimanta (North India / Rajasthan / UP)', desc: 'Month ends on Purnima. Bhadrapada Month active during Krishna Paksha.' },
+            ].map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={[styles.calSystemItem, lunarSystem === item.id && styles.calSystemItemActive]}
@@ -299,36 +333,41 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </View>
         </View>
 
-        {/* Active Location Card */}
+        {/* 4. Active Location Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t('activeLocation')}</Text>
+          <Text style={styles.cardSubTitle}>Accurate Tithi, Sunrise, Sunset, and Muhurat calculations:</Text>
 
-          <TouchableOpacity style={styles.citySelectorBox} onPress={onOpenCityModal} activeOpacity={0.8}>
-            <View style={styles.cityLeft}>
-              <Text style={styles.cityPinIcon}>📍</Text>
-              <View>
-                <Text style={styles.cityNameText}>{selectedCity.name} ({selectedCity.hindiName})</Text>
-                <Text style={styles.citySubText}>{selectedCity.stateCountry} • Lat: {selectedCity.latitude}, Lon: {selectedCity.longitude}</Text>
+          <TouchableOpacity style={styles.selectorBox} onPress={onOpenCityModal} activeOpacity={0.8}>
+            <View style={styles.selectorLeft}>
+              <Text style={{ fontSize: 22, marginRight: 10 }}>📍</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.selectorPrimaryText}>{displayCityName}</Text>
+                <Text style={styles.selectorSubText}>
+                  {selectedCity.stateCountry} • Lat: {selectedCity.latitude.toFixed(2)}, Lon: {selectedCity.longitude.toFixed(2)}
+                </Text>
               </View>
             </View>
-            <Text style={styles.changeBtnText}>Change ➔</Text>
+            <View style={styles.changeActionBadge}>
+              <Text style={styles.changeActionText}>Change ➔</Text>
+            </View>
           </TouchableOpacity>
 
           <View style={styles.switchRow}>
             <View style={styles.switchTextContainer}>
               <Text style={styles.switchLabel}>Auto Detect Location (GPS)</Text>
-              <Text style={styles.switchSub}>Use device coordinates for high precision sunrise</Text>
+              <Text style={styles.switchSub}>Use device coordinates for high precision astronomical positions</Text>
             </View>
             <Switch
               value={useGps}
               onValueChange={handleGpsToggle}
-              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
-              thumbColor={useGps ? '#FFD700' : '#F4F3F4'}
+              trackColor={{ false: '#D1D5DB', true: '#2B0E14' }}
+              thumbColor={useGps ? '#DFB059' : '#F4F3F4'}
             />
           </View>
         </View>
 
-        {/* Live Choghadiya Notification Bar Setting */}
+        {/* 5. Live Choghadiya Notification Bar Setting */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>⏰ Live Choghadiya Status Bar Widget</Text>
 
@@ -340,13 +379,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Switch
               value={useChoghadiyaNotif}
               onValueChange={handleChoghadiyaToggle}
-              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
-              thumbColor={useChoghadiyaNotif ? '#FFD700' : '#F4F3F4'}
+              trackColor={{ false: '#D1D5DB', true: '#2B0E14' }}
+              thumbColor={useChoghadiyaNotif ? '#DFB059' : '#F4F3F4'}
             />
           </View>
         </View>
 
-        {/* Purnima & Amavasya Push Notification Reminders */}
+        {/* 6. Purnima & Amavasya Push Notification Reminders */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>🔔 Purnima & Amavasya Reminders</Text>
 
@@ -359,8 +398,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Switch
               value={purnimaNotif}
               onValueChange={handlePurnimaToggle}
-              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
-              thumbColor={purnimaNotif ? '#FFD700' : '#F4F3F4'}
+              trackColor={{ false: '#D1D5DB', true: '#2B0E14' }}
+              thumbColor={purnimaNotif ? '#DFB059' : '#F4F3F4'}
             />
           </View>
 
@@ -373,13 +412,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <Switch
               value={amavasyaNotif}
               onValueChange={handleAmavasyaToggle}
-              trackColor={{ false: '#D0D0D0', true: Colors.maroon }}
-              thumbColor={amavasyaNotif ? '#FFD700' : '#F4F3F4'}
+              trackColor={{ false: '#D1D5DB', true: '#2B0E14' }}
+              thumbColor={amavasyaNotif ? '#DFB059' : '#F4F3F4'}
             />
           </View>
 
           {/* Timing Days Picker */}
-          <Text style={[styles.switchLabel, { marginTop: 12, marginBottom: 6 }]}>
+          <Text style={[styles.switchLabel, { marginTop: 14, marginBottom: 8 }]}>
             ⏰ Notification Advance Timing:
           </Text>
           <View style={styles.timingDaysRow}>
@@ -388,7 +427,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               { label: '1 Day Before', days: 1 },
               { label: '2 Days Before', days: 2 },
               { label: '5 Days Before', days: 5 },
-            ].map(item => (
+            ].map((item) => (
               <TouchableOpacity
                 key={item.days}
                 style={[styles.dayPill, reminderDays === item.days && styles.dayPillActive]}
@@ -402,56 +441,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </View>
         </View>
 
-        {/* 👤 Customer Profile Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>👤 Customer Profile & Account</Text>
-
-          {userProfile ? (
-            <View style={styles.profileBox}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.profileName}>
-                  {userProfile.name} {userProfile.authType === 'GOOGLE' ? '🔴 (Google)' : '👤 (Guest)'}
-                </Text>
-                <Text style={styles.profileEmail}>{userProfile.email}</Text>
-                <Text style={styles.profileDate}>
-                  Member Since: {new Date(userProfile.createdAtIso).toLocaleDateString()}
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: 'column', gap: 6 }}>
-                <TouchableOpacity
-                  style={styles.changeProfileBtn}
-                  onPress={() => setAuthModalVisible(true)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.changeProfileText}>Switch User</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.changeProfileBtn, { backgroundColor: '#D32F2F', marginTop: 4 }]}
-                  onPress={() => setLogoutModalVisible(true)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.changeProfileText, { color: '#FFFFFF' }]}>🚪 Log Out</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.signInBtn}
-              onPress={() => setAuthModalVisible(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.signInBtnText}>🔑 Sign In (Google or Email)</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* 💬 Customer Feedback & Support Card */}
+        {/* 7. Customer Support & Feedback Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>💬 Support & Customer Feedback</Text>
           <Text style={styles.cardSubTitle}>
-            {'Have a suggestion, bug report, or Panchang question? Send feedback directly to our team (Supports file attachments < 2MB, 3-day cooldown).'}
+            Have a suggestion, bug report, or Panchang question? Send feedback directly to our team.
           </Text>
 
           <TouchableOpacity
@@ -463,11 +457,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* 🔐 Legal & Privacy Policy Card */}
+        {/* 8. Legal & Privacy Policy Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>🔐 Privacy & Legal Compliance</Text>
           <Text style={styles.cardSubTitle}>
-            Google Play Developer Policy compliant data handling. We process location data locally and do not sell your personal data.
+            Google Play Developer Policy compliant data handling. We compute astronomical data locally and never sell your personal data.
           </Text>
 
           <TouchableOpacity
@@ -479,9 +473,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* 🗑️ Google Play Compliant Account Deletion & Reset Card */}
-        <View style={[styles.card, { borderColor: '#FFCDD2', backgroundColor: '#FFEBEE' }]}>
-          <Text style={[styles.cardTitle, { color: '#C62828' }]}>🗑️ Account Deletion & Data Reset</Text>
+        {/* 9. Google Play Compliant Account Deletion & Reset Card */}
+        <View style={[styles.card, styles.deleteCard]}>
+          <Text style={styles.deleteCardTitle}>🗑️ Account Deletion & Data Reset</Text>
           <Text style={styles.cardSubTitle}>
             Google Play Requirement: Delete your profile, saved custom reminders, and clear local storage data permanently.
           </Text>
@@ -496,27 +490,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </View>
       </ScrollView>
 
-      {/* Auth Modal */}
-      <AuthModal
-        visible={authModalVisible}
-        onClose={() => setAuthModalVisible(false)}
-        onSuccess={(profile) => {
-          setAuthModalVisible(false);
-          Alert.alert('✅ Profile Saved', `Welcome, ${profile.name}! Your profile is now active.`);
-        }}
-      />
-
       {/* Feedback Modal */}
       <FeedbackModal
         visible={feedbackModalVisible}
         onClose={() => setFeedbackModalVisible(false)}
-        userEmail={userProfile?.email}
       />
 
       {/* Privacy Policy Modal */}
       <Modal visible={privacyPolicyVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { maxHeight: 580 }]}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>📜 Privacy Policy</Text>
               <TouchableOpacity onPress={() => setPrivacyPolicyVisible(false)} style={styles.closeBtn}>
@@ -525,32 +508,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 16 }}>
-
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
-                1. Data Collection & Location Usage
-              </Text>
-              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 10, lineHeight: 18 }}>
+              <Text style={styles.policyHeading}>1. Data Collection & Location Usage</Text>
+              <Text style={styles.policyBody}>
                 SoulRise Panchang uses GPS location data solely to compute accurate city-specific sunrise, sunset, Tithi, Rahu Kalam, and planetary calculations. Location data is processed locally on your device and is NEVER sold or shared with third parties.
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
-                2. User Authentication & Profile
-              </Text>
-              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 10, lineHeight: 18 }}>
-                Guest and Google Sign-In profile names are used to auto-populate your Janam Kundli charts and personalize your experience. Profile data remains under your full control.
+              <Text style={styles.policyHeading}>2. User Authentication & Profile</Text>
+              <Text style={styles.policyBody}>
+                User profile names and details are stored locally and used to personalize your Vedic charts and reminders. Profile data remains under your complete control.
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
-                3. Account Deletion Rights
-              </Text>
-              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 10, lineHeight: 18 }}>
+              <Text style={styles.policyHeading}>3. Account Deletion Rights</Text>
+              <Text style={styles.policyBody}>
                 You can delete your account, wipe all stored local profiles, and clear all local data at any time under Settings ➔ Delete Account & Erase All Data.
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: Colors.textPrimary, marginBottom: 6 }}>
-                4. Children's Privacy (COPPA)
-              </Text>
-              <Text style={{ fontSize: 12, color: Colors.textSecondary, marginBottom: 16, lineHeight: 18 }}>
+              <Text style={styles.policyHeading}>4. Children's Privacy (COPPA)</Text>
+              <Text style={styles.policyBody}>
                 SoulRise Panchang is rated 3+ (Everyone). We do not knowingly collect personal data from children under 13.
               </Text>
             </ScrollView>
@@ -558,65 +532,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </View>
       </Modal>
 
-      {/* 🚪 Custom Log Out Confirmation Modal */}
-      <Modal visible={logoutModalVisible} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { padding: 20 }]}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors.maroon, marginBottom: 8, textAlign: 'center' }}>
-              🚪 Confirm Log Out
-            </Text>
-            <Text style={{ fontSize: 13, color: Colors.textSecondary, textAlign: 'center', lineHeight: 18, marginBottom: 20 }}>
-              Are you sure you want to log out of your account? Local data will remain saved on this device, but cloud sync requires signing back in.
-            </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-              <TouchableOpacity
-                style={{ flex: 1, backgroundColor: '#EEEEEE', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
-                onPress={() => setLogoutModalVisible(false)}
-              >
-                <Text style={{ color: Colors.textPrimary, fontWeight: 'bold', fontSize: 14 }}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ flex: 1, backgroundColor: '#D32F2F', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
-                onPress={async () => {
-                  setLogoutModalVisible(false);
-                  await logout();
-                  Alert.alert('✅ Logged Out', 'You have been successfully logged out.');
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 }}>Log Out</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ⚠️ Custom Delete Account Confirmation Modal */}
+      {/* Custom Delete Account Confirmation Modal */}
       <Modal visible={deleteModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { padding: 20, borderColor: '#C62828', borderWidth: 1.5 }]}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#C62828', marginBottom: 8, textAlign: 'center' }}>
-              ⚠️ Delete Account & Clear Data
-            </Text>
-            <Text style={{ fontSize: 13, color: Colors.textPrimary, textAlign: 'center', lineHeight: 18, marginBottom: 20 }}>
+          <View style={[styles.modalCard, styles.deleteConfirmCard]}>
+            <Text style={styles.deleteConfirmTitle}>⚠️ Delete Account & Clear Data</Text>
+            <Text style={styles.deleteConfirmDesc}>
               CAUTION: Deleting your account will permanently erase your user profile, saved Janam Kundli charts, and custom reminders from this device. Are you sure you want to proceed?
             </Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
               <TouchableOpacity
-                style={{ flex: 1, backgroundColor: '#EEEEEE', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+                style={styles.cancelDeleteBtn}
                 onPress={() => setDeleteModalVisible(false)}
               >
-                <Text style={{ color: Colors.textPrimary, fontWeight: 'bold', fontSize: 14 }}>Cancel</Text>
+                <Text style={styles.cancelDeleteBtnText}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={{ flex: 1.2, backgroundColor: '#B71C1C', paddingVertical: 12, borderRadius: 10, alignItems: 'center' }}
+                style={styles.confirmDeleteBtn}
                 onPress={async () => {
                   setDeleteModalVisible(false);
                   await handleDeleteAccountAndReset();
                 }}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 13 }}>Delete Account</Text>
+                <Text style={styles.confirmDeleteBtnText}>Delete Account</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -629,49 +568,74 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.creamBg,
+    backgroundColor: 'transparent',
   },
   header: {
-    backgroundColor: Colors.maroon,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+    backgroundColor: '#2B0E14',
+    paddingBottom: 16,
+    paddingHorizontal: 18,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#DFB059',
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(223, 176, 89, 0.15)',
+    borderWidth: 1,
+    borderColor: '#DFB059',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 20,
+    color: '#DFB059',
+    letterSpacing: 0.5,
   },
   headerSubtitle: {
+    fontFamily: Fonts.jakartaRegular,
     fontSize: 11,
-    color: Colors.creamBg,
-    marginTop: 2,
-    opacity: 0.9,
+    color: '#F8F5EE',
+    opacity: 0.85,
+    marginTop: 1,
   },
   content: {
     padding: 16,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 16,
-    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
     marginBottom: 14,
-    elevation: 3,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(223, 176, 89, 0.28)',
+    shadowColor: '#2B0E14',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   cardTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    marginBottom: 8,
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 16.5,
+    color: '#2B0E14',
+    marginBottom: 4,
   },
   cardSubTitle: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginBottom: 10,
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 11.5,
+    color: '#7D6A68',
+    marginBottom: 12,
+    lineHeight: 16,
   },
   calSystemList: {
     gap: 8,
@@ -681,62 +645,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FAF5EE',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(223, 176, 89, 0.25)',
     borderRadius: 12,
-    padding: 10,
+    padding: 11,
   },
   calSystemItemActive: {
-    backgroundColor: '#FFF3E0',
-    borderColor: Colors.maroon,
+    backgroundColor: '#FFFDF6',
+    borderColor: '#2B0E14',
     borderWidth: 1.5,
   },
   calSystemTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
+    fontFamily: Fonts.jakartaSemiBold,
+    fontSize: 12.5,
+    color: '#2B0E14',
   },
   calSystemTitleActive: {
-    color: Colors.maroon,
+    fontFamily: Fonts.jakartaBold,
+    color: '#2B0E14',
   },
   calSystemDesc: {
-    fontSize: 10,
-    color: Colors.textSecondary,
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 10.5,
+    color: '#7D6A68',
     marginTop: 2,
+    lineHeight: 14,
   },
-  citySelectorBox: {
+  selectorBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FAF5EE',
-    padding: 10,
+    padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(223, 176, 89, 0.3)',
   },
-  cityLeft: {
+  selectorLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  cityPinIcon: {
-    fontSize: 20,
-    marginRight: 10,
+  selectorPrimaryText: {
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 13.5,
+    color: '#2B0E14',
   },
-  cityNameText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  citySubText: {
-    fontSize: 10,
-    color: Colors.textSecondary,
+  selectorSubText: {
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 11,
+    color: '#7D6A68',
     marginTop: 2,
   },
-  changeBtnText: {
+  changeActionBadge: {
+    backgroundColor: '#2B0E14',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  changeActionText: {
+    fontFamily: Fonts.jakartaBold,
     fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-    marginLeft: 8,
+    color: '#DFB059',
   },
   switchRow: {
     flexDirection: 'row',
@@ -745,73 +714,84 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: 'rgba(223, 176, 89, 0.15)',
   },
   switchTextContainer: {
     flex: 1,
     paddingRight: 10,
   },
   switchLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
+    fontFamily: Fonts.jakartaSemiBold,
+    fontSize: 12.5,
+    color: '#2B0E14',
   },
   switchSub: {
-    fontSize: 10,
-    color: Colors.textSecondary,
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 10.5,
+    color: '#7D6A68',
     marginTop: 2,
   },
   timingDaysRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 7,
     marginTop: 4,
   },
   dayPill: {
     backgroundColor: '#FAF5EE',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(223, 176, 89, 0.3)',
     borderRadius: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 11,
     paddingVertical: 6,
   },
   dayPillActive: {
-    backgroundColor: Colors.maroon,
-    borderColor: Colors.maroon,
+    backgroundColor: '#2B0E14',
+    borderColor: '#DFB059',
   },
   dayPillText: {
+    fontFamily: Fonts.jakartaSemiBold,
     fontSize: 11,
-    fontWeight: 'bold',
-    color: Colors.textSecondary,
+    color: '#7D6A68',
   },
   dayPillTextActive: {
-    color: '#FFD700',
+    fontFamily: Fonts.jakartaBold,
+    color: '#DFB059',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(27, 9, 13, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
   },
   modalCard: {
-    backgroundColor: Colors.creamBg,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '70%',
-    padding: 16,
+    backgroundColor: '#FAF7F0',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#DFB059',
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: 560,
+    overflow: 'hidden',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#2B0E14',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(223, 176, 89, 0.3)',
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 17,
+    color: '#F8F5EE',
   },
   closeBtn: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -821,114 +801,119 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: Colors.textSecondary,
-  },
-  cityItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  cityItemActive: {
-    backgroundColor: '#FAF5EE',
-  },
-  cityItemName: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textPrimary,
-  },
-  cityItemNameActive: {
-    color: Colors.maroon,
-  },
-  cityItemSub: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    marginTop: 2,
+    color: '#F8F5EE',
   },
   checkIcon: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.maroon,
-  },
-  profileBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAF5EE',
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  profileName: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.textPrimary
-  },
-  profileEmail: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2
-  },
-  profileDate: {
-    fontSize: 10,
-    color: '#888888',
-    marginTop: 2
-  },
-  changeProfileBtn: {
-    backgroundColor: Colors.maroon,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6
-  },
-  changeProfileText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: 'bold'
-  },
-  signInBtn: {
-    backgroundColor: Colors.maroon,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'
-  },
-  signInBtnText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 13
+    color: '#DFB059',
+    marginLeft: 8,
   },
   feedbackBtn: {
-    backgroundColor: '#FF6F00',
+    backgroundColor: '#2B0E14',
+    borderWidth: 1,
+    borderColor: '#DFB059',
     paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'
+    borderRadius: 12,
+    alignItems: 'center',
   },
   feedbackBtnText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 13
+    fontFamily: Fonts.jakartaBold,
+    color: '#DFB059',
+    fontSize: 12.5,
+    letterSpacing: 0.3,
   },
   policyBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#FAF5EE',
+    borderWidth: 1,
+    borderColor: 'rgba(223, 176, 89, 0.35)',
     paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'
+    borderRadius: 12,
+    alignItems: 'center',
   },
   policyBtnText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 13
+    fontFamily: Fonts.jakartaBold,
+    color: '#2B0E14',
+    fontSize: 12.5,
+  },
+  deleteCard: {
+    borderColor: 'rgba(220, 38, 38, 0.3)',
+    backgroundColor: '#FFF8F8',
+  },
+  deleteCardTitle: {
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 16.5,
+    color: '#B91C1C',
+    marginBottom: 4,
   },
   deleteBtn: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
     paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'
+    borderRadius: 12,
+    alignItems: 'center',
   },
   deleteBtnText: {
+    fontFamily: Fonts.jakartaBold,
+    color: '#DC2626',
+    fontSize: 12.5,
+  },
+  policyHeading: {
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 13.5,
+    color: '#2B0E14',
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  policyBody: {
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 11.5,
+    color: '#7D6A68',
+    marginBottom: 10,
+    lineHeight: 17,
+  },
+  deleteConfirmCard: {
+    padding: 20,
+    maxWidth: 360,
+  },
+  deleteConfirmTitle: {
+    fontFamily: Fonts.cormorantBold,
+    fontSize: 18,
+    color: '#B91C1C',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  deleteConfirmDesc: {
+    fontFamily: Fonts.jakartaRegular,
+    fontSize: 12,
+    color: '#4B5563',
+    textAlign: 'center',
+    lineHeight: 17,
+    marginBottom: 18,
+  },
+  cancelDeleteBtn: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 11,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  cancelDeleteBtnText: {
+    fontFamily: Fonts.jakartaBold,
+    color: '#374151',
+    fontSize: 13,
+  },
+  confirmDeleteBtn: {
+    flex: 1.2,
+    backgroundColor: '#DC2626',
+    paddingVertical: 11,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  confirmDeleteBtnText: {
+    fontFamily: Fonts.jakartaBold,
     color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 13
-  }
+    fontSize: 12.5,
+  },
 });

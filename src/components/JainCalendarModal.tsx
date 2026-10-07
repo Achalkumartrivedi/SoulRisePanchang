@@ -2039,9 +2039,9 @@ export const JainCalendarModal: React.FC<JainCalendarModalProps> = ({
                   </TouchableOpacity>
                 </View>
 
-                {/* Quick Year Chips */}
-                <View style={styles.yearChipRow}>
-                  {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                {/* Quick Year Chips (Scrollable 1950 - 2050) */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yearChipScrollRow}>
+                  {Array.from({ length: 101 }, (_, i) => 1950 + i).map(y => (
                     <TouchableOpacity
                       key={`yr_${y}`}
                       style={[styles.yearChip, tempYear === y && styles.yearChipActive]}
@@ -2050,7 +2050,7 @@ export const JainCalendarModal: React.FC<JainCalendarModalProps> = ({
                       <Text style={[styles.yearChipText, tempYear === y && styles.yearChipTextActive]}>{y}</Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
 
                 {/* Month Selector Grid */}
                 <Text style={styles.pickerSectionLabel}>
@@ -3159,6 +3159,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+    marginBottom: 8
+  },
+  yearChipScrollRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 4,
     marginBottom: 8
   },
   yearChip: {

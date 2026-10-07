@@ -1,10 +1,53 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, StatusBar, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import Svg, { Path, Circle, Rect, Ellipse } from 'react-native-svg';
 import { Colors } from '../theme/colors';
+import { Fonts } from '../constants/typography';
 import { CityLocation, SamvatInfo } from '../types/panchang';
 import { useLanguage } from '../context/LanguageContext';
 import { SUPPORTED_LANGUAGES } from '../types/language';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DatePickerModal } from './DatePickerModal';
+import { ReminderBellModal } from './ReminderBellModal';
+import { ProfileModal } from './ProfileModal';
+import { getLocalizedDateTitle } from '../i18n/kaalMuhuratI18n';
+
+const LocationPinIcon = () => (
+  <Svg width={11} height={13} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+      fill="#D32F2F"
+    />
+    <Circle cx="12" cy="9" r="2.8" fill="#FFFFFF" />
+  </Svg>
+);
+
+const GlobeIcon = () => (
+  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9.5" stroke="#0288D1" strokeWidth="1.8" />
+    <Path
+      d="M3 12h18M3.6 8h16.8M3.6 16h16.8"
+      stroke="#0288D1"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <Ellipse cx="12" cy="12" rx="4.8" ry="9.5" stroke="#0288D1" strokeWidth="1.6" />
+  </Svg>
+);
+
+const DateCalendarIcon = () => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="4" width="18" height="17" rx="3.5" fill="#FFFFFF" stroke="#2B0E14" strokeWidth="1.6" />
+    <Path d="M3 4c0-1.1.9-2 2-2h14a2 2 0 0 1 2 2v5H3V4z" fill="#2B0E14" />
+    <Path d="M8 1.5v3M16 1.5v3" stroke="#DFB059" strokeWidth="2" strokeLinecap="round" />
+    <Circle cx="8" cy="13" r="1.1" fill="#7D6A68" />
+    <Circle cx="12" cy="13" r="1.1" fill="#7D6A68" />
+    <Circle cx="16" cy="13" r="1.1" fill="#7D6A68" />
+    <Circle cx="8" cy="17" r="1.1" fill="#7D6A68" />
+    <Circle cx="12" cy="17" r="1.1" fill="#DFB059" />
+    <Circle cx="16" cy="17" r="1.1" fill="#7D6A68" />
+  </Svg>
+);
 
 interface HeaderProps {
   currentDateIso: string;
@@ -16,12 +59,8 @@ interface HeaderProps {
   onNextDay: () => void;
   onToday: () => void;
   onSelectDateIso?: (dateIso: string) => void;
+  onNavigateToReminders?: () => void;
 }
-
-const MONTH_NAMES_ENG = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
 
 export const Header: React.FC<HeaderProps> = ({
   currentDateIso,
@@ -32,7 +71,8 @@ export const Header: React.FC<HeaderProps> = ({
   onPrevDay,
   onNextDay,
   onToday,
-  onSelectDateIso
+  onSelectDateIso,
+  onNavigateToReminders
 }) => {
   const { language, t } = useLanguage();
   const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === language) || SUPPORTED_LANGUAGES[0];
@@ -43,12 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
   const currDay = parseInt(parts[2], 10) || 11;
 
   const dateObj = new Date(currYear, currMonth, currDay);
-  const formattedDateStr = dateObj.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  const formattedDateStr = getLocalizedDateTitle(dateObj, language, true);
 
   const todayIso = (() => {
     const d = new Date();
@@ -60,34 +95,17 @@ export const Header: React.FC<HeaderProps> = ({
 
   const isTodayActive = currentDateIso === todayIso;
 
-  // Date/Month/Year Modal State
+  // Modal Visibility States
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [tempYear, setTempYear] = useState(currYear);
-  const [tempMonth, setTempMonth] = useState(currMonth);
-  const [tempDay, setTempDay] = useState(currDay);
+  const [bellModalVisible, setBellModalVisible] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   const openPicker = () => {
-    setTempYear(currYear);
-    setTempMonth(currMonth);
-    setTempDay(currDay);
     setPickerVisible(true);
   };
-
-  const applyPickerSelection = (d: number, m: number, y: number) => {
-    const daysInM = new Date(y, m + 1, 0).getDate();
-    const validDay = Math.min(d, daysInM);
-    const mStr = String(m + 1).padStart(2, '0');
-    const dStr = String(validDay).padStart(2, '0');
-    const targetIso = `${y}-${mStr}-${dStr}`;
-    setPickerVisible(false);
-    if (onSelectDateIso) {
-      onSelectDateIso(targetIso);
-    }
-  };
-
-  const daysInTempMonth = new Date(tempYear, tempMonth + 1, 0).getDate();
   const insets = useSafeAreaInsets();
-  const topPadding = Math.max(insets.top + 8, (StatusBar.currentHeight || 24) + 12);
+  // Avoid double status bar inset since SafeAreaView in AppNavigator already provides top inset
+  const topPadding = 6;
 
   return (
     <View style={[styles.container, { paddingTop: topPadding }]}>
@@ -95,46 +113,74 @@ export const Header: React.FC<HeaderProps> = ({
       <View style={styles.brandCrestHeader}>
         <View style={styles.brandCrestLeft}>
           <View style={styles.emblemWrapper}>
-            <Image
-              source={require('../assets/surya_emblem.png')}
-              style={styles.emblemImage}
-              resizeMode="contain"
-            />
+            <Svg width={25} height={25} viewBox="0 0 24 24" fill="#FFD700">
+              <Path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
+            </Svg>
           </View>
           <View style={styles.brandTypographyCol}>
-            <Text style={styles.brandTitleSoulRise}>SoulRise Panchang</Text>
-            <Text style={styles.brandSacredSubtitle}>SACRED SOLAR-LUNAR ALMANAC</Text>
+            <Text style={styles.brandTitleSoulRise} numberOfLines={1} ellipsizeMode="tail">
+              SoulRise Panchang
+            </Text>
+            <Text style={styles.brandSacredSubtitle} numberOfLines={1}>
+              SACRED SOLAR-LUNAR ALMANAC
+            </Text>
           </View>
         </View>
 
         <View style={styles.headerTopRightIcons}>
           {/* Notification Bell with Amber Dot */}
-          <TouchableOpacity style={styles.iconCircleBtn} activeOpacity={0.75}>
-            <Text style={styles.iconBellText}>🔔</Text>
+          <TouchableOpacity
+            style={styles.iconCircleBtn}
+            onPress={() => setBellModalVisible(true)}
+            activeOpacity={0.75}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#2B0E14" strokeWidth="1.8">
+              <Path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
             <View style={styles.notificationDot} />
           </TouchableOpacity>
 
           {/* Profile Avatar */}
-          <TouchableOpacity style={styles.avatarCircle} activeOpacity={0.75}>
-            <Text style={styles.avatarText}>👤</Text>
+          <TouchableOpacity
+            style={styles.avatarCircle}
+            onPress={() => setProfileModalVisible(true)}
+            activeOpacity={0.75}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#2B0E14" strokeWidth="1.8">
+              <Path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* 2. Location & Flow Bar */}
       <View style={styles.flowAndControlsRow}>
-        <Text style={styles.flowText}>Prashanta Muhurta Flow</Text>
+        <Text style={styles.flowText} numberOfLines={1}>
+          {language === 'hi' ? 'प्रशांत मुहूर्त प्रवाह' : 'Prashanta Muhurta Flow'}
+        </Text>
         <View style={styles.utilityRightAlignedGroup}>
           {/* Location Chip */}
-          <TouchableOpacity style={styles.topActionChip} onPress={onOpenCityPicker} activeOpacity={0.75}>
-            <Text style={styles.topActionChipIcon}>📍</Text>
+          <TouchableOpacity
+            style={styles.topActionChip}
+            onPress={onOpenCityPicker}
+            activeOpacity={0.75}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          >
+            <LocationPinIcon />
             <Text style={styles.topActionChipText} numberOfLines={1}>{selectedCity.name}</Text>
             <Text style={styles.topActionChipArrow}>▼</Text>
           </TouchableOpacity>
 
           {/* Language Chip */}
-          <TouchableOpacity style={styles.topActionChip} onPress={onOpenLanguagePicker} activeOpacity={0.75}>
-            <Text style={styles.topActionChipIcon}>🌐</Text>
+          <TouchableOpacity
+            style={styles.topActionChip}
+            onPress={onOpenLanguagePicker}
+            activeOpacity={0.75}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          >
+            <GlobeIcon />
             <Text style={styles.topActionChipText}>{currentLangObj.code.toUpperCase()}</Text>
             <Text style={styles.topActionChipArrow}>▼</Text>
           </TouchableOpacity>
@@ -143,119 +189,75 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* 3. Date Switcher Navigation Capsule */}
       <View style={styles.dateCapsuleContainer}>
-        <TouchableOpacity style={styles.navArrowBtn} onPress={onPrevDay} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.navArrowBtn}
+          onPress={onPrevDay}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={styles.navArrowText}>‹</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.dateCenterBtn} onPress={openPicker} activeOpacity={0.8}>
-          <Text style={styles.calendarIcon}>📅</Text>
-          <Text style={styles.datePillText}>{formattedDateStr}</Text>
-          <Text style={styles.dateChevron}>▼</Text>
-          {isTodayActive ? (
-            <View style={styles.todayActiveBadge}>
-              <Text style={styles.todayActiveBadgeText}>TODAY</Text>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.todayInactiveBadge} onPress={onToday} activeOpacity={0.75}>
-              <Text style={styles.todayInactiveBadgeText}>TODAY</Text>
-            </TouchableOpacity>
-          )}
-        </TouchableOpacity>
+        <View style={styles.dateCenterWrapper}>
+          <TouchableOpacity
+            style={styles.dateCenterBtn}
+            onPress={openPicker}
+            activeOpacity={0.8}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+          >
+            <DateCalendarIcon />
+            <Text style={styles.datePillText}>{formattedDateStr}</Text>
+            <Text style={styles.dateChevron}>▼</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navArrowBtn} onPress={onNextDay} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.todayPillBtn, isTodayActive && styles.todayPillBtnActive]}
+            onPress={onToday}
+            activeOpacity={0.75}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          >
+            <Text style={styles.todayPillBtnText}>
+              {language === 'hi' ? 'आज' : language === 'gu' ? 'આજે' : language === 'mr' ? 'आज' : 'TODAY'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.navArrowBtn}
+          onPress={onNextDay}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={styles.navArrowText}>›</Text>
         </TouchableOpacity>
       </View>
 
 
-      {/* Full Date, Month & Year Selector Modal */}
-      <Modal visible={pickerVisible} transparent animationType="fade" onRequestClose={() => setPickerVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>📅 Select Date, Month & Year</Text>
-              <TouchableOpacity onPress={() => setPickerVisible(false)}>
-                <Text style={styles.modalCloseIcon}>✕</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Sacred Monthly Calendar Grid Date Picker Modal */}
+      <DatePickerModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        selectedDateIso={currentDateIso}
+        onSelectDateIso={(iso) => {
+          if (onSelectDateIso) {
+            onSelectDateIso(iso);
+          }
+        }}
+        onToday={onToday}
+      />
 
-            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
-              {/* Year Stepper Bar */}
-              <Text style={styles.sectionLabel}>1. Select Year ({tempYear})</Text>
-              <View style={styles.yearStepperRow}>
-                <TouchableOpacity style={styles.stepperBtn} onPress={() => setTempYear(y => y - 5)}>
-                  <Text style={styles.stepperText}>-5</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.stepperBtn} onPress={() => setTempYear(y => y - 1)}>
-                  <Text style={styles.stepperText}>-1</Text>
-                </TouchableOpacity>
-                <View style={styles.yearBox}>
-                  <Text style={styles.yearBoxText}>{tempYear}</Text>
-                </View>
-                <TouchableOpacity style={styles.stepperBtn} onPress={() => setTempYear(y => y + 1)}>
-                  <Text style={styles.stepperText}>+1</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.stepperBtn} onPress={() => setTempYear(y => y + 5)}>
-                  <Text style={styles.stepperText}>+5</Text>
-                </TouchableOpacity>
-              </View>
+      {/* Reminder Bell & Alarms Modal */}
+      <ReminderBellModal
+        visible={bellModalVisible}
+        onClose={() => setBellModalVisible(false)}
+        onNavigateToReminders={onNavigateToReminders}
+      />
 
-              {/* Quick Year Chips */}
-              <View style={styles.yearChipRow}>
-                {[2024, 2025, 2026, 2027, 2028, 2029, 2030].map(y => (
-                  <TouchableOpacity
-                    key={y}
-                    style={[styles.yearChip, tempYear === y && styles.yearChipActive]}
-                    onPress={() => setTempYear(y)}
-                  >
-                    <Text style={[styles.yearChipText, tempYear === y && styles.yearChipTextActive]}>{y}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Month Grid */}
-              <Text style={styles.sectionLabel}>2. Select Month ({MONTH_NAMES_ENG[tempMonth]})</Text>
-              <View style={styles.monthGrid}>
-                {MONTH_NAMES_ENG.map((mName, idx) => (
-                  <TouchableOpacity
-                    key={mName}
-                    style={[styles.monthTile, tempMonth === idx && styles.monthTileActive]}
-                    onPress={() => setTempMonth(idx)}
-                  >
-                    <Text style={[styles.monthTileText, tempMonth === idx && styles.monthTileTextActive]}>
-                      {mName.substring(0, 3)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Day Grid */}
-              <Text style={styles.sectionLabel}>3. Select Day ({tempDay})</Text>
-              <View style={styles.dayGrid}>
-                {Array.from({ length: daysInTempMonth }, (_, i) => i + 1).map(d => (
-                  <TouchableOpacity
-                    key={d}
-                    style={[styles.dayTile, tempDay === d && styles.dayTileActive]}
-                    onPress={() => setTempDay(d)}
-                  >
-                    <Text style={[styles.dayTileText, tempDay === d && styles.dayTileTextActive]}>{d}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-
-            {/* Modal Actions */}
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity style={styles.resetBtn} onPress={() => { onToday(); setPickerVisible(false); }}>
-                <Text style={styles.resetBtnText}>🔄 Reset to Today</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyBtn} onPress={() => applyPickerSelection(tempDay, tempMonth, tempYear)}>
-                <Text style={styles.applyBtnText}>✓ Apply Date</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Customer Profile & Account Modal */}
+      <ProfileModal
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </View>
   );
 };
@@ -276,15 +278,16 @@ const styles = StyleSheet.create({
   brandCrestLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     flex: 1,
+    marginRight: 8,
   },
   emblemWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#2B0E14',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#DFB059',
     justifyContent: 'center',
     alignItems: 'center',
@@ -292,43 +295,43 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3,
+    elevation: 2,
   },
   emblemImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   brandTypographyCol: {
     justifyContent: 'center',
+    flex: 1,
   },
   brandTitleSoulRise: {
-    fontFamily: 'serif',
+    fontFamily: Fonts.cormorantBold,
     fontSize: 22,
-    fontWeight: '700',
     color: '#2B0E14',
-    letterSpacing: 0.2,
-    lineHeight: 26,
+    letterSpacing: 0.5,
+    lineHeight: 25,
   },
   brandSacredSubtitle: {
-    fontSize: 9.5,
-    fontWeight: '600',
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 8,
     color: '#7D6A68',
-    letterSpacing: 1.6,
+    letterSpacing: 1.2,
     marginTop: 1,
     textTransform: 'uppercase',
   },
   headerTopRightIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   iconCircleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
     borderColor: '#EADBCE',
     alignItems: 'center',
@@ -337,26 +340,26 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
+    shadowRadius: 2,
     elevation: 2,
   },
   iconBellText: {
-    fontSize: 17,
+    fontSize: 16,
   },
   notificationDot: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 6,
+    right: 6,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: '#F59E0B',
   },
   avatarCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
     borderColor: '#EADBCE',
     alignItems: 'center',
@@ -364,57 +367,56 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
+    shadowRadius: 2,
     elevation: 2,
   },
   avatarText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#2B0E14',
   },
   flowAndControlsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
-    marginBottom: 6,
+    paddingVertical: 3,
+    marginBottom: 4,
   },
   flowText: {
-    fontFamily: 'serif',
-    fontStyle: 'italic',
+    fontFamily: Fonts.cormorantMediumItalic,
     fontSize: 12.5,
-    fontWeight: '500',
     color: '#7D6A68',
     letterSpacing: 0.3,
+    flex: 1,
   },
   utilityRightAlignedGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   topActionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
-    paddingHorizontal: 11,
-    paddingVertical: 5,
+    gap: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#EADBCE',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   topActionChipIcon: {
-    fontSize: 12,
+    fontSize: 11,
   },
   topActionChipText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: Fonts.jakartaSemiBold,
+    fontSize: 11,
     color: '#2B0E14',
-    maxWidth: 90,
+    maxWidth: 80,
   },
   topActionChipArrow: {
     fontSize: 8,
@@ -425,12 +427,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#EADBCE',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -447,6 +449,11 @@ const styles = StyleSheet.create({
     color: 'rgba(43, 14, 20, 0.8)',
     lineHeight: 20,
   },
+  dateCenterWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   dateCenterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -456,9 +463,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   datePillText: {
-    fontFamily: 'serif',
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 13,
     color: '#2B0E14',
     letterSpacing: 0.2,
   },
@@ -466,212 +472,25 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: 'rgba(43, 14, 20, 0.6)',
   },
-  todayActiveBadge: {
-    backgroundColor: '#F0B829',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    marginLeft: 4,
-  },
-  todayActiveBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#2B0E14',
-    letterSpacing: 0.5,
-  },
-  todayInactiveBadge: {
-    backgroundColor: '#F0B829',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    marginLeft: 4,
-  },
-  todayInactiveBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#2B0E14',
-    letterSpacing: 0.5,
-  },
-
-
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  modalContainer: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    elevation: 10,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-    paddingBottom: 10,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.maroon,
-  },
-  modalCloseIcon: {
-    fontSize: 18,
-    color: '#888888',
-    fontWeight: 'bold',
-    padding: 4,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#666666',
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  yearStepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  stepperBtn: {
-    backgroundColor: '#F5F5F5',
+  todayPillBtn: {
+    backgroundColor: '#DFB059',
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 4.5,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  stepperText: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: Colors.maroon,
+  todayPillBtnActive: {
+    backgroundColor: '#D9A443',
   },
-  yearBox: {
-    backgroundColor: Colors.maroon,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  yearBoxText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.accentGold,
-  },
-  yearChipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
-  yearChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: '#F0F0F0',
-  },
-  yearChipActive: {
-    backgroundColor: Colors.maroon,
-  },
-  yearChipText: {
-    fontSize: 12,
-    color: '#333333',
-    fontWeight: '600',
-  },
-  yearChipTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  monthGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
-  monthTile: {
-    width: '23%',
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 10,
-    backgroundColor: '#F5F5F5',
-  },
-  monthTileActive: {
-    backgroundColor: Colors.maroon,
-  },
-  monthTileText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  monthTileTextActive: {
-    color: Colors.accentGold,
-    fontWeight: 'bold',
-  },
-  dayGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 10,
-  },
-  dayTile: {
-    width: '12%',
-    paddingVertical: 6,
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: '#EEEEEE',
-  },
-  dayTileActive: {
-    backgroundColor: Colors.maroon,
-    borderColor: Colors.maroon,
-  },
-  dayTileText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#333333',
-  },
-  dayTileTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  modalActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-    gap: 10,
-  },
-  resetBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  resetBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#555555',
-  },
-  applyBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    backgroundColor: Colors.maroon,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  applyBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: Colors.accentGold,
+  todayPillBtnText: {
+    fontFamily: Fonts.jakartaBold,
+    fontSize: 10,
+    color: '#2B0E14',
+    letterSpacing: 0.8,
   },
 });
+

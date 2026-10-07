@@ -12,20 +12,26 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  language: 'hinglish',
+  language: 'en',
   setLanguage: async () => {},
-  t: (key) => TRANSLATIONS.hinglish[key] || String(key),
+  t: (key) => TRANSLATIONS.en[key] || String(key),
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<LanguageCode>('hinglish');
+  const [language, setLanguageState] = useState<LanguageCode>('en');
 
   useEffect(() => {
     const loadSavedLanguage = async () => {
       try {
-        const saved = await AsyncStorage.getItem(STORAGE_KEY);
+        let saved = await AsyncStorage.getItem(STORAGE_KEY);
+        if (saved === 'hinglish') {
+          saved = 'en';
+          await AsyncStorage.setItem(STORAGE_KEY, 'en');
+        }
         if (saved && (saved in TRANSLATIONS)) {
           setLanguageState(saved as LanguageCode);
+        } else {
+          setLanguageState('en');
         }
       } catch (e) {
         console.warn('Failed to load language setting from AsyncStorage', e);
@@ -44,8 +50,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const t = (key: keyof TranslationKeys): string => {
-    const currentDict = TRANSLATIONS[language] || TRANSLATIONS.hinglish;
-    return currentDict[key] || TRANSLATIONS.hinglish[key] || String(key);
+    const currentDict = TRANSLATIONS[language] || TRANSLATIONS.en;
+    return currentDict[key] || TRANSLATIONS.en[key] || String(key);
   };
 
   return (

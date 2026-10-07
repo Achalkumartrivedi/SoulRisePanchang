@@ -15,7 +15,7 @@ export const PanchangLimbCard: React.FC<PanchangLimbCardProps> = ({ panchang }) 
   const [tithiModalVisible, setTithiModalVisible] = useState(false);
   const { tithi, nakshatra, yoga, karana, vaara } = panchang;
 
-  const locTithi = getLocalizedTithi(tithi.number || 13, language);
+  const locTithi = getLocalizedTithi(tithi.number || 13, language, tithi.paksha);
   const locPaksha = getLocalizedPakshaName(tithi.paksha === 'KRISHNA' ? 'KRISHNA' : 'SHUKLA', language);
 
   const isHindi = language === 'hi';

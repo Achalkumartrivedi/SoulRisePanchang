@@ -8,6 +8,22 @@ import { SavedKundaliProfile } from '../utils/profileStorage';
 
 export const FIREBASE_PROJECT_ID = 'soulrise-panchang';
 
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 3500): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    return response;
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+}
+
 /**
  * Pushes a user login/registration event to your Firebase Firestore cloud database in real-time.
  * Every customer Guest & Google login is recorded under the `/users/{userEmail}` collection.
@@ -34,7 +50,7 @@ export async function syncUserToFirebaseCloud(profile: UserProfile): Promise<boo
       }
     };
 
-    const response = await fetch(firestoreUrl, {
+    const response = await fetchWithTimeout(firestoreUrl, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -72,7 +88,7 @@ export async function syncKundliProfilesToCloud(userEmail: string, profiles: Sav
       }
     };
 
-    const response = await fetch(firestoreUrl, {
+    const response = await fetchWithTimeout(firestoreUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bodyData)
@@ -99,7 +115,7 @@ export async function fetchKundliProfilesFromCloud(userEmail: string): Promise<S
     const docId = encodeURIComponent(userEmail.trim().toLowerCase());
     const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${docId}`;
 
-    const response = await fetch(firestoreUrl);
+    const response = await fetchWithTimeout(firestoreUrl);
     if (response.ok) {
       const data = await response.json();
       const jsonStr = data?.fields?.kundliProfilesJson?.stringValue;

@@ -21,8 +21,12 @@ import { calculateBirthKundali } from '../engine/kundaliEngine';
 import { BirthChartModal } from '../components/BirthChartModal';
 import { AddNewProfileModal } from '../components/AddNewProfileModal';
 import { DEFAULT_CITIES } from '../data/cities';
+import { getUserProfile, subscribeToAuthState } from '../engine/userDatabase';
 
-const PREF_KEY = '@soulrise_user_horoscope_pref_v1';
+const getPrefKey = (userKey?: string | null) =>
+  userKey
+    ? `@soulrise_user_horoscope_pref_v1_user_${userKey.toLowerCase().replace(/[^a-z0-9_.-]/g, '_')}`
+    : '@soulrise_user_horoscope_pref_v1_guest';
 
 export const RashiphalScreen: React.FC = () => {
   const { t } = useLanguage();
@@ -69,38 +73,54 @@ export const RashiphalScreen: React.FC = () => {
     }
   };
 
-  // Load Saved Profiles & User Preferences on Mount
+  // Load Saved Profiles & User Preferences on Mount and reactive to Auth changes
   useEffect(() => {
-    (async () => {
+    const loadHoroscopeData = async () => {
       try {
+        const currentUser = await getUserProfile();
+        const userKey = currentUser?.email || currentUser?.id || null;
+        const currentPrefKey = getPrefKey(userKey);
+
         const profiles = await getSavedProfiles();
         setSavedProfiles(profiles);
 
-        const storedPrefJson = await AsyncStorage.getItem(PREF_KEY);
+        const storedPrefJson = await AsyncStorage.getItem(currentPrefKey);
         if (storedPrefJson) {
           const pref = JSON.parse(storedPrefJson);
           if (pref.moonRashiId) setUserMoonRashiId(pref.moonRashiId);
           if (pref.sunRashiId) setUserSunRashiId(pref.sunRashiId);
           if (pref.isSet !== undefined) setIsSignSet(pref.isSet);
+        } else {
+          setIsSignSet(false);
         }
 
         // Load persistent active profile if present
         const activeP = await getActiveProfile();
         if (activeP) {
-          loadProfileHoroscope(activeP);
+          loadProfileHoroscope(activeP, currentPrefKey);
         } else if (profiles.length > 0) {
-          loadProfileHoroscope(profiles[0]);
+          loadProfileHoroscope(profiles[0], currentPrefKey);
+        } else {
+          setActiveProfile(null);
         }
       } catch (e) {
         console.log('Error loading horoscope preferences:', e);
       }
-    })();
+    };
+
+    loadHoroscopeData();
+
+    const unsub = subscribeToAuthState(() => {
+      loadHoroscopeData();
+    });
+
+    return () => unsub();
   }, []);
 
-  const loadProfileHoroscope = (profile: SavedKundaliProfile) => {
+  const loadProfileHoroscope = async (profile: SavedKundaliProfile, prefKeyParam?: string) => {
     try {
       setActiveProfile(profile);
-      setActiveProfileId(profile.id);
+      await setActiveProfileId(profile.id);
       const dobDate = new Date(
         parseInt(profile.dobYear, 10),
         parseInt(profile.dobMonth, 10) - 1,
@@ -129,8 +149,14 @@ export const RashiphalScreen: React.FC = () => {
       setUserSunRashiId(sRashiObj.id);
       setIsSignSet(true);
 
-      AsyncStorage.setItem(
-        PREF_KEY,
+      let key = prefKeyParam;
+      if (!key) {
+        const currentUser = await getUserProfile();
+        key = getPrefKey(currentUser?.email || currentUser?.id || null);
+      }
+
+      await AsyncStorage.setItem(
+        key,
         JSON.stringify({ moonRashiId: mRashiObj.id, sunRashiId: sRashiObj.id, isSet: true })
       );
     } catch (err) {
@@ -144,8 +170,11 @@ export const RashiphalScreen: React.FC = () => {
     setIsSignSet(true);
     setShowManualSignModal(false);
 
+    const currentUser = await getUserProfile();
+    const currentPrefKey = getPrefKey(currentUser?.email || currentUser?.id || null);
+
     await AsyncStorage.setItem(
-      PREF_KEY,
+      currentPrefKey,
       JSON.stringify({ moonRashiId: moonId, sunRashiId: sunId, isSet: true })
     );
   };
@@ -497,7 +526,7 @@ export const RashiphalScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.creamBg,
+    backgroundColor: 'transparent',
   },
   header: {
     backgroundColor: Colors.maroon,

@@ -7,9 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/surya_emblem.png",
       "resizeMode": "contain",
-      "backgroundColor": "#800000"
+      "backgroundColor": "#F8F5EE"
     },
     "ios": {
       "supportsTablet": true,

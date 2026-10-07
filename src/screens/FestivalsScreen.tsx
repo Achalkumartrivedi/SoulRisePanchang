@@ -234,7 +234,7 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
             onPress={() => setSelectedCategory('ALL')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterText, selectedCategory === 'ALL' && styles.filterTextActive]}>All (सभी)</Text>
+            <Text style={[styles.filterText, selectedCategory === 'ALL' && styles.filterTextActive]}>All</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -473,7 +473,7 @@ export const FestivalsScreen: React.FC<FestivalsScreenProps> = ({ onSelectFestiv
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.creamBg,
+    backgroundColor: 'transparent',
   },
   header: {
     backgroundColor: Colors.maroon,

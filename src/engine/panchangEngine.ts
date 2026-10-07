@@ -7,7 +7,7 @@ const TITHI_NAMES: [string, string][] = [
   ['Chaturthi', 'चतुर्थी'], ['Panchami', 'पंचमी'], ['Shasthi', 'षष्ठी'],
   ['Saptami', 'सप्तमी'], ['Ashtami', 'अष्टमी'], ['Navami', 'नवमी'],
   ['Dashami', 'दशमी'], ['Ekadashi', 'एकादशी'], ['Dwadashi', 'द्वादशी'],
-  ['Trayodashi', 'त्रयोदशी'], ['Chaturdashi', 'चतुर्दशी'], ['Purnima / Amavasya', 'पूर्णिमा / अमावस्या']
+  ['Trayodashi', 'त्रयोदशी'], ['Chaturdashi', 'चतुर्दशी'], ['Purnima', 'पूर्णिमा']
 ];
 
 export const getJulianDay = (d: Date): number => {
@@ -523,19 +523,21 @@ export function calculatePanchang(
   const safeMonthIndex = isNaN(effectiveMonthIndex) ? 0 : (((Math.floor(effectiveMonthIndex) % 12) + 12) % 12);
   const monthPair = HINDU_MONTHS[safeMonthIndex] || HINDU_MONTHS[0];
 
-  const rituPair = (safeMonthIndex === 0 || safeMonthIndex === 1) ? ['Vasanta (Spring)', 'वसन्त'] :
-    (safeMonthIndex === 2 || safeMonthIndex === 3) ? ['Grishma (Summer)', 'ग्रीष्म'] :
-    (safeMonthIndex === 4 || safeMonthIndex === 5) ? ['Varsha (Monsoon)', 'वर्षा'] :
-    (safeMonthIndex === 6 || safeMonthIndex === 7) ? ['Sharad (Autumn)', 'शरद'] :
-    (safeMonthIndex === 8 || safeMonthIndex === 9) ? ['Hemanta (Pre-Winter)', 'हेमन्त'] : ['Shishira (Winter)', 'शिशिर'];
+  const rituPair = (safeMonthIndex === 0 || safeMonthIndex === 1) ? ['Vasanta', 'वसन्त'] :
+    (safeMonthIndex === 2 || safeMonthIndex === 3) ? ['Grishma', 'ग्रीष्म'] :
+    (safeMonthIndex === 4 || safeMonthIndex === 5) ? ['Varsha', 'वर्षा'] :
+    (safeMonthIndex === 6 || safeMonthIndex === 7) ? ['Sharad', 'शरद'] :
+    (safeMonthIndex === 8 || safeMonthIndex === 9) ? ['Hemanta', 'हेमन्त'] : ['Shishira', 'शिशिर'];
 
   const ayanaPair = (sunSignIndex >= 9 || sunSignIndex <= 2) ? ['Uttarayana', 'उत्तरायण'] : ['Dakshinayana', 'दक्षिणायन'];
 
   const samvatInfo = {
     vikramSamvat: vikramYear,
-    vikramName: 'Krodhi (क्रोधिन)',
+    vikramName: 'Krodhi',
+    vikramNameHindi: 'क्रोधी',
     shakaSamvat: shakaYear,
-    shakaName: 'Krodhana (क्रोधन)',
+    shakaName: 'Krodhana',
+    shakaNameHindi: 'क्रोधन',
     monthName: monthPair[0],
     monthNameHindi: monthPair[1],
     ritu: rituPair[0],

@@ -232,20 +232,36 @@ export const TITHI_MAP: Record<number, Record<LanguageCode, TithiTranslation>> =
     th: { name: 'จตุรทศี', desc: '14 ค่ำ' },
   },
   15: {
-    hinglish: { name: 'Purnima / Amavasya', desc: '15th Lunar Day' },
-    hi: { name: 'पूर्णिमा / अमावस्या', desc: '15वीं तिथि' },
-    gu: { name: 'પૂનમ / અમાસ', desc: '૧૫મી તિથિ' },
-    en: { name: 'Purnima / Amavasya', desc: '15th Lunar Day' },
-    es: { name: 'Purnima / Amavasya', desc: '15.º Día Lunar' },
-    fr: { name: 'Purnima / Amavasya', desc: '15ème Jour Lunaire' },
-    ru: { name: 'Пурнима / Амавасья', desc: '15-й Лунный день' },
-    ta: { name: 'பௌர்ணமி / અમાવાસાઈ', desc: '15ஆம் திதி' },
-    te: { name: 'పౌర్ణమి / అమావాస్య', desc: '15వ తిథి' },
-    bn: { name: 'पूर्णिमा / অমাবস্যা', desc: '১৫শ তিথি' },
-    mr: { name: 'पौर्णिमा / अमावस्या', desc: '१५वी तिथी' },
-    he: { name: 'פורנימה / אמבסיה', desc: 'יום ירחי 15' },
-    id: { name: 'Purnima / Amavasya', desc: 'Hari Lunar ke-15' },
-    th: { name: 'ปูรณิมา / อมาวสยา', desc: '15 ค่ำ' },
+    hinglish: { name: 'Purnima', desc: 'Full Moon Day' },
+    hi: { name: 'पूर्णिमा', desc: 'पूर्ण चंद्र तिथि' },
+    gu: { name: 'પૂનમ', desc: 'પૂર્ણ ચંદ્ર તિથિ' },
+    en: { name: 'Purnima', desc: 'Full Moon Day' },
+    es: { name: 'Purnima', desc: 'Luna Llena' },
+    fr: { name: 'Purnima', desc: 'Pleine Lune' },
+    ru: { name: 'Пурнима', desc: 'Полнолуние' },
+    ta: { name: 'பௌர்ணமி', desc: 'முழு நிலவு திதி' },
+    te: { name: 'పౌర్ణమి', desc: 'పూర్ణిమ తిథి' },
+    bn: { name: 'পূর্ণিমা', desc: 'পূর্ণিমা তিথি' },
+    mr: { name: 'पौर्णिमा', desc: 'पूर्ण चंद्र तिथी' },
+    he: { name: 'פורנימה', desc: 'ירח מלא' },
+    id: { name: 'Purnima', desc: 'Bulan Purnama' },
+    th: { name: 'ปูรณิมา', desc: 'วันเพ็ญ (จันทร์เต็มดวง)' },
+  },
+  30: {
+    hinglish: { name: 'Amavasya', desc: 'New Moon Day' },
+    hi: { name: 'अमावस्या', desc: 'नव चंद्र तिथि' },
+    gu: { name: 'અમાસ', desc: 'નવા ચંદ્ર તિથિ' },
+    en: { name: 'Amavasya', desc: 'New Moon Day' },
+    es: { name: 'Amavasya', desc: 'Luna Nueva' },
+    fr: { name: 'Amavasya', desc: 'Nouvelle Lune' },
+    ru: { name: 'Амавасья', desc: 'Новолуние' },
+    ta: { name: 'அமாவாசை', desc: 'அமாவாசை திதி' },
+    te: { name: 'అమావాస్య', desc: 'అమావాస్య తిథి' },
+    bn: { name: 'অমাবস্যা', desc: 'অমাবস্যা তিথি' },
+    mr: { name: 'अमावस्या', desc: 'दर्श तिथी' },
+    he: { name: 'אמבסיה', desc: 'ירח חדש' },
+    id: { name: 'Amavasya', desc: 'Bulan Baru' },
+    th: { name: 'อมาวสยา', desc: 'วันดับ (จันทร์ดับ)' },
   }
 };
 
@@ -368,46 +384,162 @@ export const VAARA_MAP: Record<number, Record<LanguageCode, string>> = {
 // 2 Lunar Pakshas translated across 14 languages
 export const PAKSHA_MAP: Record<string, Record<LanguageCode, string>> = {
   Shukla: {
-    hinglish: 'Shukla Paksha (Waxing Moon)',
+    hinglish: 'Shukla Paksha',
     hi: 'शुक्ल पक्ष',
-    gu: 'શુક્લ પક્ષ (સુદ)',
-    en: 'Shukla Paksha (Waxing Moon)',
-    es: 'Shukla Paksha (Luna Creciente)',
-    fr: 'Shukla Paksha (Lune Croissante)',
-    ru: 'Шукла Пакша (Растущая Луна)',
-    ta: 'சுக்ல പക്ഷம்',
+    gu: 'શુક્લ પક્ષ',
+    en: 'Shukla Paksha',
+    es: 'Shukla Paksha',
+    fr: 'Shukla Paksha',
+    ru: 'Шукла Пакша',
+    ta: 'சுக்ல பக்ஷம்',
     te: 'శుక్ల పక్షం',
     bn: 'শুক্ল পক্ষ',
     mr: 'शुक्ल पक्ष',
-    he: 'שוקלה פאקשה (ירח מתמלא)',
-    id: 'Shukla Paksha (Bulan Cembung)',
-    th: 'ศุกลปักษ์ (ข้างขึ้น)'
+    he: 'שוקלה פאקשה',
+    id: 'Shukla Paksha',
+    th: 'ศุกลปักษ์'
   },
   Krishna: {
-    hinglish: 'Krishna Paksha (Waning Moon)',
+    hinglish: 'Krishna Paksha',
     hi: 'कृष्ण पक्ष',
-    gu: 'કૃષ્ણ પક્ષ (વદ)',
-    en: 'Krishna Paksha (Waning Moon)',
-    es: 'Krishna Paksha (Luna Menguante)',
-    fr: 'Krishna Paksha (Lune Décroissante)',
-    ru: 'Кришна Пакша (Убывающая Луна)',
+    gu: 'કૃષ્ણ પક્ષ',
+    en: 'Krishna Paksha',
+    es: 'Krishna Paksha',
+    fr: 'Krishna Paksha',
+    ru: 'Кришна Пакша',
     ta: 'கிருஷ்ண പക്ഷம்',
     te: 'కృష్ణ పక్షం',
     bn: 'কৃষ্ণ পক্ষ',
     mr: 'कृष्ण पक्ष',
-    he: 'קרישנה פאקשה (ירח מתמעט)',
-    id: 'Krishna Paksha (Bulan Susut)',
-    th: 'કૃષ્ણปักษ์ (ข้างแรม)'
+    he: 'קרישנה פאקשה',
+    id: 'Krishna Paksha',
+    th: 'กฤษณปักษ์'
   }
 };
 
-export function getLocalizedTithi(tithiNumber: number, language: LanguageCode): TithiTranslation {
-  let normalizedNum = ((tithiNumber - 1) % 15) + 1;
-  if (isNaN(normalizedNum) || normalizedNum < 1 || normalizedNum > 15) {
-    normalizedNum = 1;
+/**
+ * Returns a standardized, culturally accurate Moon Phase description
+ * Format: "3rd Lunar - Waxing 🌔" / "4th Lunar - Waning 🌘"
+ * Handles all 14 supported languages cleanly.
+ */
+export function getLocalizedMoonPhase(tithiIndex: number, language: LanguageCode): string {
+  const normIdx = ((tithiIndex % 30) + 30) % 30; // 0 to 29
+  const isKrishna = normIdx >= 15;
+  const dayNum = isKrishna ? (normIdx - 15 + 1) : (normIdx + 1); // 1 to 15
+
+  const getOrdinal = (n: number) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  if (normIdx === 14) {
+    switch (language) {
+      case 'hi': return '१५वीं तिथि - पूर्णिमा (पूर्ण चंद्र) 🌕';
+      case 'gu': return '૧૫મી તિથિ - પૂનમ (પૂર્ણ ચંદ્ર) 🌕';
+      case 'mr': return '१५वी तिथी - पौर्णिमा 🌕';
+      case 'bn': return '১৫শ তিথি - পূর্ণিমা 🌕';
+      case 'ta': return '15ஆம் திதி - பௌர்ணமி 🌕';
+      case 'te': return '15వ తిథి - పౌర్ణమి 🌕';
+      case 'es': return '15.º Día Lunar - Luna Llena 🌕';
+      case 'fr': return '15e Jour - Pleine Lune 🌕';
+      case 'ru': return '15-й Лунный день - Полнолуние 🌕';
+      case 'he': return 'יום ירחי 15 - ירח מלא 🌕';
+      case 'id': return 'Hari Lunar ke-15 - Bulan Purnama 🌕';
+      case 'th': return '15 ค่ำ - วันเพ็ญ 🌕';
+      case 'en':
+      case 'hinglish':
+      default:
+        return '15th Lunar - Full Moon 🌕';
+    }
   }
-  const mapForNumber = TITHI_MAP[normalizedNum] || TITHI_MAP[1];
-  return mapForNumber[language] || mapForNumber.hinglish || { name: 'Pratipada', desc: '1st Lunar Day' };
+
+  if (normIdx === 29) {
+    switch (language) {
+      case 'hi': return '१५वीं तिथि - अमावस्या (नया चंद्र) 🌑';
+      case 'gu': return '૧૫મી તિથિ - અમાસ 🌑';
+      case 'mr': return '१५वी तिथी - अमावस्या 🌑';
+      case 'bn': return '১৫শ তিথি - অমাবস্যা 🌑';
+      case 'ta': return '15ஆம் திதி - அமாவாசை 🌑';
+      case 'te': return '15వ తిథి - అమావాస్య 🌑';
+      case 'es': return '15.º Día Lunar - Luna Nueva 🌑';
+      case 'fr': return '15e Jour - Nouvelle Lune 🌑';
+      case 'ru': return '15-й Лунный день - Новолуние 🌑';
+      case 'he': return 'יום ירחי 15 - מולד הירח 🌑';
+      case 'id': return 'Hari Lunar ke-15 - Bulan Baru 🌑';
+      case 'th': return '15 ค่ำ - วันดับ 🌑';
+      case 'en':
+      case 'hinglish':
+      default:
+        return '15th Lunar - New Moon 🌑';
+    }
+  }
+
+  const icon = isKrishna ? '🌘' : '🌔';
+  switch (language) {
+    case 'hi': {
+      const devanagariNums = ['', '१ली', '२री', '३री', '४थी', '५वीं', '६ठी', '७वीं', '८वीं', '९वीं', '१०वीं', '११वीं', '१२वीं', '१३वीं', '१४वीं'];
+      const dStr = devanagariNums[dayNum] || `${dayNum}वीं`;
+      const phase = isKrishna ? 'घटता चंद्रमा (कृष्ण पक्ष)' : 'बढ़ता चंद्रमा (शुक्ल पक्ष)';
+      return `${dStr} तिथि - ${phase} ${icon}`;
+    }
+    case 'gu': {
+      const gujNums = ['', '૧લી', '૨જી', '૩જી', '૪થી', '૫મી', '૬ઠ્ઠી', '૭મી', '૮મી', '૯મી', '૧૦મી', '૧૧મી', '૧૨મી', '૧૩મી', '૧૪મી'];
+      const dStr = gujNums[dayNum] || `${dayNum}મી`;
+      const phase = isKrishna ? 'વદ (ઘટતો ચંદ્ર)' : 'સુદ (વધતો ચંદ્ર)';
+      return `${dStr} તિથિ - ${phase} ${icon}`;
+    }
+    case 'es':
+      return `${dayNum}.º Día Lunar - ${isKrishna ? 'Menguante' : 'Creciente'} ${icon}`;
+    case 'fr':
+      return `${dayNum}e Jour Lunar - ${isKrishna ? 'Décroissante' : 'Croissante'} ${icon}`;
+    case 'ru':
+      return `${dayNum}-й Лунный день - ${isKrishna ? 'Убывающая' : 'Растущая'} ${icon}`;
+    case 'ta':
+      return `${dayNum}ஆம் சந்திர நாள் - ${isKrishna ? 'தேய்பிறை' : 'வளர்பிறை'} ${icon}`;
+    case 'te':
+      return `${dayNum}వ చంద్ర దినం - ${isKrishna ? 'కృష్ణ పక్షం' : 'శుక్ల పక్షం'} ${icon}`;
+    case 'bn':
+      return `${dayNum}ম চান্দ্র দিন - ${isKrishna ? 'কৃষ্ণ পক্ষ' : 'শুক্ল পক্ষ'} ${icon}`;
+    case 'mr':
+      return `${dayNum}वी तिथी - ${isKrishna ? 'कृष्ण पक्ष' : 'शुक्ल पक्ष'} ${icon}`;
+    case 'he':
+      return `יום ירחי ${dayNum} - ${isKrishna ? 'ירח מתמעט' : 'ירח מתמלא'} ${icon}`;
+    case 'id':
+      return `Hari Lunar ke-${dayNum} - ${isKrishna ? 'Bulan Susut' : 'Bulan Terang'} ${icon}`;
+    case 'th':
+      return `${dayNum} ค่ำ - ${isKrishna ? 'ข้างแรม' : 'ข้างขึ้น'} ${icon}`;
+    case 'en':
+    case 'hinglish':
+    default:
+      return `${getOrdinal(dayNum)} Lunar - ${isKrishna ? 'Waning' : 'Waxing'} ${icon}`;
+  }
+}
+
+export function getLocalizedTithi(
+  tithiNumber: number,
+  language: LanguageCode,
+  paksha?: 'Shukla' | 'Krishna' | 'SHUKLA' | 'KRISHNA'
+): TithiTranslation {
+  const isKrishna = paksha === 'KRISHNA' || paksha === 'Krishna';
+  let targetNum = tithiNumber;
+
+  if (targetNum === 30 || (targetNum === 15 && isKrishna)) {
+    targetNum = 30;
+  } else if (targetNum === 15) {
+    targetNum = 15;
+  } else {
+    targetNum = ((targetNum - 1) % 15) + 1;
+    if (isNaN(targetNum) || targetNum < 1 || targetNum > 15) {
+      targetNum = 1;
+    }
+  }
+
+  const mapForNumber = TITHI_MAP[targetNum] || TITHI_MAP[1];
+  return mapForNumber[language] || mapForNumber.hinglish || {
+    name: targetNum === 30 ? 'Amavasya' : 'Pratipada',
+    desc: 'Lunar Day'
+  };
 }
 
 export function getLocalizedPakshaName(paksha: 'Shukla' | 'Krishna' | 'SHUKLA' | 'KRISHNA', language: LanguageCode): string {

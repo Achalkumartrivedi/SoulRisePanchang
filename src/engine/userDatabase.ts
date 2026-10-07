@@ -121,6 +121,7 @@ export async function loginOrRegisterEmailUser(
         return { success: false, message: 'Incorrect 6-digit PIN. Please enter the correct PIN or reset it.' };
       }
       await AsyncStorage.setItem(CURRENT_USER_PROFILE_KEY, JSON.stringify(existing));
+      notifyAuthStateChanged(existing);
       syncUserToFirebaseCloud(existing).catch(err => console.log('Firebase sync error:', err));
       return { success: true, profile: existing, isNewUser: false };
     } else {
@@ -129,7 +130,7 @@ export async function loginOrRegisterEmailUser(
       if (!userName) {
         try {
           const { getActiveProfile } = require('../utils/profileStorage');
-          const activeBirthProfile = await getActiveProfile();
+          const activeBirthProfile = await getActiveProfile(normalizedIdentifier);
           if (activeBirthProfile && activeBirthProfile.name) {
             userName = activeBirthProfile.name;
           }
@@ -155,6 +156,7 @@ export async function loginOrRegisterEmailUser(
       };
 
       await saveUserProfile(newProfile);
+      notifyAuthStateChanged(newProfile);
       return { success: true, profile: newProfile, isNewUser: true };
     }
   } catch (e) {

@@ -17,6 +17,11 @@ export const DEFAULT_CITIES: CityLocation[] = [
   { name: 'Chennai', hindiName: 'चेन्नई', stateCountry: 'Tamil Nadu, India', latitude: 13.0827, longitude: 80.2707, timeZoneId: 'Asia/Kolkata' },
   { name: 'Hyderabad', hindiName: 'हैदराबाद', stateCountry: 'Telangana, India', latitude: 17.3850, longitude: 78.4867, timeZoneId: 'Asia/Kolkata' },
   { name: 'Ahmedabad', hindiName: 'अहमदाबाद', stateCountry: 'Gujarat, India', latitude: 23.0225, longitude: 72.5714, timeZoneId: 'Asia/Kolkata' },
+  { name: 'Surat', hindiName: 'सूरत', stateCountry: 'Gujarat, India', latitude: 21.1702, longitude: 72.8311, timeZoneId: 'Asia/Kolkata' },
+  { name: 'Pune', hindiName: 'पुणे', stateCountry: 'Maharashtra, India', latitude: 18.5204, longitude: 73.8567, timeZoneId: 'Asia/Kolkata' },
+  { name: 'Lucknow', hindiName: 'लखनऊ', stateCountry: 'Uttar Pradesh, India', latitude: 26.8467, longitude: 80.9462, timeZoneId: 'Asia/Kolkata' },
+  { name: 'Indore', hindiName: 'इंदौर', stateCountry: 'Madhya Pradesh, India', latitude: 22.7196, longitude: 75.8577, timeZoneId: 'Asia/Kolkata' },
+  { name: 'Vadodara', hindiName: 'वडोदरा', stateCountry: 'Gujarat, India', latitude: 22.3072, longitude: 73.1812, timeZoneId: 'Asia/Kolkata' },
 
   // Russia 🇷🇺 (Vast Multi-Timezone Lands)
   { name: 'Moscow', hindiName: 'मॉस्को', stateCountry: 'Russia (MSK UTC+3)', latitude: 55.7558, longitude: 37.6173, timeZoneId: 'Europe/Moscow' },
