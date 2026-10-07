@@ -66,6 +66,8 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
 
   // Continuous slow rotation for celestial orbital system (36s loop)
   const spinAnim = useRef(new Animated.Value(0)).current;
+  // Subtle continuous axial rotation for the Moon texture (120s celestial loop)
+  const moonSpinAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const orbitLoop = Animated.loop(
@@ -76,11 +78,28 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
         useNativeDriver: true,
       })
     );
+    const moonLoop = Animated.loop(
+      Animated.timing(moonSpinAnim, {
+        toValue: 1,
+        duration: 120000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
     orbitLoop.start();
-    return () => orbitLoop.stop();
-  }, [spinAnim]);
+    moonLoop.start();
+    return () => {
+      orbitLoop.stop();
+      moonLoop.stop();
+    };
+  }, [spinAnim, moonSpinAnim]);
 
   const spinInterpolation = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const moonSpinInterpolation = moonSpinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
@@ -90,7 +109,6 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
   const outerOrbitSize = size + 36; // ~96px for size=60
   const dottedOrbitSize = size + 24; // ~84px
   const haloSize = size + 16; // ~76px
-  const innerRingSize = size + 12; // ~72px
 
   // Dynamic SVG dual-arc terminator path calculation
   const getShadowPath = () => {
@@ -134,7 +152,7 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
     <View style={styles.wrapper}>
       <View style={[styles.container, { width: outerOrbitSize, height: outerOrbitSize }]}>
         
-        {/* 1. ROTATING CELESTIAL ORBIT SYSTEM (Outer Ring, Dotted Ring, Celestial ✦ Marker) */}
+        {/* 1. OUTER ROTATING CELESTIAL ORBIT (96px, continuous orbit + rotating ✦ marker) */}
         <Animated.View
           pointerEvents="none"
           style={[
@@ -151,14 +169,6 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
             ]}
           />
 
-          {/* Dotted concentric celestial orbit (84px) */}
-          <View
-            style={[
-              styles.dottedOrbitCircle,
-              { width: dottedOrbitSize, height: dottedOrbitSize, borderRadius: dottedOrbitSize / 2 },
-            ]}
-          />
-
           {/* Celestial Spark Marker (✦) attached to the outer orbit at ~45° */}
           <View
             style={[
@@ -170,7 +180,16 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
           </View>
         </Animated.View>
 
-        {/* 2. STATIC SOFT CHAMPAGNE ATMOSPHERIC HALO (76px, Deliberate Breathing Room) */}
+        {/* 2. MIDDLE STATIC DOTTED CELESTIAL ORBIT (84px, concentric dashed gold ring) */}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.dottedOrbitCircle,
+            { width: dottedOrbitSize, height: dottedOrbitSize, borderRadius: dottedOrbitSize / 2 },
+          ]}
+        />
+
+        {/* 3. STATIC SOFT CHAMPAGNE ATMOSPHERIC HALO (76px, open breathing space) */}
         <View
           pointerEvents="none"
           style={[
@@ -195,16 +214,9 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
           </Svg>
         </View>
 
-        {/* 3. STATIC INNER ORBIT RING (72px) */}
-        <View
-          pointerEvents="none"
-          style={[
-            styles.innerRingCircle,
-            { width: innerRingSize, height: innerRingSize, borderRadius: innerRingSize / 2 },
-          ]}
-        />
+        {/* [INNER SOLID RING IS REMOVED] */}
 
-        {/* 4. STATIC REALISTIC PHOTOGRAPHIC MOON (60px, White/Gray Cratering) */}
+        {/* 4. REALISTIC MOON DISC (60px) WITH TWO-LAYER ARCHITECTURE */}
         <View
           style={[
             styles.moonDiscContainer,
@@ -215,11 +227,20 @@ export const MoonPhaseVisual: React.FC<MoonPhaseVisualProps> = ({
             },
           ]}
         >
-          <Image
-            source={require('../../assets/moon_real.png')}
-            style={{ width: size, height: size, borderRadius: moonR }}
-            resizeMode="cover"
-          />
+          {/* LAYER 1: Realistic Moon Surface Texture (Subtle continuous axial rotation) */}
+          <Animated.View
+            style={{
+              width: size,
+              height: size,
+              transform: [{ rotate: moonSpinInterpolation }],
+            }}
+          >
+            <Image
+              source={require('../../assets/moon_real.png')}
+              style={{ width: size, height: size, borderRadius: moonR }}
+              resizeMode="cover"
+            />
+          </Animated.View>
 
           {/* Dynamic Astronomical Terminator Shadow Mask */}
           {shadowPath && (
@@ -301,11 +322,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  innerRingCircle: {
-    position: 'absolute',
-    borderWidth: 1,
-    borderColor: 'rgba(223, 176, 89, 0.24)',
   },
   moonDiscContainer: {
     overflow: 'hidden',
